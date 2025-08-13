@@ -1,8 +1,9 @@
 import { execa } from "execa";
 import { shellEscape } from "@token-ring/utility/shellEscape";
-import DockerService from "../DockerService.js";
+import DockerService from "../DockerService.ts";
 import ChatService from "@token-ring/chat/ChatService";
 import { z } from "zod";
+
 
 /**
  * Prune unused Docker volumes
@@ -12,7 +13,7 @@ import { z } from "zod";
  * @param {TokenRingRegistry} registry - The package registry
  * @returns {Promise<object>} Result of the prune operation
  */
-export default execute;
+
 export async function execute({ filter, timeoutSeconds = 60 }, registry) {
 	const chatService = registry.requireFirstServiceByType(ChatService);
 	const dockerService = registry.requireFirstServiceByType(DockerService);

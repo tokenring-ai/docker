@@ -1,22 +1,24 @@
 import { execa } from "execa";
 import { shellEscape } from "@token-ring/utility/shellEscape";
-import DockerService from "../DockerService.js";
+import DockerService from "../DockerService.ts";
 import ChatService from "@token-ring/chat/ChatService";
 import { z } from "zod";
+import {Registry} from "@token-ring/registry";
+
 
 /**
- * Prune unused Docker images
+ * Tag a Docker image
  * @param {object} args
- * @param {boolean} [args.all=false] - Whether to remove all unused images, not just dangling ones
- * @param {string} [args.filter] - Filter images based on conditions provided
- * @param {number} [args.timeoutSeconds=60] - Timeout in seconds
+ * @param {string} args.sourceImage - The source image to tag
+ * @param {string} args.targetImage - The target image name and tag
+ * @param {number} [args.timeoutSeconds=30] - Timeout in seconds
  * @param {TokenRingRegistry} registry - The package registry
- * @returns {Promise<object>} Result of the prune operation
+ * @returns {Promise<object>} Result of the tag operation
  */
-export default execute;
+
 export async function execute(
-	{ all = false, filter, timeoutSeconds = 60 },
-	registry,
+	{ sourceImage, targetImage, timeoutSeconds = 30 },
+	registry: Registry,
 ) {
 	const chatService = registry.requireFirstServiceByType(ChatService);
 	const dockerService = registry.requireFirstServiceByType(DockerService);
@@ -26,6 +28,16 @@ export async function execute(
 		);
 		return "Couldn't perform Docker operation due to application misconfiguration, do not retry.";
 	}
+
+	if (!sourceImage || !targetImage) {
+		chatService.errorLine(
+			"[tagImage] sourceImage and targetImage are required",
+		);
+		return { error: "sourceImage and targetImage are required" };
+	}
+
+	// Construct the docker tag command with Docker context settings
+	const timeout = Math.max(5, Math.min(timeoutSeconds, 120));
 
 	// Build Docker command with host and TLS settings
 	let dockerCmd = "docker";
@@ -53,22 +65,12 @@ export async function execute(
 		}
 	}
 
-	// Construct the docker image prune command
-	const timeout = Math.max(5, Math.min(timeoutSeconds, 300));
-	let cmd = `timeout ${timeout}s ${dockerCmd} image prune -f`; // Always use -f to avoid interactive prompt
+	const cmd = `timeout ${timeout}s ${dockerCmd} tag ${shellEscape(sourceImage)} ${shellEscape(targetImage)}`;
 
-	// Add all flag if specified
-	if (all) {
-		cmd += ` -a`;
-	}
-
-	// Add filter if specified
-	if (filter) {
-		cmd += ` --filter ${shellEscape(filter)}`;
-	}
-
-	chatService.infoLine(`[pruneImages] Pruning unused Docker images...`);
-	chatService.infoLine(`[pruneImages] Executing: ${cmd}`);
+	chatService.infoLine(
+		`[tagImage] Tagging image ${sourceImage} as ${targetImage}...`,
+	);
+	chatService.infoLine(`[tagImage] Executing: ${cmd}`);
 
 	try {
 		const { stdout, stderr, exitCode } = await execa(cmd, {
@@ -76,26 +78,19 @@ export async function execute(
 			timeout: timeout * 1000,
 			maxBuffer: 1024 * 1024,
 		});
-
-		// Parse the output to extract the amount of space reclaimed
-		let spaceReclaimed = "0B";
-		const match = stdout.match(/Total reclaimed space: ([\d\.]+\s?[KMGT]?B)/i);
-		if (match) {
-			spaceReclaimed = match[1];
-		}
-
 		chatService.systemLine(
-			`[pruneImages] Successfully pruned unused Docker images. Space reclaimed: ${spaceReclaimed}`,
+			`[tagImage] Successfully tagged image ${sourceImage} as ${targetImage}`,
 		);
 		return {
 			ok: true,
 			exitCode: exitCode,
 			stdout: stdout?.trim() || "",
 			stderr: stderr?.trim() || "",
-			spaceReclaimed: spaceReclaimed,
+			sourceImage: sourceImage,
+			targetImage: targetImage,
 		};
 	} catch (err) {
-		chatService.errorLine(`[pruneImages] Error: ${err.message}`);
+		chatService.errorLine(`[tagImage] Error: ${err.message}`);
 		return {
 			ok: false,
 			exitCode: typeof err.code === "number" ? err.code : 1,
@@ -106,20 +101,15 @@ export async function execute(
 	}
 }
 
-export const description = "Prune unused Docker images";
+export const description = "Tag a Docker image with a new name and/or tag";
 
 export const parameters = z.object({
-	all: z
-		.boolean()
-		.default(false)
-		.describe("Whether to remove all unused images, not just dangling ones"),
-	filter: z
-		.string()
-		.optional()
-		.describe("Filter images based on conditions provided"),
-	force: z
-		.boolean()
-		.default(false)
-		.describe("Whether to force removal of images"),
-	timeoutSeconds: z.number().int().default(60).describe("Timeout in seconds"),
+	sourceImage: z.string().describe("The source image to tag"),
+	targetImage: z.string().describe("The target image name and tag"),
+	timeoutSeconds: z
+		.number()
+		.int()
+		.describe("Timeout in seconds")
+		.default(30)
+		.optional(),
 });

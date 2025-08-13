@@ -1,22 +1,32 @@
 import { execa } from "execa";
 import { shellEscape } from "@token-ring/utility/shellEscape";
-import DockerService from "../DockerService.js";
+import DockerService from "../DockerService.ts";
 import ChatService from "@token-ring/chat/ChatService";
 import { z } from "zod";
+import {Registry} from "@token-ring/registry";
+
 
 /**
- * Stop one or more Docker containers
+ * Remove one or more Docker containers
  * @param {object} args
- * @param {string|string[]} args.containers - Container ID(s) or name(s) to stop
- * @param {number} [args.time=10] - Seconds to wait for stop before killing the container
+ * @param {string|string[]} args.containers - Container ID(s) or name(s) to remove
+ * @param {boolean} [args.force=false] - Whether to force the removal of a running container
+ * @param {boolean} [args.volumes=false] - Whether to remove anonymous volumes associated with the container
+ * @param {boolean} [args.link=false] - Whether to remove the specified link
  * @param {number} [args.timeoutSeconds=30] - Timeout in seconds
  * @param {TokenRingRegistry} registry - The package registry
- * @returns {Promise<object>} Result of the stop operation
+ * @returns {Promise<object>} Result of the remove operation
  */
-export default execute;
+
 export async function execute(
-	{ containers, time = 10, timeoutSeconds = 30 },
-	registry,
+	{
+		containers,
+		force = false,
+		volumes = false,
+		link = false,
+		timeoutSeconds = 30,
+	},
+	registry: Registry,
 ) {
 	const chatService = registry.requireFirstServiceByType(ChatService);
 	const dockerService = registry.requireFirstServiceByType(DockerService);
@@ -28,7 +38,7 @@ export async function execute(
 	}
 
 	if (!containers) {
-		chatService.errorLine("[stopContainer] containers is required");
+		chatService.errorLine("[removeContainer] containers is required");
 		return { error: "containers is required" };
 	}
 
@@ -36,7 +46,7 @@ export async function execute(
 	const containerList = Array.isArray(containers) ? containers : [containers];
 	if (containerList.length === 0) {
 		chatService.errorLine(
-			"[stopContainer] at least one container must be specified",
+			"[removeContainer] at least one container must be specified",
 		);
 		return { error: "at least one container must be specified" };
 	}
@@ -67,23 +77,32 @@ export async function execute(
 		}
 	}
 
-	// Construct the docker stop command
+	// Construct the docker rm command
 	const timeout = Math.max(5, Math.min(timeoutSeconds, 120));
-	let cmd = `timeout ${timeout}s ${dockerCmd} stop`;
+	let cmd = `timeout ${timeout}s ${dockerCmd} rm`;
 
-	// Add time parameter if specified
-	if (time !== 10) {
-		// Only add if different from default
-		cmd += ` -t ${shellEscape(String(time))}`;
+	// Add force flag if specified
+	if (force) {
+		cmd += ` -f`;
+	}
+
+	// Add volumes flag if specified
+	if (volumes) {
+		cmd += ` -v`;
+	}
+
+	// Add link flag if specified
+	if (link) {
+		cmd += ` -l`;
 	}
 
 	// Add containers
 	cmd += ` ${containerList.map((container) => shellEscape(container)).join(" ")}`;
 
 	chatService.infoLine(
-		`[stopContainer] Stopping container(s): ${containerList.join(", ")}...`,
+		`[removeContainer] Removing container(s): ${containerList.join(", ")}...`,
 	);
-	chatService.infoLine(`[stopContainer] Executing: ${cmd}`);
+	chatService.infoLine(`[removeContainer] Executing: ${cmd}`);
 
 	try {
 		const { stdout, stderr, exitCode } = await execa(cmd, {
@@ -93,7 +112,7 @@ export async function execute(
 		});
 
 		chatService.systemLine(
-			`[stopContainer] Successfully stopped container(s): ${containerList.join(", ")}`,
+			`[removeContainer] Successfully removed container(s): ${containerList.join(", ")}`,
 		);
 		return {
 			ok: true,
@@ -103,7 +122,7 @@ export async function execute(
 			containers: containerList,
 		};
 	} catch (err) {
-		chatService.errorLine(`[stopContainer] Error: ${err.message}`);
+		chatService.errorLine(`[removeContainer] Error: ${err.message}`);
 		return {
 			ok: false,
 			exitCode: typeof err.code === "number" ? err.code : 1,
@@ -114,19 +133,25 @@ export async function execute(
 	}
 }
 
-export const description = "Stop one or more Docker containers";
+export const description = "Remove one or more Docker containers";
 
 export const parameters = z.object({
 	containers: z
-		.union([z.string(), z.array(z.string())], {
-			required_error: "containers is required",
-			invalid_type_error: "containers must be a string or array of strings",
-		})
-		.describe("Container ID(s) or name(s) to stop"),
-	time: z
-		.number()
-		.int()
-		.default(10)
-		.describe("Seconds to wait for stop before killing the container"),
+		.union([z.string(), z.array(z.string())])
+		.describe("Container ID(s) or name(s) to remove"),
+	force: z
+		.boolean()
+		.default(false)
+		.describe("Whether to force the removal of a running container"),
+	volumes: z
+		.boolean()
+		.default(false)
+		.describe(
+			"Whether to remove anonymous volumes associated with the container",
+		),
+	link: z
+		.boolean()
+		.default(false)
+		.describe("Whether to remove the specified link"),
 	timeoutSeconds: z.number().int().default(30).describe("Timeout in seconds"),
 });

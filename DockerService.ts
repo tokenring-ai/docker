@@ -48,11 +48,11 @@ export default class DockerService extends Service {
     },
   } as const;
 
-  private host: string;
-  private tlsVerify: boolean;
-  private tlsCACert?: string;
-  private tlsCert?: string;
-  private tlsKey?: string;
+  private readonly host: string;
+  private readonly tlsVerify: boolean;
+  private readonly tlsCACert?: string;
+  private readonly tlsCert?: string;
+  private readonly tlsKey?: string;
   private dirty: boolean;
 
   constructor({

@@ -1,22 +1,23 @@
 import { execa } from "execa";
 import { shellEscape } from "@token-ring/utility/shellEscape";
-import DockerService from "../DockerService.js";
+import DockerService from "../DockerService.ts";
 import ChatService from "@token-ring/chat/ChatService";
 import { z } from "zod";
 
+
 /**
- * Start one or more Docker containers
+ * Remove one or more Docker images
  * @param {object} args
- * @param {string|string[]} args.containers - Container ID(s) or name(s) to start
- * @param {boolean} [args.attach=false] - Whether to attach STDOUT/STDERR and forward signals
- * @param {boolean} [args.interactive=false] - Whether to attach container's STDIN
+ * @param {string|string[]} args.images - Image ID(s) or name(s) to remove
+ * @param {boolean} [args.force=false] - Whether to force removal of the image
+ * @param {boolean} [args.noPrune=false] - Whether to prevent the pruning of parent images
  * @param {number} [args.timeoutSeconds=30] - Timeout in seconds
  * @param {TokenRingRegistry} registry - The package registry
- * @returns {Promise<object>} Result of the start operation
+ * @returns {Promise<object>} Result of the remove operation
  */
-export default execute;
+
 export async function execute(
-	{ containers, attach = false, interactive = false, timeoutSeconds = 30 },
+	{ images, force = false, noPrune = false, timeoutSeconds = 30 },
 	registry,
 ) {
 	const chatService = registry.requireFirstServiceByType(ChatService);
@@ -28,18 +29,16 @@ export async function execute(
 		return "Couldn't perform Docker operation due to application misconfiguration, do not retry.";
 	}
 
-	if (!containers) {
-		chatService.errorLine("[startContainer] containers is required");
-		return { error: "containers is required" };
+	if (!images) {
+		chatService.errorLine("[removeImage] images is required");
+		return { error: "images is required" };
 	}
 
-	// Convert single container to array
-	const containerList = Array.isArray(containers) ? containers : [containers];
-	if (containerList.length === 0) {
-		chatService.errorLine(
-			"[startContainer] at least one container must be specified",
-		);
-		return { error: "at least one container must be specified" };
+	// Convert single image to array
+	const imageList = Array.isArray(images) ? images : [images];
+	if (imageList.length === 0) {
+		chatService.errorLine("[removeImage] at least one image must be specified");
+		return { error: "at least one image must be specified" };
 	}
 
 	// Build Docker command with host and TLS settings
@@ -68,27 +67,27 @@ export async function execute(
 		}
 	}
 
-	// Construct the docker start command
+	// Construct the docker rmi command
 	const timeout = Math.max(5, Math.min(timeoutSeconds, 120));
-	let cmd = `timeout ${timeout}s ${dockerCmd} start`;
+	let cmd = `timeout ${timeout}s ${dockerCmd} rmi`;
 
-	// Add attach flag if specified
-	if (attach) {
-		cmd += ` -a`;
+	// Add force flag if specified
+	if (force) {
+		cmd += ` -f`;
 	}
 
-	// Add interactive flag if specified
-	if (interactive) {
-		cmd += ` -i`;
+	// Add no-prune flag if specified
+	if (noPrune) {
+		cmd += ` --no-prune`;
 	}
 
-	// Add containers
-	cmd += ` ${containerList.map((container) => shellEscape(container)).join(" ")}`;
+	// Add images
+	cmd += ` ${imageList.map((image) => shellEscape(image)).join(" ")}`;
 
 	chatService.infoLine(
-		`[startContainer] Starting container(s): ${containerList.join(", ")}...`,
+		`[removeImage] Removing image(s): ${imageList.join(", ")}...`,
 	);
-	chatService.infoLine(`[startContainer] Executing: ${cmd}`);
+	chatService.infoLine(`[removeImage] Executing: ${cmd}`);
 
 	try {
 		const { stdout, stderr, exitCode } = await execa(cmd, {
@@ -98,17 +97,17 @@ export async function execute(
 		});
 
 		chatService.systemLine(
-			`[startContainer] Successfully started container(s): ${containerList.join(", ")}`,
+			`[removeImage] Successfully removed image(s): ${imageList.join(", ")}`,
 		);
 		return {
 			ok: true,
 			exitCode: exitCode,
 			stdout: stdout?.trim() || "",
 			stderr: stderr?.trim() || "",
-			containers: containerList,
+			images: imageList,
 		};
 	} catch (err) {
-		chatService.errorLine(`[startContainer] Error: ${err.message}`);
+		chatService.errorLine(`[removeImage] Error: ${err.message}`);
 		return {
 			ok: false,
 			exitCode: typeof err.code === "number" ? err.code : 1,
@@ -119,23 +118,23 @@ export async function execute(
 	}
 }
 
-export const description = "Start one or more Docker containers";
+export const description = "Remove one or more Docker images";
 
 export const parameters = z
 	.object({
-		containers: z.union([z.string(), z.array(z.string())], {
-			description: "Container ID(s) or name(s) to start",
+		images: z.union([z.string(), z.array(z.string())], {
+			description: "Image ID(s) or name(s) to remove",
 		}),
-		attach: z
+		force: z
 			.boolean()
 			.optional()
 			.default(false)
-			.describe("Whether to attach STDOUT/STDERR and forward signals"),
-		interactive: z
+			.describe("Whether to force removal of the image"),
+		noPrune: z
 			.boolean()
 			.optional()
 			.default(false)
-			.describe("Whether to attach container's STDIN"),
+			.describe("Whether to prevent the pruning of parent images"),
 		timeoutSeconds: z
 			.number()
 			.int()

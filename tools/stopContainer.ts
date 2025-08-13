@@ -1,21 +1,22 @@
 import { execa } from "execa";
 import { shellEscape } from "@token-ring/utility/shellEscape";
-import DockerService from "../DockerService.js";
+import DockerService from "../DockerService.ts";
 import ChatService from "@token-ring/chat/ChatService";
 import { z } from "zod";
 
+
 /**
- * Tag a Docker image
+ * Stop one or more Docker containers
  * @param {object} args
- * @param {string} args.sourceImage - The source image to tag
- * @param {string} args.targetImage - The target image name and tag
+ * @param {string|string[]} args.containers - Container ID(s) or name(s) to stop
+ * @param {number} [args.time=10] - Seconds to wait for stop before killing the container
  * @param {number} [args.timeoutSeconds=30] - Timeout in seconds
  * @param {TokenRingRegistry} registry - The package registry
- * @returns {Promise<object>} Result of the tag operation
+ * @returns {Promise<object>} Result of the stop operation
  */
-export default execute;
+
 export async function execute(
-	{ sourceImage, targetImage, timeoutSeconds = 30 },
+	{ containers, time = 10, timeoutSeconds = 30 },
 	registry,
 ) {
 	const chatService = registry.requireFirstServiceByType(ChatService);
@@ -27,15 +28,19 @@ export async function execute(
 		return "Couldn't perform Docker operation due to application misconfiguration, do not retry.";
 	}
 
-	if (!sourceImage || !targetImage) {
-		chatService.errorLine(
-			"[tagImage] sourceImage and targetImage are required",
-		);
-		return { error: "sourceImage and targetImage are required" };
+	if (!containers) {
+		chatService.errorLine("[stopContainer] containers is required");
+		return { error: "containers is required" };
 	}
 
-	// Construct the docker tag command with Docker context settings
-	const timeout = Math.max(5, Math.min(timeoutSeconds, 120));
+	// Convert single container to array
+	const containerList = Array.isArray(containers) ? containers : [containers];
+	if (containerList.length === 0) {
+		chatService.errorLine(
+			"[stopContainer] at least one container must be specified",
+		);
+		return { error: "at least one container must be specified" };
+	}
 
 	// Build Docker command with host and TLS settings
 	let dockerCmd = "docker";
@@ -63,12 +68,23 @@ export async function execute(
 		}
 	}
 
-	const cmd = `timeout ${timeout}s ${dockerCmd} tag ${shellEscape(sourceImage)} ${shellEscape(targetImage)}`;
+	// Construct the docker stop command
+	const timeout = Math.max(5, Math.min(timeoutSeconds, 120));
+	let cmd = `timeout ${timeout}s ${dockerCmd} stop`;
+
+	// Add time parameter if specified
+	if (time !== 10) {
+		// Only add if different from default
+		cmd += ` -t ${shellEscape(String(time))}`;
+	}
+
+	// Add containers
+	cmd += ` ${containerList.map((container) => shellEscape(container)).join(" ")}`;
 
 	chatService.infoLine(
-		`[tagImage] Tagging image ${sourceImage} as ${targetImage}...`,
+		`[stopContainer] Stopping container(s): ${containerList.join(", ")}...`,
 	);
-	chatService.infoLine(`[tagImage] Executing: ${cmd}`);
+	chatService.infoLine(`[stopContainer] Executing: ${cmd}`);
 
 	try {
 		const { stdout, stderr, exitCode } = await execa(cmd, {
@@ -76,19 +92,19 @@ export async function execute(
 			timeout: timeout * 1000,
 			maxBuffer: 1024 * 1024,
 		});
+
 		chatService.systemLine(
-			`[tagImage] Successfully tagged image ${sourceImage} as ${targetImage}`,
+			`[stopContainer] Successfully stopped container(s): ${containerList.join(", ")}`,
 		);
 		return {
 			ok: true,
 			exitCode: exitCode,
 			stdout: stdout?.trim() || "",
 			stderr: stderr?.trim() || "",
-			sourceImage: sourceImage,
-			targetImage: targetImage,
+			containers: containerList,
 		};
 	} catch (err) {
-		chatService.errorLine(`[tagImage] Error: ${err.message}`);
+		chatService.errorLine(`[stopContainer] Error: ${err.message}`);
 		return {
 			ok: false,
 			exitCode: typeof err.code === "number" ? err.code : 1,
@@ -99,15 +115,19 @@ export async function execute(
 	}
 }
 
-export const description = "Tag a Docker image with a new name and/or tag";
+export const description = "Stop one or more Docker containers";
 
 export const parameters = z.object({
-	sourceImage: z.string().describe("The source image to tag"),
-	targetImage: z.string().describe("The target image name and tag"),
-	timeoutSeconds: z
+	containers: z
+		.union([z.string(), z.array(z.string())], {
+			required_error: "containers is required",
+			invalid_type_error: "containers must be a string or array of strings",
+		})
+		.describe("Container ID(s) or name(s) to stop"),
+	time: z
 		.number()
 		.int()
-		.describe("Timeout in seconds")
-		.default(30)
-		.optional(),
+		.default(10)
+		.describe("Seconds to wait for stop before killing the container"),
+	timeoutSeconds: z.number().int().default(30).describe("Timeout in seconds"),
 });
