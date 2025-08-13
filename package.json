@@ -16,7 +16,7 @@
 	},
 	"license": "MIT",
 	"scripts": {
-		"lint": "eslint ",
+
 		"eslint": "eslint --fix ./"
 	},
 	"type": "module"

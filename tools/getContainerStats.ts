@@ -1,10 +1,10 @@
-import { execa } from "execa";
-import { z } from "zod";
-import { shellEscape } from "@token-ring/utility/shellEscape";
+import {execa} from "execa";
+import {z} from "zod";
+import {shellEscape} from "@token-ring/utility/shellEscape";
 import DockerService from "../DockerService.ts";
 import ChatService from "@token-ring/chat/ChatService";
-import { DockerCommandResult } from "../types.ts";
-import { Registry } from "@token-ring/registry";
+import {DockerCommandResult} from "../types.ts";
+import {Registry} from "@token-ring/registry";
 
 type FormatType = "json" | "table" | string;
 

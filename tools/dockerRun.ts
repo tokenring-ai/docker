@@ -1,7 +1,7 @@
 import DockerService from "../DockerService.ts";
 import ChatService from "@token-ring/chat/ChatService";
-import { FileSystemService } from "@token-ring/filesystem";
-import { z } from "zod";
+import {FileSystemService} from "@token-ring/filesystem";
+import {z} from "zod";
 import {Registry} from "@token-ring/registry";
 import type {DockerCommandResult} from "../types.ts";
 

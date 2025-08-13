@@ -1,4 +1,4 @@
-import { Service } from "@token-ring/registry";
+import {Service} from "@token-ring/registry";
 
 export interface DockerServiceParams {
   host?: string;

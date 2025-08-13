@@ -1,9 +1,9 @@
-import { execa } from "execa";
-import { shellEscape } from "@token-ring/utility/shellEscape";
+import {execa} from "execa";
+import {shellEscape} from "@token-ring/utility/shellEscape";
 import DockerService from "../DockerService.ts";
 import ChatService from "@token-ring/chat/ChatService";
-import { z } from "zod";
-import { DockerCommandResult } from "../types.ts";
+import {z} from "zod";
+import {DockerCommandResult} from "../types.ts";
 import {Registry} from "@token-ring/registry";
 
 interface CreateNetworkArgs {
