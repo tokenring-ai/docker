@@ -15,9 +15,11 @@ import {z} from "zod";
  * @returns {Promise<object>} Result of the prune operation
  */
 
+import {Registry} from "@token-ring/registry";
+
 export async function execute(
-	{ all = false, filter, timeoutSeconds = 60 },
-	registry,
+	{ all = false, filter, timeoutSeconds = 60 }: { all?: boolean; filter?: string; timeoutSeconds?: number },
+	registry: Registry,
 ) {
 	const chatService = registry.requireFirstServiceByType(ChatService);
 	const dockerService = registry.requireFirstServiceByType(DockerService);
@@ -95,14 +97,19 @@ export async function execute(
 			stderr: stderr?.trim() || "",
 			spaceReclaimed: spaceReclaimed,
 		};
-	} catch (err) {
-		chatService.errorLine(`[pruneImages] Error: ${err.message}`);
+	} catch (err: unknown) {
+		if (err && typeof err === 'object' && 'message' in err) {
+			chatService.errorLine(`[pruneImages] Error: ${(err as any).message}`);
+		} else {
+			chatService.errorLine(`[pruneImages] Unknown error`);
+		}
+		const anyErr: any = err as any;
 		return {
 			ok: false,
-			exitCode: typeof err.code === "number" ? err.code : 1,
-			stdout: err.stdout?.trim() || "",
-			stderr: err.stderr?.trim() || "",
-			error: err.shortMessage || err.message,
+			exitCode: typeof anyErr?.code === "number" ? anyErr.code : 1,
+			stdout: anyErr?.stdout?.trim?.() || "",
+			stderr: anyErr?.stderr?.trim?.() || "",
+			error: anyErr?.shortMessage || anyErr?.message || String(err),
 		};
 	}
 }

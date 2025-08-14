@@ -71,7 +71,12 @@ export async function execute(
 
   // Add mount if specified
   if (mountSrc) {
-    dockerArgs.push("-v", `${filesystem.baseDirectory}:${mountSrc}`);
+    try {
+      const base = filesystem.getBaseDirectory();
+      dockerArgs.push("-v", `${base}:${mountSrc}`);
+    } catch (_e) {
+      // If base directory is not available, skip mounting
+    }
   }
 
   // Add image and command
