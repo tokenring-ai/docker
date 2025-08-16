@@ -1,18 +1,18 @@
-import {execa} from "execa";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import DockerService from "../DockerService.ts";
 import ChatService from "@token-ring/chat/ChatService";
-import {z} from "zod";
-import {DockerCommandResult} from "../types.ts";
 import {Registry} from "@token-ring/registry";
+import {shellEscape} from "@token-ring/utility/shellEscape";
+import {execa} from "execa";
+import {z} from "zod";
+import DockerService from "../DockerService.ts";
+import {DockerCommandResult} from "../types.ts";
 
 type StackAction = "deploy" | "remove" | "ps";
 
 interface DockerStackArgs {
-    action: StackAction;
-    stackName: string;
-    composeFile?: string;
-    timeoutSeconds?: number;
+  action: StackAction;
+  stackName: string;
+  composeFile?: string;
+  timeoutSeconds?: number;
 }
 
 /**
@@ -23,116 +23,116 @@ interface DockerStackArgs {
  */
 
 export async function execute(
-    {action, stackName, composeFile, timeoutSeconds = 60}: DockerStackArgs,
-    registry: Registry
+  {action, stackName, composeFile, timeoutSeconds = 60}: DockerStackArgs,
+  registry: Registry
 ): Promise<DockerCommandResult | string> {
-    const chatService = registry.requireFirstServiceByType(ChatService);
-    const dockerService = registry.requireFirstServiceByType(DockerService);
-    if (!dockerService) {
-        chatService.errorLine(
-            `[dockerStack] DockerService not found, can't perform Docker operations without Docker connection details`,
-        );
-        return {error: "Couldn't perform Docker operation due to application misconfiguration, do not retry."};
+  const chatService = registry.requireFirstServiceByType(ChatService);
+  const dockerService = registry.requireFirstServiceByType(DockerService);
+  if (!dockerService) {
+    chatService.errorLine(
+      `[dockerStack] DockerService not found, can't perform Docker operations without Docker connection details`,
+    );
+    return {error: "Couldn't perform Docker operation due to application misconfiguration, do not retry."};
+  }
+
+  if (!action || !stackName) {
+    chatService.errorLine("[dockerStack] action and stackName are required");
+    return {error: "action and stackName are required"};
+  }
+
+  // Build Docker command with host and TLS settings
+  let dockerCmd = "docker";
+
+  // Add host if not using default
+  if (dockerService.getHost() !== "unix:///var/run/docker.sock") {
+    dockerCmd += ` -H ${shellEscape(dockerService.getHost())}`;
+  }
+
+  // Add TLS settings if needed
+  const tlsConfig = dockerService.getTLSConfig();
+  if (tlsConfig.tlsVerify) {
+    dockerCmd += " --tls";
+
+    if (tlsConfig.tlsCACert) {
+      dockerCmd += ` --tlscacert=${shellEscape(tlsConfig.tlsCACert)}`;
     }
 
-    if (!action || !stackName) {
-        chatService.errorLine("[dockerStack] action and stackName are required");
-        return {error: "action and stackName are required"};
+    if (tlsConfig.tlsCert) {
+      dockerCmd += ` --tlscert=${shellEscape(tlsConfig.tlsCert)}`;
     }
 
-    // Build Docker command with host and TLS settings
-    let dockerCmd = "docker";
-
-    // Add host if not using default
-    if (dockerService.getHost() !== "unix:///var/run/docker.sock") {
-        dockerCmd += ` -H ${shellEscape(dockerService.getHost())}`;
+    if (tlsConfig.tlsKey) {
+      dockerCmd += ` --tlskey=${shellEscape(tlsConfig.tlsKey)}`;
     }
+  }
 
-    // Add TLS settings if needed
-    const tlsConfig = dockerService.getTLSConfig();
-    if (tlsConfig.tlsVerify) {
-        dockerCmd += " --tls";
+  let cmd: string;
+  const timeout = Math.max(5, Math.min(timeoutSeconds, 600));
 
-        if (tlsConfig.tlsCACert) {
-            dockerCmd += ` --tlscacert=${shellEscape(tlsConfig.tlsCACert)}`;
-        }
+  switch (action) {
+    case "deploy":
+      if (!composeFile) {
+        chatService.errorLine("[dockerStack] composeFile required for deploy");
+        return {error: "composeFile required for deploy"};
+      }
+      cmd = `timeout ${timeout}s ${dockerCmd} stack deploy -c ${shellEscape(composeFile)} ${shellEscape(stackName)}`;
+      break;
+    case "remove":
+      cmd = `timeout ${timeout}s ${dockerCmd} stack rm ${shellEscape(stackName)}`;
+      break;
+    case "ps":
+      cmd = `timeout ${timeout}s ${dockerCmd} stack ps ${shellEscape(stackName)}`;
+      break;
+    default:
+      chatService.errorLine(`[dockerStack] Unknown action: ${action}`);
+      return {error: `Unknown action: ${action}`};
+  }
 
-        if (tlsConfig.tlsCert) {
-            dockerCmd += ` --tlscert=${shellEscape(tlsConfig.tlsCert)}`;
-        }
+  chatService.infoLine("[dockerStack] Executing: " + cmd);
 
-        if (tlsConfig.tlsKey) {
-            dockerCmd += ` --tlskey=${shellEscape(tlsConfig.tlsKey)}`;
-        }
-    }
-
-    let cmd: string;
-    const timeout = Math.max(5, Math.min(timeoutSeconds, 600));
-
-    switch (action) {
-        case "deploy":
-            if (!composeFile) {
-                chatService.errorLine("[dockerStack] composeFile required for deploy");
-                return {error: "composeFile required for deploy"};
-            }
-            cmd = `timeout ${timeout}s ${dockerCmd} stack deploy -c ${shellEscape(composeFile)} ${shellEscape(stackName)}`;
-            break;
-        case "remove":
-            cmd = `timeout ${timeout}s ${dockerCmd} stack rm ${shellEscape(stackName)}`;
-            break;
-        case "ps":
-            cmd = `timeout ${timeout}s ${dockerCmd} stack ps ${shellEscape(stackName)}`;
-            break;
-        default:
-            chatService.errorLine(`[dockerStack] Unknown action: ${action}`);
-            return {error: `Unknown action: ${action}`};
-    }
-
-    chatService.infoLine("[dockerStack] Executing: " + cmd);
-
-    try {
-        const {stdout, stderr, exitCode} = await execa(cmd, {
-            shell: true,
-            timeout: timeout * 1000,
-            maxBuffer: 1024 * 1024,
-        });
-        chatService.systemLine(
-            `[dockerStack] Successfully executed ${action} on stack ${stackName}`,
-        );
-        return {
-            ok: true,
-            exitCode: exitCode,
-            stdout: stdout?.trim() || "",
-            stderr: stderr?.trim() || "",
-            error: undefined,
-        };
-    } catch (err: any) {
-        chatService.errorLine(`[dockerStack] Error: ${err.message}`);
-        return {
-            ok: false,
-            exitCode: typeof err.exitCode === "number" ? err.exitCode : 1,
-            stdout: err.stdout?.trim() || "",
-            stderr: err.stderr?.trim() || "",
-            error: err.shortMessage || err.message,
-        };
-    }
+  try {
+    const {stdout, stderr, exitCode} = await execa(cmd, {
+      shell: true,
+      timeout: timeout * 1000,
+      maxBuffer: 1024 * 1024,
+    });
+    chatService.systemLine(
+      `[dockerStack] Successfully executed ${action} on stack ${stackName}`,
+    );
+    return {
+      ok: true,
+      exitCode: exitCode,
+      stdout: stdout?.trim() || "",
+      stderr: stderr?.trim() || "",
+      error: undefined,
+    };
+  } catch (err: any) {
+    chatService.errorLine(`[dockerStack] Error: ${err.message}`);
+    return {
+      ok: false,
+      exitCode: typeof err.exitCode === "number" ? err.exitCode : 1,
+      stdout: err.stdout?.trim() || "",
+      stderr: err.stderr?.trim() || "",
+      error: err.shortMessage || err.message,
+    };
+  }
 }
 
 export const description =
-    "Launch, update, or remove a Docker stack from the local Docker Swarm. Actions: deploy (requires composeFile), remove, ps.";
+  "Launch, update, or remove a Docker stack from the local Docker Swarm. Actions: deploy (requires composeFile), remove, ps.";
 
 export const parameters = z.object({
-    action: z
-        .enum(["deploy", "remove", "ps"])
-        .describe("Action to perform: 'deploy', 'remove', or 'ps'."),
-    stackName: z.string().describe("Name of the stack to deploy/remove/list."),
-    composeFile: z
-        .string()
-        .describe("Path to docker-compose.yml file (required for deploy)")
-        .optional(),
-    timeoutSeconds: z
-        .number()
-        .int()
-        .describe("Timeout for the stack operation in seconds (default: 60).")
-        .optional(),
+  action: z
+    .enum(["deploy", "remove", "ps"])
+    .describe("Action to perform: 'deploy', 'remove', or 'ps'."),
+  stackName: z.string().describe("Name of the stack to deploy/remove/list."),
+  composeFile: z
+    .string()
+    .describe("Path to docker-compose.yml file (required for deploy)")
+    .optional(),
+  timeoutSeconds: z
+    .number()
+    .int()
+    .describe("Timeout for the stack operation in seconds (default: 60).")
+    .optional(),
 });

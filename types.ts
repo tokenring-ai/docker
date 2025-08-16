@@ -6,26 +6,26 @@
  * Interface for the TokenRing Registry
  */
 export interface TokenRingRegistry {
-    requireFirstServiceByType: <T>(serviceType: any) => T;
+  requireFirstServiceByType: <T>(serviceType: any) => T;
 }
 
 /**
  * TLS configuration for Docker
  */
 export interface TLSConfig {
-    tlsVerify: boolean;
-    tlsCACert?: string;
-    tlsCert?: string;
-    tlsKey?: string;
+  tlsVerify: boolean;
+  tlsCACert?: string;
+  tlsCert?: string;
+  tlsKey?: string;
 }
 
 /**
  * Common Docker command execution result
  */
 export interface DockerCommandResult {
-    ok?: boolean;
-    exitCode?: number;
-    stdout?: string;
-    stderr?: string;
-    error?: string;
+  ok?: boolean;
+  exitCode?: number;
+  stdout?: string;
+  stderr?: string;
+  error?: string;
 }
