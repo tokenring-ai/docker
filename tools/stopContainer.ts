@@ -6,6 +6,8 @@ import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
+export const name = "docker/stopContainer";
+
 interface StopContainerResult {
   ok: boolean;
   exitCode: number;
@@ -14,7 +16,6 @@ interface StopContainerResult {
   containers: string[];
 }
 
-
 /**
  * Stop one or more Docker containers
  */
@@ -22,34 +23,29 @@ export async function execute(
   {containers, time = 10, timeoutSeconds = 30}: {
     containers: string | string[];
     time?: number;
-    timeoutSeconds?: number
+    timeoutSeconds?: number;
   },
   registry: Registry,
-): Promise<StopContainerResult | { error: string }> {
+): Promise<StopContainerResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
 
   // Ensure DockerService is available
   if (!dockerService) {
-    chatService.errorLine(
-      `[stopContainer] DockerService not found, can't perform Docker operations without Docker connection details`,
+    throw new Error(
+      `[${name}] DockerService not found, can't perform Docker operations without Docker connection details`,
     );
-    return {error: "DockerService not found, can't perform Docker operations without Docker connection details"};
   }
 
   // Validate containers argument
   if (!containers) {
-    chatService.errorLine("[stopContainer] containers is required");
-    return {error: "containers is required"};
+    throw new Error(`[${name}] containers is required`);
   }
 
   // Convert single container to array
   const containerList = Array.isArray(containers) ? containers : [containers];
   if (containerList.length === 0) {
-    chatService.errorLine(
-      "[stopContainer] at least one container must be specified",
-    );
-    return {error: "at least one container must be specified"};
+    throw new Error(`[${name}] at least one container must be specified`);
   }
 
   // Build Docker command with host and TLS settings
@@ -88,9 +84,9 @@ export async function execute(
   cmd += ` ${containerList.map((c) => shellEscape(c)).join(" ")}`;
 
   chatService.infoLine(
-    `[stopContainer] Stopping container(s): ${containerList.join(", ")}...`,
+    `[${name}] Stopping container(s): ${containerList.join(", ")}...`,
   );
-  chatService.infoLine(`[stopContainer] Executing: ${cmd}`);
+  chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
   const {stdout, stderr, exitCode} = await execa(cmd, {
     shell: true,
@@ -99,7 +95,7 @@ export async function execute(
   });
 
   chatService.systemLine(
-    `[stopContainer] Successfully stopped container(s): ${containerList.join(", ")}`,
+    `[${name}] Successfully stopped container(s): ${containerList.join(", ")}`,
   );
   return {
     ok: true,

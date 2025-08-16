@@ -1,10 +1,12 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
+import { DockerCommandResult } from "../types.ts";
+
+export const name = "docker/getContainerLogs";
 
 interface GetContainerLogsArgs {
   name: string;
@@ -32,7 +34,7 @@ interface GetContainerLogsResult extends DockerCommandResult {
 
 export async function execute(
   {
-    name,
+    name: containerName,
     follow = false,
     timestamps = false,
     since,
@@ -42,20 +44,18 @@ export async function execute(
     timeoutSeconds = 30,
   }: GetContainerLogsArgs,
   registry: Registry
-): Promise<GetContainerLogsResult | { error: string }> {
+): Promise<GetContainerLogsResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
 
   if (!dockerService) {
-    chatService.errorLine(
-      `[getContainerLogs] ERROR DockerService not found, can't perform Docker operations without Docker connection details`,
+    throw new Error(
+      `[${name}] DockerService not found, can't perform Docker operations without Docker connection details`
     );
-    return {error: "DockerService not found, can't perform Docker operations without Docker connection details"};
   }
 
-  if (!name) {
-    chatService.errorLine("[getContainerLogs] name is required");
-    return {error: "name is required"};
+  if (!containerName) {
+    throw new Error(`[${name}] name is required`);
   }
 
   // Build Docker command with host and TLS settings
@@ -110,15 +110,15 @@ export async function execute(
     cmd += ` --details`;
   }
 
-  cmd += ` ${shellEscape(name)}`;
+  cmd += ` ${shellEscape(containerName)}`;
 
   chatService.infoLine(
-    `[getContainerLogs] Getting logs from container ${name}...`,
+    `[${name}] Getting logs from container ${containerName}...`
   );
-  chatService.infoLine(`[getContainerLogs] Executing: ${cmd}`);
+  chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
-    const {stdout, stderr, exitCode} = await execa(cmd, {
+    const { stdout, stderr, exitCode } = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 5 * 1024 * 1024,
@@ -128,20 +128,19 @@ export async function execute(
     const logLines = logs.split("\n");
 
     chatService.systemLine(
-      `[getContainerLogs] Successfully retrieved logs from container ${name}`,
+      `[${name}] Successfully retrieved logs from container ${containerName}`
     );
     return {
       ok: true,
       exitCode: exitCode,
       logs: logs,
       lineCount: logLines.length,
-      container: name,
+      container: containerName,
       stdout: stdout?.trim() || "",
       stderr: stderr?.trim() || "",
     };
   } catch (err: any) {
-    chatService.errorLine(`[getContainerLogs] Error: ${err.message}`);
-    return {error: err.shortMessage || err.message};
+    throw new Error(`[${name}] Error: ${err.message}`);
   }
 }
 
@@ -163,13 +162,13 @@ export const parameters = z.object({
     .string()
     .optional()
     .describe(
-      "Show logs since timestamp (e.g. 2013-01-02T13:23:37Z) or relative (e.g. 42m for 42 minutes)",
+      "Show logs since timestamp (e.g. 2013-01-02T13:23:37Z) or relative (e.g. 42m for 42 minutes)"
     ),
   until: z
     .string()
     .optional()
     .describe(
-      "Show logs before a timestamp (e.g. 2013-01-02T13:23:37Z) or relative (e.g. 42m for 42 minutes)",
+      "Show logs before a timestamp (e.g. 2013-01-02T13:23:37Z) or relative (e.g. 42m for 42 minutes)"
     ),
   tail: z
     .number()

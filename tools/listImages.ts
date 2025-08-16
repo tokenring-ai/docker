@@ -1,10 +1,10 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
+import { DockerCommandResult } from "../types.ts";
 
 type FormatType = "json" | "table" | string;
 
@@ -26,8 +26,10 @@ interface ListImagesResult extends DockerCommandResult {
  * List Docker images
  * @param args - List images parameters
  * @param registry - The package registry
- * @returns List of images or an error object
+ * @returns List of images
  */
+
+export const name = "docker/listImages";
 
 export async function execute(
   {
@@ -39,15 +41,14 @@ export async function execute(
     timeoutSeconds = 30,
   }: ListImagesArgs,
   registry: Registry,
-): Promise<ListImagesResult | { error: string }> {
+): Promise<ListImagesResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
   if (!dockerService) {
-    chatService.errorLine(
-      `[listImages] DockerService not found, can't perform Docker operations without Docker connection details`,
+    // Throw error instead of returning an object
+    throw new Error(
+      `[${name}] DockerService not found, can't perform Docker operations without Docker connection details`
     );
-    // Return a structured error object as required
-    return {error: "Couldn't perform Docker operation due to application misconfiguration, do not retry."};
   }
 
   // Build Docker command with host and TLS settings
@@ -104,17 +105,17 @@ export async function execute(
   if (format === "json") {
     cmd += ` --format '{{json .}}'`;
   } else if (format === "table") {
-    // Default table format
+    // Default table format – no extra flag needed
   } else {
     // Custom format
     cmd += ` --format ${shellEscape(format)}`;
   }
 
-  chatService.infoLine(`[listImages] Listing images...`);
-  chatService.infoLine(`[listImages] Executing: ${cmd}`);
+  chatService.infoLine(`[${name}] Listing images...`);
+  chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
-    const {stdout, stderr, exitCode} = await execa(cmd, {
+    const { stdout, stderr, exitCode } = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 1024 * 1024,
@@ -132,7 +133,7 @@ export async function execute(
           .map((line) => JSON.parse(line));
       } catch (e: any) {
         chatService.errorLine(
-          `[listImages] Error parsing JSON output: ${e.message}`,
+          `[${name}] Error parsing JSON output: ${e.message}`
         );
         images = stdout.trim();
       }
@@ -140,7 +141,7 @@ export async function execute(
       images = stdout.trim();
     }
 
-    chatService.systemLine(`[listImages] Successfully listed images`);
+    chatService.systemLine(`[${name}] Successfully listed images`);
     return {
       ok: true,
       exitCode: exitCode,
@@ -148,16 +149,15 @@ export async function execute(
       count: Array.isArray(images)
         ? images.length
         : stdout
-          .trim()
-          .split("\n")
-          .filter((line) => line.trim()).length,
+            .trim()
+            .split("\n")
+            .filter((line) => line.trim()).length,
       stdout: stdout?.trim() || "",
       stderr: stderr?.trim() || "",
     };
   } catch (err: any) {
-    chatService.errorLine(`[listImages] Error: ${err.message}`);
-    // Return a structured error object
-    return {error: err.message};
+    // Throw error instead of returning an object
+    throw new Error(`[${name}] Error: ${err.message}`);
   }
 }
 

@@ -1,10 +1,12 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
+import { DockerCommandResult } from "../types.ts";
+
+export const name = "docker/createNetwork";
 
 interface CreateNetworkArgs {
   name: string;
@@ -28,10 +30,9 @@ interface CreateNetworkResult extends DockerCommandResult {
  * @param registry - The package registry
  * @returns Result of the network creation
  */
-
 export async function execute(
   {
-    name,
+    name: networkName,
     driver = "bridge",
     options = {},
     internal = false,
@@ -41,20 +42,20 @@ export async function execute(
     timeoutSeconds = 30,
   }: CreateNetworkArgs,
   registry: Registry
-): Promise<CreateNetworkResult | { error: string }> {
+): Promise<CreateNetworkResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
   if (!dockerService) {
     const errMsg =
       "DockerService not found, can't perform Docker operations without Docker connection details";
-    chatService.errorLine(`[createNetwork] ${errMsg}`);
-    return {error: errMsg};
+    // Removed chatService.errorLine per specification
+    throw new Error(`[${name}] ${errMsg}`);
   }
 
-  if (!name) {
+  if (!networkName) {
     const errMsg = "name is required";
-    chatService.errorLine(`[createNetwork] ${errMsg}`);
-    return {error: errMsg};
+    // Removed chatService.errorLine per specification
+    throw new Error(`[${name}] ${errMsg}`);
   }
 
   // Build Docker command with host and TLS settings
@@ -118,13 +119,13 @@ export async function execute(
   }
 
   // Add network name
-  cmd += ` ${shellEscape(name)}`;
+  cmd += ` ${shellEscape(networkName)}`;
 
-  chatService.infoLine(`[createNetwork] Creating Docker network ${name}...`);
-  chatService.infoLine(`[createNetwork] Executing: ${cmd}`);
+  chatService.infoLine(`[${name}] Creating Docker network ${networkName}...`);
+  chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
-    const {stdout, stderr, exitCode} = await execa(cmd, {
+    const { stdout, stderr, exitCode } = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 1024 * 1024,
@@ -134,20 +135,20 @@ export async function execute(
     const networkId = stdout.trim();
 
     chatService.systemLine(
-      `[createNetwork] Successfully created Docker network ${name} (${networkId})`,
+      `[${name}] Successfully created Docker network ${networkName} (${networkId})`
     );
     return {
       ok: true,
       exitCode: exitCode,
       stdout: stdout?.trim() || "",
       stderr: stderr?.trim() || "",
-      name: name,
+      name: networkName,
       id: networkId,
     };
   } catch (err: any) {
     const errMsg = err.message || "Unknown error";
-    chatService.errorLine(`[createNetwork] Error: ${errMsg}`);
-    return {error: errMsg};
+    // Removed chatService.errorLine per specification
+    throw new Error(`[${name}] ${errMsg}`);
   }
 }
 

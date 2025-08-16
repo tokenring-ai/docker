@@ -1,22 +1,15 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
-
 
 /**
  * Remove one or more Docker containers
- * @param {object} args
- * @param {string|string[]} args.containers - Container ID(s) or name(s) to remove
- * @param {boolean} [args.force=false] - Whether to force the removal of a running container
- * @param {boolean} [args.volumes=false] - Whether to remove anonymous volumes associated with the container
- * @param {boolean} [args.link=false] - Whether to remove the specified link
- * @param {number} [args.timeoutSeconds=30] - Timeout in seconds
- * @param {TokenRingRegistry} registry - The package registry
- * @returns {Promise<object>} Result of the remove operation
  */
+
+export const name = "docker/removeContainer";
 
 export async function execute(
   {
@@ -25,30 +18,27 @@ export async function execute(
     volumes = false,
     link = false,
     timeoutSeconds = 30,
-  },
+  } : { containers: string | string[]; force?: boolean; volumes?: boolean; link?: boolean; timeoutSeconds?: number;},
   registry: Registry,
 ) {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
+
   if (!dockerService) {
-    chatService.errorLine(
-      `[ERROR] DockerService not found, can't perform Docker operations without Docker connection details`,
+    // Critical misconfiguration – throw error instead of returning a message
+    throw new Error(
+      `[${name}] DockerService not found, can't perform Docker operations without Docker connection details`,
     );
-    return "Couldn't perform Docker operation due to application misconfiguration, do not retry.";
   }
 
   if (!containers) {
-    chatService.errorLine("[removeContainer] containers is required");
-    return {error: "containers is required"};
+    throw new Error(`[${name}] containers is required`);
   }
 
   // Convert single container to array
   const containerList = Array.isArray(containers) ? containers : [containers];
   if (containerList.length === 0) {
-    chatService.errorLine(
-      "[removeContainer] at least one container must be specified",
-    );
-    return {error: "at least one container must be specified"};
+    throw new Error(`[${name}] at least one container must be specified`);
   }
 
   // Build Docker command with host and TLS settings
@@ -100,19 +90,19 @@ export async function execute(
   cmd += ` ${containerList.map((container) => shellEscape(container)).join(" ")}`;
 
   chatService.infoLine(
-    `[removeContainer] Removing container(s): ${containerList.join(", ")}...`,
+    `[${name}] Removing container(s): ${containerList.join(", ")}...`,
   );
-  chatService.infoLine(`[removeContainer] Executing: ${cmd}`);
+  chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
-    const {stdout, stderr, exitCode} = await execa(cmd, {
+    const { stdout, stderr, exitCode } = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 1024 * 1024,
     });
 
     chatService.systemLine(
-      `[removeContainer] Successfully removed container(s): ${containerList.join(", ")}`,
+      `[${name}] Successfully removed container(s): ${containerList.join(", ")}`,
     );
     return {
       ok: true,
@@ -121,15 +111,9 @@ export async function execute(
       stderr: stderr?.trim() || "",
       containers: containerList,
     };
-  } catch (err) {
-    chatService.errorLine(`[removeContainer] Error: ${err.message}`);
-    return {
-      ok: false,
-      exitCode: typeof err.code === "number" ? err.code : 1,
-      stdout: err.stdout?.trim() || "",
-      stderr: err.stderr?.trim() || "",
-      error: err.shortMessage || err.message,
-    };
+  } catch (err: any) {
+    // Throw error instead of returning an error object
+    throw new Error(`[${name}] ${err.message}`);
   }
 }
 
@@ -139,19 +123,8 @@ export const parameters = z.object({
   containers: z
     .union([z.string(), z.array(z.string())])
     .describe("Container ID(s) or name(s) to remove"),
-  force: z
-    .boolean()
-    .default(false)
-    .describe("Whether to force the removal of a running container"),
-  volumes: z
-    .boolean()
-    .default(false)
-    .describe(
-      "Whether to remove anonymous volumes associated with the container",
-    ),
-  link: z
-    .boolean()
-    .default(false)
-    .describe("Whether to remove the specified link"),
+  force: z.boolean().default(false).describe("Whether to force the removal of a running container"),
+  volumes: z.boolean().default(false).describe("Whether to remove anonymous volumes associated with the container"),
+  link: z.boolean().default(false).describe("Whether to remove the specified link"),
   timeoutSeconds: z.number().int().default(30).describe("Timeout in seconds"),
 });

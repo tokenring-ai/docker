@@ -1,9 +1,11 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
+
+export const name = "docker/tagImage";
 
 interface TagImageResult {
   ok: boolean;
@@ -20,31 +22,29 @@ interface TagImageResult {
  * @param {string} args.sourceImage - The source image to tag
  * @param {string} args.targetImage - The target image name and tag
  * @param {number} [args.timeoutSeconds=30] - Timeout in seconds
- * @param {TokenRingRegistry} registry - The package registry
- * @returns {Promise<object>} Result of the tag operation
+ * @param {Registry} registry - The package registry
+ * @returns {Promise<TagImageResult>} Result of the tag operation
  */
 export async function execute(
-  {sourceImage, targetImage, timeoutSeconds = 30}: {
+  {
+    sourceImage,
+    targetImage,
+    timeoutSeconds = 30,
+  }: {
     sourceImage: string;
     targetImage: string;
-    timeoutSeconds: number
+    timeoutSeconds: number;
   },
   registry: Registry,
-): Promise<TagImageResult | { error: string }> {
+): Promise<TagImageResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
   if (!dockerService) {
-    chatService.errorLine(
-      `[tagImage] DockerService not found, can't perform Docker operations without Docker connection details`,
-    );
-    return {error: "DockerService not found, can't perform Docker operations without Docker connection details"};
+    throw new Error(`[${name}] DockerService not found, can't perform Docker operations without Docker connection details`);
   }
 
   if (!sourceImage || !targetImage) {
-    chatService.errorLine(
-      "[tagImage] sourceImage and targetImage are required",
-    );
-    return {error: "sourceImage and targetImage are required"};
+    throw new Error(`[${name}] sourceImage and targetImage are required`);
   }
 
   // Construct the docker tag command with Docker context settings
@@ -79,17 +79,17 @@ export async function execute(
   const cmd = `timeout ${timeout}s ${dockerCmd} tag ${shellEscape(sourceImage)} ${shellEscape(targetImage)}`;
 
   chatService.infoLine(
-    `[tagImage] Tagging image ${sourceImage} as ${targetImage}...`,
+    `[${name}] Tagging image ${sourceImage} as ${targetImage}...`,
   );
-  chatService.infoLine(`[tagImage] Executing: ${cmd}`);
+  chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
-  const {stdout, stderr, exitCode} = await execa(cmd, {
+  const { stdout, stderr, exitCode } = await execa(cmd, {
     shell: true,
     timeout: timeout * 1000,
     maxBuffer: 1024 * 1024,
   });
   chatService.systemLine(
-    `[tagImage] Successfully tagged image ${sourceImage} as ${targetImage}`,
+    `[${name}] Successfully tagged image ${sourceImage} as ${targetImage}`,
   );
   return {
     ok: true,

@@ -1,10 +1,10 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
+import { DockerCommandResult } from "../types.ts";
 
 type FormatType = "json" | "table" | string;
 
@@ -30,7 +30,7 @@ interface ListContainersResult extends DockerCommandResult {
  * @returns List of containers
  */
 
-const TOOL_NAME = "listContainers";
+export const name = "docker/listContainers";
 
 export async function execute(
   {
@@ -43,14 +43,14 @@ export async function execute(
     timeoutSeconds = 30,
   }: ListContainersArgs,
   registry: Registry
-): Promise<ListContainersResult | string> {
+): Promise<ListContainersResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
   if (!dockerService) {
-    chatService.errorLine(
-      `[${TOOL_NAME}] DockerService not found, can't perform Docker operations without Docker connection details`,
+    // Throw error instead of returning an error object
+    throw new Error(
+      `[${name}] DockerService not found, can't perform Docker operations without Docker connection details`
     );
-    return {error: "DockerService not found, cannot perform Docker operations"};
   }
 
   // Build Docker command with host and TLS settings
@@ -118,11 +118,11 @@ export async function execute(
     cmd += ` --format ${shellEscape(format)}`;
   }
 
-  chatService.infoLine(`[${TOOL_NAME}] Listing containers...`);
-  chatService.infoLine(`[${TOOL_NAME}] Executing: ${cmd}`);
+  chatService.infoLine(`[${name}] Listing containers...`);
+  chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
-    const {stdout, stderr, exitCode} = await execa(cmd, {
+    const { stdout, stderr, exitCode } = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 1024 * 1024,
@@ -139,16 +139,14 @@ export async function execute(
           .filter((line) => line.trim())
           .map((line) => JSON.parse(line));
       } catch (e: any) {
-        chatService.errorLine(
-          `[${TOOL_NAME}] Error parsing JSON output: ${e.message}`,
-        );
-        containers = stdout.trim();
+        // Throw parsing error instead of returning error object
+        throw new Error(`[${name}] Error parsing JSON output: ${e.message}`);
       }
     } else {
       containers = stdout.trim();
     }
 
-    chatService.systemLine(`[${TOOL_NAME}] Successfully listed containers`);
+    chatService.systemLine(`[${name}] Successfully listed containers`);
     return {
       ok: true,
       exitCode: exitCode,
@@ -156,15 +154,15 @@ export async function execute(
       count: Array.isArray(containers)
         ? containers.length
         : stdout
-          .trim()
-          .split("\n")
-          .filter((line) => line.trim()).length,
+            .trim()
+            .split("\n")
+            .filter((line) => line.trim()).length,
       stdout: stdout?.trim() || "",
       stderr: stderr?.trim() || "",
     };
   } catch (err: any) {
-    chatService.errorLine(`[${TOOL_NAME}] Error: ${err.message}`);
-    return {error: err.message};
+    // Throw error instead of returning error object
+    throw new Error(`[${name}] Error: ${err.message}`);
   }
 }
 

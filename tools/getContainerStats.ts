@@ -1,10 +1,10 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
+import { DockerCommandResult } from "../types.ts";
 
 type FormatType = "json" | "table" | string;
 
@@ -28,6 +28,8 @@ interface GetContainerStatsResult extends DockerCommandResult {
  * @returns Container stats
  */
 
+export const name = "docker/getContainerStats";
+
 export async function execute(
   {
     containers,
@@ -37,28 +39,21 @@ export async function execute(
     timeoutSeconds = 10,
   }: GetContainerStatsArgs,
   registry: Registry
-): Promise<GetContainerStatsResult | { error: string }> {
+): Promise<GetContainerStatsResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
   if (!dockerService) {
-    chatService.errorLine(
-      `[getContainerStats] DockerService not found, can't perform Docker operations without Docker connection details`
-    );
-    return {error: "DockerService not found, cannot perform Docker operations"};
+    throw new Error(`[${name}] DockerService not found, can't perform Docker operations without Docker connection details`);
   }
 
   if (!containers) {
-    chatService.errorLine(`[getContainerStats] containers is required`);
-    return {error: "containers is required"};
+    throw new Error(`[${name}] containers is required`);
   }
 
   // Convert single container to array
   const containerList = Array.isArray(containers) ? containers : [containers];
   if (containerList.length === 0) {
-    chatService.errorLine(
-      `[getContainerStats] at least one container must be specified`
-    );
-    return {error: "at least one container must be specified"};
+    throw new Error(`[${name}] at least one container must be specified`);
   }
 
   // Build Docker command with host and TLS settings
@@ -115,12 +110,12 @@ export async function execute(
   cmd += ` ${containerList.map((container) => shellEscape(container)).join(" ")}`;
 
   chatService.infoLine(
-    `[getContainerStats] Getting stats for container(s): ${containerList.join(", ")}...`
+    `[${name}] Getting stats for container(s): ${containerList.join(", ")}...`
   );
-  chatService.infoLine(`[getContainerStats] Executing: ${cmd}`);
+  chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
-    const {stdout, stderr, exitCode} = await execa(cmd, {
+    const { stdout, stderr, exitCode } = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 1024 * 1024,
@@ -137,17 +132,14 @@ export async function execute(
           .filter((line) => line.trim())
           .map((line) => JSON.parse(line));
       } catch (e: any) {
-        chatService.errorLine(
-          `[getContainerStats] Error parsing JSON output: ${e.message}`
-        );
-        stats = stdout.trim();
+        throw new Error(`[${name}] Error parsing JSON output: ${e.message}`);
       }
     } else {
       stats = stdout.trim();
     }
 
     chatService.systemLine(
-      `[getContainerStats] Successfully retrieved stats for container(s): ${containerList.join(", ")}`
+      `[${name}] Successfully retrieved stats for container(s): ${containerList.join(", ")}`
     );
     return {
       ok: true,
@@ -158,8 +150,7 @@ export async function execute(
       stderr: stderr?.trim() || "",
     };
   } catch (err: any) {
-    chatService.errorLine(`[getContainerStats] Error: ${err.message}`);
-    return {error: err.message};
+    throw new Error(`[${name}] Error: ${err.message}`);
   }
 }
 

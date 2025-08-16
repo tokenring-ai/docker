@@ -1,10 +1,14 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
 
+/**
+ * Exported tool name in the format "packageName/toolName".
+ */
+export const name = "docker/removeImage";
 
 interface RemoveImageResult {
   ok: boolean;
@@ -17,35 +21,36 @@ interface RemoveImageResult {
 /**
  * Remove one or more Docker images
  */
-
 export async function execute(
-  {images, force = false, noPrune = false, timeoutSeconds = 30}: {
+  {
+    images,
+    force = false,
+    noPrune = false,
+    timeoutSeconds = 30,
+  }: {
     images: string[];
     force: boolean;
-    noPrune: false;
-    timeoutSeconds: number
+    noPrune: boolean;
+    timeoutSeconds: number;
   },
   registry: Registry,
-): Promise<RemoveImageResult | { error: string }> {
+): Promise<RemoveImageResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
+
   if (!dockerService) {
-    chatService.errorLine(
-      `[removeImage] DockerService not found, can't perform Docker operations without Docker connection details`,
-    );
-    return {error: "DockerService not found, cannot perform Docker operations"};
+    // Throw error instead of returning an error object
+    throw new Error(`[${name}] DockerService not found, can't perform Docker operations without Docker connection details`);
   }
 
   if (!images) {
-    chatService.errorLine("[removeImage] images is required");
-    return {error: "images is required"};
+    throw new Error(`[${name}] images is required`);
   }
 
-  // Convert single image to array
+  // Convert single image to array (images is already an array per type, but keep for safety)
   const imageList = Array.isArray(images) ? images : [images];
   if (imageList.length === 0) {
-    chatService.errorLine("[removeImage] at least one image must be specified");
-    return {error: "at least one image must be specified"};
+    throw new Error(`[${name}] at least one image must be specified`);
   }
 
   // Build Docker command with host and TLS settings
@@ -91,24 +96,25 @@ export async function execute(
   // Add images
   cmd += ` ${imageList.map((image) => shellEscape(image)).join(" ")}`;
 
+  // Informational messages using the standardized prefix
   chatService.infoLine(
-    `[removeImage] Removing image(s): ${imageList.join(", ")}...`,
+    `[${name}] Removing image(s): ${imageList.join(", ")}...`,
   );
-  chatService.infoLine(`[removeImage] Executing: ${cmd}`);
+  chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
-
-  const {stdout, stderr, exitCode} = await execa(cmd, {
+  const { stdout, stderr, exitCode } = await execa(cmd, {
     shell: true,
     timeout: timeout * 1000,
     maxBuffer: 1024 * 1024,
   });
 
   chatService.systemLine(
-    `[removeImage] Successfully removed image(s): ${imageList.join(", ")}`,
+    `[${name}] Successfully removed image(s): ${imageList.join(", ")}`,
   );
+
   return {
     ok: true,
-    exitCode: exitCode,
+    exitCode,
     stdout: stdout?.trim() || "",
     stderr: stderr?.trim() || "",
     images: imageList,
@@ -119,23 +125,9 @@ export const description = "Remove one or more Docker images";
 
 export const parameters = z
   .object({
-    images: z.array(z.string())
-      .describe("Image ID(s) or name(s) to remove"),
-    force: z
-      .boolean()
-      .optional()
-      .default(false)
-      .describe("Whether to force removal of the image"),
-    noPrune: z
-      .boolean()
-      .optional()
-      .default(false)
-      .describe("Whether to prevent the pruning of parent images"),
-    timeoutSeconds: z
-      .number()
-      .int()
-      .optional()
-      .default(30)
-      .describe("Timeout in seconds"),
+    images: z.array(z.string()).describe("Image ID(s) or name(s) to remove"),
+    force: z.boolean().optional().default(false).describe("Whether to force removal of the image"),
+    noPrune: z.boolean().optional().default(false).describe("Whether to prevent the pruning of parent images"),
+    timeoutSeconds: z.number().int().optional().default(30).describe("Timeout in seconds"),
   })
   .strict();

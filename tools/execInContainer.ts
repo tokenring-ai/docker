@@ -6,6 +6,8 @@ import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import {DockerCommandResult} from "../types.ts";
 
+export const name = "docker/execInContainer";
+
 interface ExecInContainerArgs {
   container: string;
   command: string | string[];
@@ -43,30 +45,22 @@ export async function execute(
     timeoutSeconds = 30,
   }: ExecInContainerArgs,
   registry: Registry
-): Promise<ExecInContainerResult | { error: string }> {
+): Promise<ExecInContainerResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
   if (!dockerService) {
-    // Informational message with tool name prefix
-    chatService.errorLine(
-      `[execInContainer] DockerService not found, can't perform Docker operations without Docker connection details`,
-    );
-    // Return error object as per specification
-    return {error: "DockerService not found, cannot perform Docker operations"};
+    // Throw error instead of returning or printing
+    throw new Error(`[${name}] DockerService not found, cannot perform Docker operations`);
   }
 
   if (!container || !command) {
-    chatService.errorLine(
-      "[execInContainer] container and command are required",
-    );
-    return {error: "container and command are required"};
+    throw new Error(`[${name}] container and command are required`);
   }
 
   // Convert command to array if it's a string
   const commandList = Array.isArray(command) ? command : [command];
   if (commandList.length === 0) {
-    chatService.errorLine("[execInContainer] command cannot be empty");
-    return {error: "command cannot be empty"};
+    throw new Error(`[${name}] command cannot be empty`);
   }
 
   // Build Docker command with host and TLS settings
@@ -135,6 +129,7 @@ export async function execute(
   // Add command
   cmd += ` ${commandList.map((arg) => shellEscape(arg)).join(" ")}`;
 
+  // Informational messages prefixed with tool name
   chatService.infoLine(
     `[execInContainer] Executing command in container ${container}...`,
   );
@@ -159,14 +154,8 @@ export async function execute(
       command: commandList.join(" "),
     };
   } catch (err: any) {
-    chatService.errorLine(`[execInContainer] Error: ${err.message}`);
-    return {
-      ok: false,
-      exitCode: typeof err.code === "number" ? err.code : 1,
-      stdout: err.stdout?.trim() || "",
-      stderr: err.stderr?.trim() || "",
-      error: err.shortMessage || err.message,
-    };
+    // Throw error instead of returning error object
+    throw new Error(`[${name}] ${err.message}`);
   }
 }
 

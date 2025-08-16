@@ -1,10 +1,12 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
 
+// Export tool name for consistent messaging
+export const name = "docker/startContainer";
 
 interface StartContainerResult {
   ok: boolean;
@@ -18,36 +20,34 @@ interface StartContainerResult {
  * Start one or more Docker containers
  */
 export async function execute(
-  {containers, attach = false, interactive = false, timeoutSeconds = 30}: {
+  {
+    containers,
+    attach = false,
+    interactive = false,
+    timeoutSeconds = 30,
+  }: {
     containers: string[];
     attach: boolean;
     interactive: boolean;
-    timeoutSeconds: number
+    timeoutSeconds: number;
   },
   registry: Registry,
-): Promise<StartContainerResult | { error: string }> {
+): Promise<StartContainerResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
   if (!dockerService) {
-    // Informational error message prefixed with tool name
-    chatService.errorLine(
-      `[startContainer] DockerService not found, can't perform Docker operations without Docker connection details`,
-    );
-    return {error: "DockerService not found, can't perform Docker operations without Docker connection details"};
+    // Throw error with tool name prefix
+    throw new Error(`[${name}] DockerService not found, can't perform Docker operations without Docker connection details`);
   }
 
   if (!containers) {
-    chatService.errorLine("[startContainer] containers is required");
-    return {error: "containers is required"};
+    throw new Error(`[${name}] containers is required`);
   }
 
-  // Convert single container to array
+  // Convert single container to array (maintained for backward compatibility)
   const containerList = Array.isArray(containers) ? containers : [containers];
   if (containerList.length === 0) {
-    chatService.errorLine(
-      "[startContainer] at least one container must be specified",
-    );
-    return {error: "at least one container must be specified"};
+    throw new Error(`[${name}] at least one container must be specified`);
   }
 
   // Build Docker command with host and TLS settings
@@ -94,18 +94,18 @@ export async function execute(
   cmd += ` ${containerList.map((container) => shellEscape(container)).join(" ")}`;
 
   chatService.infoLine(
-    `[startContainer] Starting container(s): ${containerList.join(", ")}...`,
+    `[${name}] Starting container(s): ${containerList.join(", ")}...`,
   );
-  chatService.infoLine(`[startContainer] Executing: ${cmd}`);
+  chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
-  const {stdout, stderr, exitCode} = await execa(cmd, {
+  const { stdout, stderr, exitCode } = await execa(cmd, {
     shell: true,
     timeout: timeout * 1000,
     maxBuffer: 1024 * 1024,
   });
 
   chatService.systemLine(
-    `[startContainer] Successfully started container(s): ${containerList.join(", ")}`,
+    `[${name}] Successfully started container(s): ${containerList.join(", ")}`,
   );
   return {
     ok: true,
@@ -114,7 +114,6 @@ export async function execute(
     stderr: stderr?.trim() || "",
     containers: containerList,
   };
-
 }
 
 export const description = "Start one or more Docker containers";

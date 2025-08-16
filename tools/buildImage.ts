@@ -1,10 +1,12 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
+import { DockerCommandResult } from "../types.ts";
+
+export const name = "docker/buildImage";
 
 interface BuildImageArgs {
   context: string;
@@ -26,7 +28,6 @@ interface BuildResult extends DockerCommandResult {
  * @param registry - The package registry
  * @returns Result of the build operation
  */
-
 export async function execute(
   {
     context,
@@ -38,19 +39,17 @@ export async function execute(
     timeoutSeconds = 300,
   }: BuildImageArgs,
   registry: Registry
-): Promise<BuildResult | { error: string }> {
+): Promise<BuildResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
   if (!dockerService) {
-    chatService.errorLine(
-      `[buildImage] DockerService not found, can't perform Docker operations without Docker connection details`,
-    );
-    return {error: "DockerService not found, can't perform Docker operations without Docker connection details"};
+    const msg = `${name} DockerService not found, can't perform Docker operations without Docker connection details`;
+    throw new Error(`[${name}] ${msg}`);
   }
 
   if (!context || !tag) {
-    chatService.errorLine("[buildImage] context and tag are required");
-    return {error: "context and tag are required"};
+    const msg = "context and tag are required";
+    throw new Error(`[${name}] ${msg}`);
   }
 
   // Build Docker command with host and TLS settings
@@ -109,16 +108,16 @@ export async function execute(
   // Add context
   cmd += ` ${shellEscape(context)}`;
 
-  chatService.infoLine(`[buildImage] Building image ${tag}...`);
-  chatService.infoLine(`[buildImage] Executing: ${cmd}`);
+  chatService.infoLine(`[${name}] Building image ${tag}...`);
+  chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
-    const {stdout, stderr, exitCode} = await execa(cmd, {
+    const { stdout, stderr, exitCode } = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 5 * 1024 * 1024,
     });
-    chatService.systemLine(`[buildImage] Successfully built image ${tag}`);
+    chatService.systemLine(`[${name}] Successfully built image ${tag}`);
     return {
       ok: true,
       exitCode: exitCode,
@@ -127,8 +126,8 @@ export async function execute(
       tag: tag,
     };
   } catch (err: any) {
-    chatService.errorLine(`[buildImage] Error: ${err.message}`);
-    return {error: err.shortMessage || err.message};
+    const message = err.shortMessage || err.message;
+    throw new Error(`[${name}] ${message}`);
   }
 }
 

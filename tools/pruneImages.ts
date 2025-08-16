@@ -1,6 +1,5 @@
 import ChatService from "@token-ring/chat/ChatService";
 
-
 /**
  * Prune unused Docker images
  * @param {object} args
@@ -10,11 +9,13 @@ import ChatService from "@token-ring/chat/ChatService";
  * @param {TokenRingRegistry} registry - The package registry
  * @returns {Promise<object>} Result of the prune operation
  */
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
+
+export const name = "docker/pruneImages";
 
 interface PruneImagesResult {
   ok: boolean;
@@ -25,16 +26,14 @@ interface PruneImagesResult {
 }
 
 export async function execute(
-  {all = false, filter, timeoutSeconds = 60}: { all?: boolean; filter?: string; timeoutSeconds?: number },
+  { all = false, filter, timeoutSeconds = 60 }: { all?: boolean; filter?: string; timeoutSeconds?: number },
   registry: Registry,
-): Promise<PruneImagesResult | { error: string }> {
+): Promise<PruneImagesResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
   if (!dockerService) {
-    chatService.errorLine(
-      `[pruneImages] Error: DockerService not found, can't perform Docker operations without Docker connection details`,
-    );
-    return {error: "DockerService not configured"};
+    // Throw an error instead of returning an error object
+    throw new Error(`[${name}] DockerService not configured`);
   }
 
   // Build Docker command with host and TLS settings
@@ -77,10 +76,10 @@ export async function execute(
     cmd += ` --filter ${shellEscape(filter)}`;
   }
 
-  chatService.infoLine(`[pruneImages] Pruning unused Docker images...`);
-  chatService.infoLine(`[pruneImages] Executing: ${cmd}`);
+  chatService.infoLine(`[${name}] Pruning unused Docker images...`);
+  chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
-  const {stdout, stderr, exitCode} = await execa(cmd, {
+  const { stdout, stderr, exitCode } = await execa(cmd, {
     shell: true,
     timeout: timeout * 1000,
     maxBuffer: 1024 * 1024,
@@ -94,7 +93,7 @@ export async function execute(
   }
 
   chatService.systemLine(
-    `[pruneImages] Successfully pruned unused Docker images. Space reclaimed: ${spaceReclaimed}`,
+    `[${name}] Successfully pruned unused Docker images. Space reclaimed: ${spaceReclaimed}`,
   );
   return {
     ok: true,
@@ -112,13 +111,7 @@ export const parameters = z.object({
     .boolean()
     .default(false)
     .describe("Whether to remove all unused images, not just dangling ones"),
-  filter: z
-    .string()
-    .optional()
-    .describe("Filter images based on conditions provided"),
-  force: z
-    .boolean()
-    .default(false)
-    .describe("Whether to force removal of images"),
+  filter: z.string().optional().describe("Filter images based on conditions provided"),
+  force: z.boolean().default(false).describe("Whether to force removal of images"),
   timeoutSeconds: z.number().int().default(60).describe("Timeout in seconds"),
 });

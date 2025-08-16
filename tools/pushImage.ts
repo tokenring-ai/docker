@@ -1,8 +1,8 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
 
 /**
@@ -15,8 +15,10 @@ import DockerService from "../DockerService.ts";
  * @returns {Promise<object>} Result of the push operation
  */
 
+export const name = "docker/pushImage";
+
 interface PushImageResult {
-  ok: boolean
+  ok: boolean;
   exitCode: number;
   stdout: string;
   stderr: string;
@@ -24,21 +26,18 @@ interface PushImageResult {
 }
 
 export async function execute(
-  {tag, allTags = false, timeoutSeconds = 300}: { tag: string; allTags: boolean; timeoutSeconds: number },
+  { tag, allTags = false, timeoutSeconds = 300 }: { tag: string; allTags: boolean; timeoutSeconds: number },
   registry: Registry,
-): Promise<PushImageResult | { error: string }> {
+): Promise<PushImageResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
+
   if (!dockerService) {
-    chatService.errorLine(
-      `[pushImage] DockerService not found, can't perform Docker operations without Docker connection details`,
-    );
-    return {error: "DockerService not found, can't perform Docker operations without Docker connection details"};
+    throw new Error(`[${name}] DockerService not found, can't perform Docker operations without Docker connection details`);
   }
 
   if (!tag) {
-    chatService.errorLine("[pushImage] tag is required");
-    return {error: "tag is required"};
+    throw new Error(`[${name}] tag is required`);
   }
 
   // Build Docker command with host and TLS settings
@@ -82,11 +81,12 @@ export async function execute(
   chatService.infoLine(`[pushImage] Pushing image ${tag}...`);
   chatService.infoLine(`[pushImage] Executing: ${cmd}`);
 
-  const {stdout, stderr, exitCode} = await execa(cmd, {
+  const { stdout, stderr, exitCode } = await execa(cmd, {
     shell: true,
     timeout: timeout * 1000,
     maxBuffer: 5 * 1024 * 1024,
   });
+
   chatService.systemLine(`[pushImage] Successfully pushed image ${tag}`);
   return {
     ok: true,

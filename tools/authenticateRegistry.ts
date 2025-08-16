@@ -1,10 +1,12 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
+import { DockerCommandResult } from "../types.ts";
+
+export const name = "docker/authenticateRegistry";
 
 interface AuthenticateRegistryArgs {
   server: string;
@@ -26,7 +28,6 @@ interface AuthResult extends DockerCommandResult {
  * @param registry - The package registry
  * @returns Result of the login operation
  */
-
 export async function execute(
   {
     server,
@@ -37,22 +38,27 @@ export async function execute(
     timeoutSeconds = 30,
   }: AuthenticateRegistryArgs,
   registry: Registry
-): Promise<AuthResult | { error: string }> {
+): Promise<AuthResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
+
   if (!dockerService) {
     // Informational message follows the required format
     chatService.errorLine(
-      `[authenticateRegistry] DockerService not found, can't perform Docker operations without Docker connection details`
+      `[${name}] DockerService not found, can't perform Docker operations without Docker connection details`
     );
-    return {error: "DockerService not found, cannot perform Docker operations"};
+    throw new Error(
+      `[${name}] DockerService not found, cannot perform Docker operations`
+    );
   }
 
   if (!server || !username || (!password && !passwordStdin)) {
     chatService.errorLine(
-      `[authenticateRegistry] server, username, and password are required`
+      `[${name}] server, username, and password are required`
     );
-    return {error: "server, username, and password are required"};
+    throw new Error(
+      `[${name}] server, username, and password are required`
+    );
   }
 
   // Build Docker command with host and TLS settings
@@ -102,14 +108,14 @@ export async function execute(
   }
 
   chatService.infoLine(
-    `[authenticateRegistry] Authenticating to registry ${server}...`
+    `[${name}] Authenticating to registry ${server}...`
   );
   // Don't log the full command as it may contain sensitive information
   chatService.infoLine(
-    `[authenticateRegistry] Executing: ${dockerCmd} login ${server} -u ${username} [password hidden]`
+    `[${name}] Executing: ${dockerCmd} login ${server} -u ${username} [password hidden]`
   );
 
-  const execOptions: { maxBuffer: number; input?: string } = {maxBuffer: 1024 * 1024};
+  const execOptions: { maxBuffer: number; input?: string } = { maxBuffer: 1024 * 1024 };
 
   // If using passwordStdin, we need to provide the password via stdin
   if (passwordStdin) {
@@ -117,13 +123,13 @@ export async function execute(
   }
 
   try {
-    const {stdout, stderr, exitCode} = await execa(cmd, {
+    const { stdout, stderr, exitCode } = await execa(cmd, {
       shell: true,
       ...execOptions,
       timeout: timeout * 1000,
     });
     chatService.systemLine(
-      `[authenticateRegistry] Successfully authenticated to registry ${server}`
+      `[${name}] Successfully authenticated to registry ${server}`
     );
     return {
       ok: true,
@@ -135,8 +141,8 @@ export async function execute(
     };
   } catch (err: any) {
     // Error message follows the required format
-    chatService.errorLine(`[authenticateRegistry] Error: ${err.message}`);
-    return {error: err.shortMessage || err.message};
+    chatService.errorLine(`[${name}] Error: ${err.message}`);
+    throw new Error(`[${name}] ${err.shortMessage || err.message}`);
   }
 }
 

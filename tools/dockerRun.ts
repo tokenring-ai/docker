@@ -5,6 +5,8 @@ import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import type {DockerCommandResult} from "../types.ts";
 
+export const name = "docker/dockerRun";
+
 interface DockerRunArgs {
   image?: string;
   cmd?: string;
@@ -29,8 +31,7 @@ export async function execute(
   const dockerService = registry.requireFirstServiceByType(DockerService);
 
   if (!image || !cmd) {
-    chatService.errorLine("[dockerRun] image and cmd required");
-    return {error: "image and cmd required"};
+    throw new Error(`[${name}] image and cmd required`);
   }
 
   // Build Docker command arguments
@@ -87,7 +88,7 @@ export async function execute(
   // Create the final command with timeout
   const finalCommand: string[] = ["timeout", `${timeout}s`, "docker", ...dockerArgs];
 
-  chatService.infoLine("[dockerRun] Executing: " + finalCommand.join(" "));
+  chatService.infoLine(`[${name}] Executing: ${finalCommand.join(" ")}`);
 
   try {
     const result = await filesystem.executeCommand(finalCommand, {
@@ -104,13 +105,7 @@ export async function execute(
         : `Command failed with exit code ${result.exitCode}`,
     };
   } catch (err: any) {
-    return {
-      ok: false,
-      exitCode: 1,
-      stdout: "",
-      stderr: "",
-      error: err.message,
-    };
+    throw new Error(`[${name}] ${err.message}`);
   }
 }
 

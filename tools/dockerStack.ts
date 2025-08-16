@@ -22,22 +22,21 @@ interface DockerStackArgs {
  * @returns Result of the shell command
  */
 
+export const name = "docker/dockerStack";
+
 export async function execute(
   {action, stackName, composeFile, timeoutSeconds = 60}: DockerStackArgs,
   registry: Registry
-): Promise<DockerCommandResult | string> {
+): Promise<DockerCommandResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
+
   if (!dockerService) {
-    chatService.errorLine(
-      `[dockerStack] DockerService not found, can't perform Docker operations without Docker connection details`,
-    );
-    return {error: "Couldn't perform Docker operation due to application misconfiguration, do not retry."};
+    throw new Error(`[${name}] DockerService not found, can't perform Docker operations without Docker connection details`);
   }
 
   if (!action || !stackName) {
-    chatService.errorLine("[dockerStack] action and stackName are required");
-    return {error: "action and stackName are required"};
+    throw new Error(`[${name}] action and stackName are required`);
   }
 
   // Build Docker command with host and TLS settings
@@ -72,8 +71,7 @@ export async function execute(
   switch (action) {
     case "deploy":
       if (!composeFile) {
-        chatService.errorLine("[dockerStack] composeFile required for deploy");
-        return {error: "composeFile required for deploy"};
+        throw new Error(`[${name}] composeFile required for deploy`);
       }
       cmd = `timeout ${timeout}s ${dockerCmd} stack deploy -c ${shellEscape(composeFile)} ${shellEscape(stackName)}`;
       break;
@@ -84,11 +82,10 @@ export async function execute(
       cmd = `timeout ${timeout}s ${dockerCmd} stack ps ${shellEscape(stackName)}`;
       break;
     default:
-      chatService.errorLine(`[dockerStack] Unknown action: ${action}`);
-      return {error: `Unknown action: ${action}`};
+      throw new Error(`[${name}] Unknown action: ${action}`);
   }
 
-  chatService.infoLine("[dockerStack] Executing: " + cmd);
+  chatService.infoLine(`[dockerStack] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -107,14 +104,8 @@ export async function execute(
       error: undefined,
     };
   } catch (err: any) {
-    chatService.errorLine(`[dockerStack] Error: ${err.message}`);
-    return {
-      ok: false,
-      exitCode: typeof err.exitCode === "number" ? err.exitCode : 1,
-      stdout: err.stdout?.trim() || "",
-      stderr: err.stderr?.trim() || "",
-      error: err.shortMessage || err.message,
-    };
+    // Propagate as an error with contextual information
+    throw new Error(`[${name}] ${err.message}`);
   }
 }
 

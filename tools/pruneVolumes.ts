@@ -1,10 +1,12 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import { Registry } from "@token-ring/registry";
+import { shellEscape } from "@token-ring/utility/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
 
+// Export the tool name in the required format
+export const name = "docker/pruneVolumes";
 
 interface PruneVolumesResult {
   ok: boolean;
@@ -18,17 +20,23 @@ interface PruneVolumesResult {
 /**
  * Prune unused Docker volumes
  */
-export async function execute({filter, timeoutSeconds = 60}: {
-  filter: string;
-  timeoutSeconds: number
-}, registry: Registry): Promise<PruneVolumesResult | { error: string }> {
+export async function execute(
+  {
+    filter,
+    timeoutSeconds = 60,
+  }: {
+    filter: string;
+    timeoutSeconds: number;
+  },
+  registry: Registry,
+): Promise<PruneVolumesResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const dockerService = registry.requireFirstServiceByType(DockerService);
   if (!dockerService) {
-    chatService.errorLine(
-      `[pruneVolumes] DockerService not found, can't perform Docker operations without Docker connection details`,
+    // Throw an error instead of returning an error object
+    throw new Error(
+      `[${name}] DockerService not found, can't perform Docker operations without Docker connection details`,
     );
-    return {error: "DockerService not found, cannot perform Docker operations."};
   }
 
   // Build Docker command with host and TLS settings
@@ -66,11 +74,10 @@ export async function execute({filter, timeoutSeconds = 60}: {
     cmd += ` --filter ${shellEscape(filter)}`;
   }
 
-  chatService.infoLine(`[pruneVolumes] Pruning unused Docker volumes...`);
-  chatService.infoLine(`[pruneVolumes] Executing: ${cmd}`);
+  chatService.infoLine(`[${name}] Pruning unused Docker volumes...`);
+  chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
-
-  const {stdout, stderr, exitCode} = await execa(cmd, {
+  const { stdout, stderr, exitCode } = await execa(cmd, {
     shell: true,
     timeout: timeout * 1000,
     maxBuffer: 1024 * 1024,
@@ -94,7 +101,7 @@ export async function execute({filter, timeoutSeconds = 60}: {
   }
 
   chatService.systemLine(
-    `[pruneVolumes] Successfully pruned unused Docker volumes. Space reclaimed: ${spaceReclaimed}`,
+    `[${name}] Successfully pruned unused Docker volumes. Space reclaimed: ${spaceReclaimed}`,
   );
   return {
     ok: true,
