@@ -1,14 +1,5 @@
 import ChatService from "@token-ring/chat/ChatService";
 
-/**
- * Prune unused Docker images
- * @param {object} args
- * @param {boolean} [args.all=false] - Whether to remove all unused images, not just dangling ones
- * @param {string} [args.filter] - Filter images based on conditions provided
- * @param {number} [args.timeoutSeconds=60] - Timeout in seconds
- * @param {TokenRingRegistry} registry - The package registry
- * @returns {Promise<object>} Result of the prune operation
- */
 import { Registry } from "@token-ring/registry";
 import { shellEscape } from "@token-ring/utility/shellEscape";
 import { execa } from "execa";
@@ -25,6 +16,9 @@ interface PruneImagesResult {
   spaceReclaimed: string;
 }
 
+/**
+ * Prune unused Docker images
+ */
 export async function execute(
   { all = false, filter, timeoutSeconds = 60 }: { all?: boolean; filter?: string; timeoutSeconds?: number },
   registry: Registry,

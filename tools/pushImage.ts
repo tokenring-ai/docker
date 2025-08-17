@@ -5,16 +5,6 @@ import { execa } from "execa";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
 
-/**
- * Push a Docker image to a registry
- * @param {object} args
- * @param {string} args.tag - The image tag to push
- * @param {boolean} [args.allTags=false] - Whether to push all tags of the image
- * @param {number} [args.timeoutSeconds=300] - Timeout in seconds
- * @param {TokenRingRegistry} registry - The package registry
- * @returns {Promise<object>} Result of the push operation
- */
-
 export const name = "docker/pushImage";
 
 interface PushImageResult {
@@ -25,6 +15,9 @@ interface PushImageResult {
   tag: string;
 }
 
+/**
+ * Push a Docker image to a registry
+ */
 export async function execute(
   { tag, allTags = false, timeoutSeconds = 300 }: { tag: string; allTags: boolean; timeoutSeconds: number },
   registry: Registry,

@@ -3,13 +3,6 @@
  */
 
 /**
- * Interface for the TokenRing Registry
- */
-export interface TokenRingRegistry {
-  requireFirstServiceByType: <T>(serviceType: any) => T;
-}
-
-/**
  * TLS configuration for Docker
  */
 export interface TLSConfig {

@@ -10,7 +10,6 @@ export const name = "docker/dockerRun";
 interface DockerRunArgs {
   image?: string;
   cmd?: string;
-  env?: Record<string, string>;
   workdir?: string;
   timeoutSeconds?: number;
   mountSrc?: string;
@@ -23,7 +22,7 @@ interface DockerRunArgs {
  * @returns Result of the docker run operation
  */
 export async function execute(
-  {image, cmd, env = {}, workdir, timeoutSeconds = 60, mountSrc}: DockerRunArgs,
+  {image, cmd, workdir, timeoutSeconds = 60, mountSrc}: DockerRunArgs,
   registry: Registry
 ): Promise<DockerCommandResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
@@ -59,11 +58,6 @@ export async function execute(
       dockerArgs.unshift(`--tlskey=${tlsConfig.tlsKey}`);
     }
   }
-
-  // Add environment variables
-  Object.entries(env).forEach(([k, v]) => {
-    dockerArgs.push("-e", `${k}=${v}`);
-  });
 
   // Add working directory
   if (workdir) {
@@ -115,10 +109,6 @@ export const description =
 export const parameters = z.object({
   image: z.string().describe("Docker image name (e.g., ubuntu:latest)"),
   cmd: z.string().describe("Command to run in the container (e.g., 'ls -l /')"),
-  env: z
-    .record(z.string())
-    .optional()
-    .describe("Environment variables to pass (optional)"),
   workdir: z
     .string()
     .optional()
