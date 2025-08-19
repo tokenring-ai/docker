@@ -1,8 +1,8 @@
 import ChatService from "@token-ring/chat/ChatService";
-import { Registry } from "@token-ring/registry";
-import { shellEscape } from "@token-ring/utility/shellEscape";
-import { execa } from "execa";
-import { z } from "zod";
+import {Registry} from "@token-ring/registry";
+import {shellEscape} from "@token-ring/utility/shellEscape";
+import {execa} from "execa";
+import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
 /**
@@ -18,7 +18,7 @@ export async function execute(
     volumes = false,
     link = false,
     timeoutSeconds = 30,
-  } : { containers: string | string[]; force?: boolean; volumes?: boolean; link?: boolean; timeoutSeconds?: number;},
+  }: { containers: string | string[]; force?: boolean; volumes?: boolean; link?: boolean; timeoutSeconds?: number; },
   registry: Registry,
 ) {
   const chatService = registry.requireFirstServiceByType(ChatService);
@@ -95,7 +95,7 @@ export async function execute(
   chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
-    const { stdout, stderr, exitCode } = await execa(cmd, {
+    const {stdout, stderr, exitCode} = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 1024 * 1024,
@@ -119,7 +119,7 @@ export async function execute(
 
 export const description = "Remove one or more Docker containers";
 
-export const parameters = z.object({
+export const inputSchema = z.object({
   containers: z
     .union([z.string(), z.array(z.string())])
     .describe("Container ID(s) or name(s) to remove"),

@@ -1,10 +1,10 @@
 import ChatService from "@token-ring/chat/ChatService";
-import { Registry } from "@token-ring/registry";
-import { shellEscape } from "@token-ring/utility/shellEscape";
-import { execa } from "execa";
-import { z } from "zod";
+import {Registry} from "@token-ring/registry";
+import {shellEscape} from "@token-ring/utility/shellEscape";
+import {execa} from "execa";
+import {z} from "zod";
 import DockerService from "../DockerService.ts";
-import { DockerCommandResult } from "../types.ts";
+import {DockerCommandResult} from "../types.ts";
 
 export const name = "docker/createNetwork";
 
@@ -26,9 +26,6 @@ interface CreateNetworkResult extends DockerCommandResult {
 
 /**
  * Create a Docker network
- * @param args - Network creation parameters
- * @param registry - The package registry
- * @returns Result of the network creation
  */
 export async function execute(
   {
@@ -125,7 +122,7 @@ export async function execute(
   chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
-    const { stdout, stderr, exitCode } = await execa(cmd, {
+    const {stdout, stderr, exitCode} = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 1024 * 1024,
@@ -154,7 +151,7 @@ export async function execute(
 
 export const description = "Create a Docker network";
 
-export const parameters = z.object({
+export const inputSchema = z.object({
   name: z.string().describe("The name of the network"),
   driver: z.string().describe("Driver to manage the network").default("bridge"),
   options: z.record(z.string()).describe("Driver specific options").default({}),

@@ -1,8 +1,8 @@
 import ChatService from "@token-ring/chat/ChatService";
-import { Registry } from "@token-ring/registry";
-import { shellEscape } from "@token-ring/utility/shellEscape";
-import { execa } from "execa";
-import { z } from "zod";
+import {Registry} from "@token-ring/registry";
+import {shellEscape} from "@token-ring/utility/shellEscape";
+import {execa} from "execa";
+import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
 export const name = "docker/tagImage";
@@ -18,12 +18,6 @@ interface TagImageResult {
 
 /**
  * Tag a Docker image
- * @param {object} args
- * @param {string} args.sourceImage - The source image to tag
- * @param {string} args.targetImage - The target image name and tag
- * @param {number} [args.timeoutSeconds=30] - Timeout in seconds
- * @param {Registry} registry - The package registry
- * @returns {Promise<TagImageResult>} Result of the tag operation
  */
 export async function execute(
   {
@@ -83,7 +77,7 @@ export async function execute(
   );
   chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
-  const { stdout, stderr, exitCode } = await execa(cmd, {
+  const {stdout, stderr, exitCode} = await execa(cmd, {
     shell: true,
     timeout: timeout * 1000,
     maxBuffer: 1024 * 1024,
@@ -103,7 +97,7 @@ export async function execute(
 
 export const description = "Tag a Docker image with a new name and/or tag";
 
-export const parameters = z.object({
+export const inputSchema = z.object({
   sourceImage: z.string().describe("The source image to tag"),
   targetImage: z.string().describe("The target image name and tag"),
   timeoutSeconds: z

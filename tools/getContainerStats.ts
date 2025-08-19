@@ -1,10 +1,10 @@
 import ChatService from "@token-ring/chat/ChatService";
-import { Registry } from "@token-ring/registry";
-import { shellEscape } from "@token-ring/utility/shellEscape";
-import { execa } from "execa";
-import { z } from "zod";
+import {Registry} from "@token-ring/registry";
+import {shellEscape} from "@token-ring/utility/shellEscape";
+import {execa} from "execa";
+import {z} from "zod";
 import DockerService from "../DockerService.ts";
-import { DockerCommandResult } from "../types.ts";
+import {DockerCommandResult} from "../types.ts";
 
 type FormatType = "json" | "table" | string;
 
@@ -23,9 +23,6 @@ interface GetContainerStatsResult extends DockerCommandResult {
 
 /**
  * Get stats from a Docker container
- * @param args - Stats retrieval parameters
- * @param registry - The package registry
- * @returns Container stats
  */
 
 export const name = "docker/getContainerStats";
@@ -115,7 +112,7 @@ export async function execute(
   chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
-    const { stdout, stderr, exitCode } = await execa(cmd, {
+    const {stdout, stderr, exitCode} = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 1024 * 1024,
@@ -155,7 +152,7 @@ export async function execute(
 }
 
 export const description = "Get stats from a Docker container";
-export const parameters = z
+export const inputSchema = z
   .object({
     containers: z
       .union([z.string(), z.array(z.string())])

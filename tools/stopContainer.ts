@@ -108,7 +108,7 @@ export async function execute(
 
 export const description = "Stop one or more Docker containers";
 
-export const parameters = z.object({
+export const inputSchema = z.object({
   containers: z
     .union([z.string(), z.array(z.string())], {
       required_error: "containers is required",

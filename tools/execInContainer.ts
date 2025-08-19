@@ -27,9 +27,6 @@ interface ExecInContainerResult extends DockerCommandResult {
 
 /**
  * Execute a command in a running Docker container
- * @param args - Command execution parameters
- * @param registry - The package registry
- * @returns Result of the command execution
  */
 
 export async function execute(
@@ -161,7 +158,7 @@ export async function execute(
 
 export const description = "Execute a command in a running Docker container";
 
-export const parameters = z.object({
+export const inputSchema = z.object({
   container: z.string().describe("Container name or ID"),
   command: z
     .union([z.string(), z.array(z.string())])

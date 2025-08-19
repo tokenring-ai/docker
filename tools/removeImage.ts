@@ -1,8 +1,8 @@
 import ChatService from "@token-ring/chat/ChatService";
-import { Registry } from "@token-ring/registry";
-import { shellEscape } from "@token-ring/utility/shellEscape";
-import { execa } from "execa";
-import { z } from "zod";
+import {Registry} from "@token-ring/registry";
+import {shellEscape} from "@token-ring/utility/shellEscape";
+import {execa} from "execa";
+import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
 /**
@@ -102,7 +102,7 @@ export async function execute(
   );
   chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
-  const { stdout, stderr, exitCode } = await execa(cmd, {
+  const {stdout, stderr, exitCode} = await execa(cmd, {
     shell: true,
     timeout: timeout * 1000,
     maxBuffer: 1024 * 1024,
@@ -123,7 +123,7 @@ export async function execute(
 
 export const description = "Remove one or more Docker images";
 
-export const parameters = z
+export const inputSchema = z
   .object({
     images: z.array(z.string()).describe("Image ID(s) or name(s) to remove"),
     force: z.boolean().optional().default(false).describe("Whether to force removal of the image"),

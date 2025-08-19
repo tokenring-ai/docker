@@ -1,8 +1,8 @@
 import ChatService from "@token-ring/chat/ChatService";
-import { Registry } from "@token-ring/registry";
-import { shellEscape } from "@token-ring/utility/shellEscape";
-import { execa } from "execa";
-import { z } from "zod";
+import {Registry} from "@token-ring/registry";
+import {shellEscape} from "@token-ring/utility/shellEscape";
+import {execa} from "execa";
+import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
 // Export tool name for consistent messaging
@@ -98,7 +98,7 @@ export async function execute(
   );
   chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
-  const { stdout, stderr, exitCode } = await execa(cmd, {
+  const {stdout, stderr, exitCode} = await execa(cmd, {
     shell: true,
     timeout: timeout * 1000,
     maxBuffer: 1024 * 1024,
@@ -118,7 +118,7 @@ export async function execute(
 
 export const description = "Start one or more Docker containers";
 
-export const parameters = z
+export const inputSchema = z
   .object({
     containers: z.union([z.string(), z.array(z.string())], {
       description: "Container ID(s) or name(s) to start",

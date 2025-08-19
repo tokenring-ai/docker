@@ -1,23 +1,21 @@
 {
-	"name": "@token-ring/docker",
-	"version": "0.1.0",
-	"dependencies": {
-		"@token-ring/chat": "0.1.0",
-
-		"@token-ring/filesystem": "0.1.0",
-		"@token-ring/registry": "0.1.0",
-		"@token-ring/utility": "0.1.0",
-		"execa": "^9.6.0",
-		"glob-gitignore": "^1.0.15"
-	},
-	"exports": {
-		".": "./index.ts",
-		"./*": "./*.ts"
-	},
-	"license": "MIT",
-	"scripts": {
-
-		"eslint": "eslint --fix ./"
-	},
-	"type": "module"
+ "name": "@token-ring/docker",
+ "version": "0.1.0",
+ "dependencies": {
+  "@token-ring/chat": "0.1.0",
+  "@token-ring/filesystem": "0.1.0",
+  "@token-ring/registry": "0.1.0",
+  "@token-ring/utility": "0.1.0",
+  "execa": "^9.6.0",
+  "glob-gitignore": "^1.0.15"
+ },
+ "exports": {
+  ".": "./index.ts",
+  "./*": "./*.ts"
+ },
+ "license": "MIT",
+ "scripts": {
+  "eslint": "eslint --fix ./"
+ },
+ "type": "module"
 }

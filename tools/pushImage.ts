@@ -1,8 +1,8 @@
 import ChatService from "@token-ring/chat/ChatService";
-import { Registry } from "@token-ring/registry";
-import { shellEscape } from "@token-ring/utility/shellEscape";
-import { execa } from "execa";
-import { z } from "zod";
+import {Registry} from "@token-ring/registry";
+import {shellEscape} from "@token-ring/utility/shellEscape";
+import {execa} from "execa";
+import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
 export const name = "docker/pushImage";
@@ -19,7 +19,7 @@ interface PushImageResult {
  * Push a Docker image to a registry
  */
 export async function execute(
-  { tag, allTags = false, timeoutSeconds = 300 }: { tag: string; allTags: boolean; timeoutSeconds: number },
+  {tag, allTags = false, timeoutSeconds = 300}: { tag: string; allTags: boolean; timeoutSeconds: number },
   registry: Registry,
 ): Promise<PushImageResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
@@ -74,7 +74,7 @@ export async function execute(
   chatService.infoLine(`[pushImage] Pushing image ${tag}...`);
   chatService.infoLine(`[pushImage] Executing: ${cmd}`);
 
-  const { stdout, stderr, exitCode } = await execa(cmd, {
+  const {stdout, stderr, exitCode} = await execa(cmd, {
     shell: true,
     timeout: timeout * 1000,
     maxBuffer: 5 * 1024 * 1024,
@@ -91,7 +91,7 @@ export async function execute(
 }
 
 export const description = "Push a Docker image to a registry";
-export const parameters = z.object({
+export const inputSchema = z.object({
   tag: z.string().describe("The image tag to push"),
   allTags: z
     .boolean()

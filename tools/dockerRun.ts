@@ -17,9 +17,6 @@ interface DockerRunArgs {
 
 /**
  * Runs a shell command in an ephemeral Docker container
- * @param args - Docker run parameters
- * @param registry - The package registry
- * @returns Result of the docker run operation
  */
 export async function execute(
   {image, cmd, workdir, timeoutSeconds = 60, mountSrc}: DockerRunArgs,
@@ -106,7 +103,7 @@ export async function execute(
 export const description =
   "Runs a shell command in an ephemeral Docker container (docker run --rm). Returns the result (stdout, stderr, exit code). Now also supports mounting the source directory at a custom path.";
 
-export const parameters = z.object({
+export const inputSchema = z.object({
   image: z.string().describe("Docker image name (e.g., ubuntu:latest)"),
   cmd: z.string().describe("Command to run in the container (e.g., 'ls -l /')"),
   workdir: z

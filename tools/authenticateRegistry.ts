@@ -1,10 +1,10 @@
 import ChatService from "@token-ring/chat/ChatService";
-import { Registry } from "@token-ring/registry";
-import { shellEscape } from "@token-ring/utility/shellEscape";
-import { execa } from "execa";
-import { z } from "zod";
+import {Registry} from "@token-ring/registry";
+import {shellEscape} from "@token-ring/utility/shellEscape";
+import {execa} from "execa";
+import {z} from "zod";
 import DockerService from "../DockerService.ts";
-import { DockerCommandResult } from "../types.ts";
+import {DockerCommandResult} from "../types.ts";
 
 export const name = "docker/authenticateRegistry";
 
@@ -24,9 +24,6 @@ interface AuthResult extends DockerCommandResult {
 
 /**
  * Authenticate against a Docker registry
- * @param args - Authentication parameters
- * @param registry - The package registry
- * @returns Result of the login operation
  */
 export async function execute(
   {
@@ -115,7 +112,7 @@ export async function execute(
     `[${name}] Executing: ${dockerCmd} login ${server} -u ${username} [password hidden]`
   );
 
-  const execOptions: { maxBuffer: number; input?: string } = { maxBuffer: 1024 * 1024 };
+  const execOptions: { maxBuffer: number; input?: string } = {maxBuffer: 1024 * 1024};
 
   // If using passwordStdin, we need to provide the password via stdin
   if (passwordStdin) {
@@ -123,7 +120,7 @@ export async function execute(
   }
 
   try {
-    const { stdout, stderr, exitCode } = await execa(cmd, {
+    const {stdout, stderr, exitCode} = await execa(cmd, {
       shell: true,
       ...execOptions,
       timeout: timeout * 1000,
@@ -147,7 +144,7 @@ export async function execute(
 }
 
 export const description = "Authenticate against a Docker registry";
-export const parameters = z.object({
+export const inputSchema = z.object({
   server: z
     .string()
     .describe("The registry server URL (e.g., 'https://index.docker.io/v1/')"),

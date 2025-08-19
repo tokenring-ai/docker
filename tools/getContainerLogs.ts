@@ -1,10 +1,10 @@
 import ChatService from "@token-ring/chat/ChatService";
-import { Registry } from "@token-ring/registry";
-import { shellEscape } from "@token-ring/utility/shellEscape";
-import { execa } from "execa";
-import { z } from "zod";
+import {Registry} from "@token-ring/registry";
+import {shellEscape} from "@token-ring/utility/shellEscape";
+import {execa} from "execa";
+import {z} from "zod";
 import DockerService from "../DockerService.ts";
-import { DockerCommandResult } from "../types.ts";
+import {DockerCommandResult} from "../types.ts";
 
 export const name = "docker/getContainerLogs";
 
@@ -27,9 +27,6 @@ interface GetContainerLogsResult extends DockerCommandResult {
 
 /**
  * Get logs from a Docker container
- * @param args - Log retrieval parameters
- * @param registry - The package registry
- * @returns Container logs
  */
 
 export async function execute(
@@ -118,7 +115,7 @@ export async function execute(
   chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
-    const { stdout, stderr, exitCode } = await execa(cmd, {
+    const {stdout, stderr, exitCode} = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 5 * 1024 * 1024,
@@ -146,7 +143,7 @@ export async function execute(
 
 export const description = "Get logs from a Docker container";
 
-export const parameters = z.object({
+export const inputSchema = z.object({
   name: z.string().describe("The container name or ID"),
   follow: z
     .boolean()

@@ -1,9 +1,9 @@
 import ChatService from "@token-ring/chat/ChatService";
 
-import { Registry } from "@token-ring/registry";
-import { shellEscape } from "@token-ring/utility/shellEscape";
-import { execa } from "execa";
-import { z } from "zod";
+import {Registry} from "@token-ring/registry";
+import {shellEscape} from "@token-ring/utility/shellEscape";
+import {execa} from "execa";
+import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
 export const name = "docker/pruneImages";
@@ -20,7 +20,7 @@ interface PruneImagesResult {
  * Prune unused Docker images
  */
 export async function execute(
-  { all = false, filter, timeoutSeconds = 60 }: { all?: boolean; filter?: string; timeoutSeconds?: number },
+  {all = false, filter, timeoutSeconds = 60}: { all?: boolean; filter?: string; timeoutSeconds?: number },
   registry: Registry,
 ): Promise<PruneImagesResult> {
   const chatService = registry.requireFirstServiceByType(ChatService);
@@ -73,7 +73,7 @@ export async function execute(
   chatService.infoLine(`[${name}] Pruning unused Docker images...`);
   chatService.infoLine(`[${name}] Executing: ${cmd}`);
 
-  const { stdout, stderr, exitCode } = await execa(cmd, {
+  const {stdout, stderr, exitCode} = await execa(cmd, {
     shell: true,
     timeout: timeout * 1000,
     maxBuffer: 1024 * 1024,
@@ -100,7 +100,7 @@ export async function execute(
 
 export const description = "Prune unused Docker images";
 
-export const parameters = z.object({
+export const inputSchema = z.object({
   all: z
     .boolean()
     .default(false)
