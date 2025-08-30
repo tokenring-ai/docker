@@ -1,4 +1,5 @@
 export {default as DockerService} from "./DockerService.ts";
+export {default as DockerSandboxResource} from "./DockerSandboxProvider.ts";
 export * as tools from "./tools.ts";
 
 export const name = "@token-ring/docker";

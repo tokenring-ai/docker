@@ -5,6 +5,7 @@ Overview
 - @token-ring/docker provides Docker integration for Token Ring agents and tools.
 - It exposes a DockerService for configuration (host/TLS) and a dockerRun tool to execute one-off commands inside
   ephemeral containers (docker run --rm).
+- It also provides DockerSandboxResource which implements the @token-ring/sandbox interface for persistent container management.
 
 Features
 
@@ -17,6 +18,9 @@ Features
 - Timeout control
 - Optional bind-mount of the host source directory at a custom path
 - Structured results (ok, exitCode, stdout, stderr, error).
+- Persistent container management via DockerSandboxResource:
+- Create, execute commands, stop, get logs, and remove containers
+- Integrates with @token-ring/sandbox for unified container operations
 
 Installation
 This package is part of the Token Ring monorepo. If you are using packages individually, ensure the following peer
@@ -85,6 +89,16 @@ DockerService (class)
 - tlsCACert, tlsCert, tlsKey: paths to the CA, client certificate, and client key files.
 - getHost(): string
 - getTLSConfig(): { tlsVerify: boolean; tlsCACert?: string; tlsCert?: string; tlsKey?: string; }
+
+DockerSandboxResource (class)
+
+- constructor(dockerService: DockerService)
+- Implements SandboxResource interface for persistent Docker container management
+- createContainer(options?: SandboxOptions): Promise<SandboxResult>
+- executeCommand(containerId: string, command: string): Promise<ExecuteResult>
+- stopContainer(containerId: string): Promise<void>
+- getLogs(containerId: string): Promise<LogsResult>
+- removeContainer(containerId: string): Promise<void>
 
 Tools
 
