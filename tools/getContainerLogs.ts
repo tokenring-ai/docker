@@ -1,6 +1,5 @@
-import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
+import Agent from "@tokenring-ai/agent/Agent";
+import {shellEscape} from "@tokenring-ai/utility/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
@@ -40,16 +39,10 @@ export async function execute(
     details = false,
     timeoutSeconds = 30,
   }: GetContainerLogsArgs,
-  registry: Registry
+  agent: Agent
 ): Promise<GetContainerLogsResult> {
-  const chatService = registry.requireFirstServiceByType(ChatService);
-  const dockerService = registry.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireFirstServiceByType(DockerService);
 
-  if (!dockerService) {
-    throw new Error(
-      `[${name}] DockerService not found, can't perform Docker operations without Docker connection details`
-    );
-  }
 
   if (!containerName) {
     throw new Error(`[${name}] name is required`);
@@ -109,10 +102,10 @@ export async function execute(
 
   cmd += ` ${shellEscape(containerName)}`;
 
-  chatService.infoLine(
+  agent.infoLine(
     `[${name}] Getting logs from container ${containerName}...`
   );
-  chatService.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -124,7 +117,7 @@ export async function execute(
     const logs = stdout.trim();
     const logLines = logs.split("\n");
 
-    chatService.systemLine(
+    agent.infoLine(
       `[${name}] Successfully retrieved logs from container ${containerName}`
     );
     return {

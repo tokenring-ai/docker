@@ -1,12 +1,12 @@
 {
- "name": "@token-ring/docker",
+ "name": "@tokenring-ai/docker",
+ "description": "Service that add file contents or file names to the chat memory.",
  "version": "0.1.0",
  "dependencies": {
-  "@token-ring/chat": "0.1.0",
-  "@token-ring/filesystem": "0.1.0",
-  "@token-ring/registry": "0.1.0",
-  "@token-ring/sandbox": "0.1.0",
-  "@token-ring/utility": "0.1.0",
+  "@tokenring-ai/agent": "0.1.0",
+  "@tokenring-ai/filesystem": "0.1.0",
+  "@tokenring-ai/sandbox": "0.1.0",
+  "@tokenring-ai/utility": "0.1.0",
   "execa": "^9.6.0",
   "glob-gitignore": "^1.0.15"
  },

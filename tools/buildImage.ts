@@ -1,6 +1,5 @@
-import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
+import Agent from "@tokenring-ai/agent/Agent";
+import {shellEscape} from "@tokenring-ai/utility/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
@@ -35,14 +34,9 @@ export async function execute(
     pull = false,
     timeoutSeconds = 300,
   }: BuildImageArgs,
-  registry: Registry
+  agent: Agent
 ): Promise<BuildResult> {
-  const chatService = registry.requireFirstServiceByType(ChatService);
-  const dockerService = registry.requireFirstServiceByType(DockerService);
-  if (!dockerService) {
-    const msg = `${name} DockerService not found, can't perform Docker operations without Docker connection details`;
-    throw new Error(`[${name}] ${msg}`);
-  }
+  const dockerService = agent.requireFirstServiceByType(DockerService);
 
   if (!context || !tag) {
     const msg = "context and tag are required";
@@ -105,8 +99,8 @@ export async function execute(
   // Add context
   cmd += ` ${shellEscape(context)}`;
 
-  chatService.infoLine(`[${name}] Building image ${tag}...`);
-  chatService.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoLine(`[${name}] Building image ${tag}...`);
+  agent.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -114,7 +108,7 @@ export async function execute(
       timeout: timeout * 1000,
       maxBuffer: 5 * 1024 * 1024,
     });
-    chatService.systemLine(`[${name}] Successfully built image ${tag}`);
+    agent.infoLine(`[${name}] Successfully built image ${tag}`);
     return {
       ok: true,
       exitCode: exitCode,

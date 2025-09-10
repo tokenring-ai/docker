@@ -1,6 +1,5 @@
-import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
+import Agent from "@tokenring-ai/agent/Agent";
+import {shellEscape} from "@tokenring-ai/utility/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
@@ -37,16 +36,9 @@ export async function execute(
     format = "json",
     timeoutSeconds = 30,
   }: ListImagesArgs,
-  registry: Registry,
+  agent: Agent,
 ): Promise<ListImagesResult> {
-  const chatService = registry.requireFirstServiceByType(ChatService);
-  const dockerService = registry.requireFirstServiceByType(DockerService);
-  if (!dockerService) {
-    // Throw error instead of returning an object
-    throw new Error(
-      `[${name}] DockerService not found, can't perform Docker operations without Docker connection details`
-    );
-  }
+  const dockerService = agent.requireFirstServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
   let dockerCmd = "docker";
@@ -108,8 +100,8 @@ export async function execute(
     cmd += ` --format ${shellEscape(format)}`;
   }
 
-  chatService.infoLine(`[${name}] Listing images...`);
-  chatService.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoLine(`[${name}] Listing images...`);
+  agent.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -129,7 +121,7 @@ export async function execute(
           .filter((line) => line.trim())
           .map((line) => JSON.parse(line));
       } catch (e: any) {
-        chatService.errorLine(
+        agent.errorLine(
           `[${name}] Error parsing JSON output: ${e.message}`
         );
         images = stdout.trim();
@@ -138,7 +130,7 @@ export async function execute(
       images = stdout.trim();
     }
 
-    chatService.systemLine(`[${name}] Successfully listed images`);
+    agent.infoLine(`[${name}] Successfully listed images`);
     return {
       ok: true,
       exitCode: exitCode,

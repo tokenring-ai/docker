@@ -1,5 +1,10 @@
-import SandboxProvider, {type SandboxOptions, type SandboxResult, type ExecuteResult, type LogsResult} from "@token-ring/sandbox/SandboxProvider";
-import {shellEscape} from "@token-ring/utility/shellEscape";
+import SandboxProvider, {
+  type ExecuteResult,
+  type LogsResult,
+  type SandboxOptions,
+  type SandboxResult
+} from "@tokenring-ai/sandbox/SandboxProvider";
+import {shellEscape} from "@tokenring-ai/utility/shellEscape";
 import {execa} from "execa";
 
 export interface DockerSandboxProviderParams extends TLSConfig {
@@ -17,7 +22,7 @@ export interface TLSConfig {
 export default class DockerSandboxProvider extends SandboxProvider {
   private readonly host: string;
   private readonly tlsConfig?: TLSConfig;
-  
+
   constructor({
                 host = "unix:///var/run/docker.sock",
                 tlsVerify = false,
@@ -36,50 +41,30 @@ export default class DockerSandboxProvider extends SandboxProvider {
     }
   }
 
-
-  private buildDockerCmd(): string {
-    let dockerCmd = "docker";
-    
-    if (this.host !== "unix:///var/run/docker.sock") {
-      dockerCmd += ` -H ${shellEscape(this.host)}`;
-    }
-
-    if (this.tlsConfig) {
-      dockerCmd += " --tls";
-      const { tlsCACert, tlsCert, tlsKey } = this.tlsConfig;
-      
-      if (tlsCACert) dockerCmd += ` --tlscacert=${shellEscape(tlsCACert)}`;
-      if (tlsCert) dockerCmd += ` --tlscert=${shellEscape(tlsCert)}`;
-      if (tlsKey) dockerCmd += ` --tlskey=${shellEscape(tlsKey)}`;
-    }
-
-    return dockerCmd;
-  }
-
   async createContainer(options: SandboxOptions = {}): Promise<SandboxResult> {
     const {image = "ubuntu:latest", workingDir, environment, timeout = 30} = options;
-    
+
     let cmd = `${this.buildDockerCmd()} run -d`;
-    
+
     if (workingDir) cmd += ` -w ${shellEscape(workingDir)}`;
-    
+
     if (environment) {
       for (const [key, value] of Object.entries(environment)) {
         cmd += ` -e ${shellEscape(`${key}=${value}`)}`;
       }
     }
-    
+
     cmd += ` ${shellEscape(image)} sleep infinity`;
 
     const {stdout} = await execa(cmd, {shell: true, timeout: timeout * 1000});
     const containerId = stdout.trim();
-    
+
     return {containerId, status: "running"};
   }
 
   async executeCommand(containerId: string, command: string): Promise<ExecuteResult> {
     const cmd = `${this.buildDockerCmd()} exec ${shellEscape(containerId)} sh -c ${shellEscape(command)}`;
-    
+
     try {
       const {stdout, stderr, exitCode} = await execa(cmd, {shell: true, reject: false});
       return {stdout: stdout || "", stderr: stderr || "", exitCode: exitCode || 0};
@@ -102,5 +87,24 @@ export default class DockerSandboxProvider extends SandboxProvider {
   async removeContainer(containerId: string): Promise<void> {
     const cmd = `${this.buildDockerCmd()} rm -f ${shellEscape(containerId)}`;
     await execa(cmd, {shell: true});
+  }
+
+  private buildDockerCmd(): string {
+    let dockerCmd = "docker";
+
+    if (this.host !== "unix:///var/run/docker.sock") {
+      dockerCmd += ` -H ${shellEscape(this.host)}`;
+    }
+
+    if (this.tlsConfig) {
+      dockerCmd += " --tls";
+      const {tlsCACert, tlsCert, tlsKey} = this.tlsConfig;
+
+      if (tlsCACert) dockerCmd += ` --tlscacert=${shellEscape(tlsCACert)}`;
+      if (tlsCert) dockerCmd += ` --tlscert=${shellEscape(tlsCert)}`;
+      if (tlsKey) dockerCmd += ` --tlskey=${shellEscape(tlsKey)}`;
+    }
+
+    return dockerCmd;
   }
 }

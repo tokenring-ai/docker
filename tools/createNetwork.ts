@@ -1,6 +1,5 @@
-import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
+import Agent from "@tokenring-ai/agent/Agent";
+import {shellEscape} from "@tokenring-ai/utility/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
@@ -38,20 +37,13 @@ export async function execute(
     ipRange,
     timeoutSeconds = 30,
   }: CreateNetworkArgs,
-  registry: Registry
+  agent: Agent
 ): Promise<CreateNetworkResult> {
-  const chatService = registry.requireFirstServiceByType(ChatService);
-  const dockerService = registry.requireFirstServiceByType(DockerService);
-  if (!dockerService) {
-    const errMsg =
-      "DockerService not found, can't perform Docker operations without Docker connection details";
-    // Removed chatService.errorLine per specification
-    throw new Error(`[${name}] ${errMsg}`);
-  }
+  const dockerService = agent.requireFirstServiceByType(DockerService);
 
   if (!networkName) {
     const errMsg = "name is required";
-    // Removed chatService.errorLine per specification
+    // Removed agent.errorLine per specification
     throw new Error(`[${name}] ${errMsg}`);
   }
 
@@ -118,8 +110,8 @@ export async function execute(
   // Add network name
   cmd += ` ${shellEscape(networkName)}`;
 
-  chatService.infoLine(`[${name}] Creating Docker network ${networkName}...`);
-  chatService.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoLine(`[${name}] Creating Docker network ${networkName}...`);
+  agent.infoLine(`[${name}] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -131,7 +123,7 @@ export async function execute(
     // The output is the network ID
     const networkId = stdout.trim();
 
-    chatService.systemLine(
+    agent.infoLine(
       `[${name}] Successfully created Docker network ${networkName} (${networkId})`
     );
     return {
@@ -144,7 +136,7 @@ export async function execute(
     };
   } catch (err: any) {
     const errMsg = err.message || "Unknown error";
-    // Removed chatService.errorLine per specification
+    // Removed agent.errorLine per specification
     throw new Error(`[${name}] ${errMsg}`);
   }
 }

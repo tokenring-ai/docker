@@ -1,6 +1,5 @@
-import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
+import Agent from "@tokenring-ai/agent/Agent";
+import {shellEscape} from "@tokenring-ai/utility/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
@@ -28,16 +27,9 @@ export async function execute(
     filter: string;
     timeoutSeconds: number;
   },
-  registry: Registry,
+  agent: Agent,
 ): Promise<PruneVolumesResult> {
-  const chatService = registry.requireFirstServiceByType(ChatService);
-  const dockerService = registry.requireFirstServiceByType(DockerService);
-  if (!dockerService) {
-    // Throw an error instead of returning an error object
-    throw new Error(
-      `[${name}] DockerService not found, can't perform Docker operations without Docker connection details`,
-    );
-  }
+  const dockerService = agent.requireFirstServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
   let dockerCmd = "docker";
@@ -74,8 +66,8 @@ export async function execute(
     cmd += ` --filter ${shellEscape(filter)}`;
   }
 
-  chatService.infoLine(`[${name}] Pruning unused Docker volumes...`);
-  chatService.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoLine(`[${name}] Pruning unused Docker volumes...`);
+  agent.infoLine(`[${name}] Executing: ${cmd}`);
 
   const {stdout, stderr, exitCode} = await execa(cmd, {
     shell: true,
@@ -100,7 +92,7 @@ export async function execute(
       .filter((line) => line.trim()).length;
   }
 
-  chatService.systemLine(
+  agent.infoLine(
     `[${name}] Successfully pruned unused Docker volumes. Space reclaimed: ${spaceReclaimed}`,
   );
   return {

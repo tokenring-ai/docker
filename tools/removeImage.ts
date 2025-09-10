@@ -1,6 +1,5 @@
-import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
+import Agent from "@tokenring-ai/agent/Agent";
+import {shellEscape} from "@tokenring-ai/utility/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
@@ -33,15 +32,10 @@ export async function execute(
     noPrune: boolean;
     timeoutSeconds: number;
   },
-  registry: Registry,
+  agent: Agent,
 ): Promise<RemoveImageResult> {
-  const chatService = registry.requireFirstServiceByType(ChatService);
-  const dockerService = registry.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireFirstServiceByType(DockerService);
 
-  if (!dockerService) {
-    // Throw error instead of returning an error object
-    throw new Error(`[${name}] DockerService not found, can't perform Docker operations without Docker connection details`);
-  }
 
   if (!images) {
     throw new Error(`[${name}] images is required`);
@@ -97,10 +91,10 @@ export async function execute(
   cmd += ` ${imageList.map((image) => shellEscape(image)).join(" ")}`;
 
   // Informational messages using the standardized prefix
-  chatService.infoLine(
+  agent.infoLine(
     `[${name}] Removing image(s): ${imageList.join(", ")}...`,
   );
-  chatService.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoLine(`[${name}] Executing: ${cmd}`);
 
   const {stdout, stderr, exitCode} = await execa(cmd, {
     shell: true,
@@ -108,7 +102,7 @@ export async function execute(
     maxBuffer: 1024 * 1024,
   });
 
-  chatService.systemLine(
+  agent.infoLine(
     `[${name}] Successfully removed image(s): ${imageList.join(", ")}`,
   );
 

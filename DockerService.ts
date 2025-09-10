@@ -1,4 +1,4 @@
-import {Service} from "@token-ring/registry";
+import {TokenRingService} from "@tokenring-ai/agent/types";
 
 export interface DockerServiceParams {
   host?: string;
@@ -15,7 +15,7 @@ export interface TLSConfig {
   tlsKey?: string;
 }
 
-export default class DockerService extends Service {
+export default class DockerService implements TokenRingService {
   static constructorProperties = {
     host: {
       type: "string",
@@ -60,7 +60,6 @@ export default class DockerService extends Service {
                 tlsCert,
                 tlsKey,
               }: DockerServiceParams = {}) {
-    super();
     this.host = host;
     this.tlsVerify = tlsVerify;
     this.tlsCACert = tlsCACert;

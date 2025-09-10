@@ -1,6 +1,5 @@
-import ChatService from "@token-ring/chat/ChatService";
-import {FileSystemService} from "@token-ring/filesystem";
-import {Registry} from "@token-ring/registry";
+import Agent from "@tokenring-ai/agent/Agent";
+import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import type {DockerCommandResult} from "../types.ts";
@@ -20,11 +19,10 @@ interface DockerRunArgs {
  */
 export async function execute(
   {image, cmd, workdir, timeoutSeconds = 60, mountSrc}: DockerRunArgs,
-  registry: Registry
+  agent: Agent
 ): Promise<DockerCommandResult> {
-  const chatService = registry.requireFirstServiceByType(ChatService);
-  const filesystem = registry.requireFirstServiceByType(FileSystemService);
-  const dockerService = registry.requireFirstServiceByType(DockerService);
+  const filesystem = agent.requireFirstServiceByType(FileSystemService);
+  const dockerService = agent.requireFirstServiceByType(DockerService);
 
   if (!image || !cmd) {
     throw new Error(`[${name}] image and cmd required`);
@@ -79,7 +77,7 @@ export async function execute(
   // Create the final command with timeout
   const finalCommand: string[] = ["timeout", `${timeout}s`, "docker", ...dockerArgs];
 
-  chatService.infoLine(`[${name}] Executing: ${finalCommand.join(" ")}`);
+  agent.infoLine(`[${name}] Executing: ${finalCommand.join(" ")}`);
 
   try {
     const result = await filesystem.executeCommand(finalCommand, {

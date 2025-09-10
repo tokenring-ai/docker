@@ -1,11 +1,12 @@
-@token-ring/docker
+@tokenring-ai/docker
 
 Overview
 
-- @token-ring/docker provides Docker integration for Token Ring agents and tools.
+- @tokenring-ai/docker provides Docker integration for Token Ring agents and tools.
 - It exposes a DockerService for configuration (host/TLS) and a dockerRun tool to execute one-off commands inside
   ephemeral containers (docker run --rm).
-- It also provides DockerSandboxResource which implements the @token-ring/sandbox interface for persistent container management.
+- It also provides DockerSandboxResource which implements the @tokenring-ai/sandbox interface for persistent container
+  management.
 
 Features
 
@@ -20,15 +21,15 @@ Features
 - Structured results (ok, exitCode, stdout, stderr, error).
 - Persistent container management via DockerSandboxResource:
 - Create, execute commands, stop, get logs, and remove containers
-- Integrates with @token-ring/sandbox for unified container operations
+- Integrates with @tokenring-ai/sandbox for unified container operations
 
 Installation
 This package is part of the Token Ring monorepo. If you are using packages individually, ensure the following peer
 packages are available in your workspace:
 
-- @token-ring/registry
-- @token-ring/chat
-- @token-ring/filesystem
+- @tokenring-ai/registry
+- @tokenring-ai/chat
+- @tokenring-ai/filesystem
 
 Usage
 
@@ -38,10 +39,10 @@ Usage
 
 TypeScript example
 
-import { ServiceRegistry } from "@token-ring/registry";
-import { ChatService } from "@token-ring/chat";
-import { FileSystemService } from "@token-ring/filesystem";
-import { DockerService, tools as dockerTools } from "@token-ring/docker";
+import { ServiceRegistry } from "@tokenring-ai/registry";
+import { ChatService } from "@tokenring-ai/chat";
+import { FileSystemService } from "@tokenring-ai/filesystem";
+import { DockerService, tools as dockerTools } from "@tokenring-ai/docker";
 
 const registry = new ServiceRegistry();
 
@@ -126,7 +127,7 @@ Requirements and Notes
 
 Package Metadata
 
-- Name: @token-ring/docker
+- Name: @tokenring-ai/docker
 - Exports: DockerService, tools.dockerRun
 
 License

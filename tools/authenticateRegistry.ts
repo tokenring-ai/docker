@@ -1,6 +1,5 @@
-import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
+import Agent from "@tokenring-ai/agent/Agent";
+import {shellEscape} from "@tokenring-ai/utility/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
@@ -34,23 +33,13 @@ export async function execute(
     passwordStdin = false,
     timeoutSeconds = 30,
   }: AuthenticateRegistryArgs,
-  registry: Registry
+  agent: Agent
 ): Promise<AuthResult> {
-  const chatService = registry.requireFirstServiceByType(ChatService);
-  const dockerService = registry.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireFirstServiceByType(DockerService);
 
-  if (!dockerService) {
-    // Informational message follows the required format
-    chatService.errorLine(
-      `[${name}] DockerService not found, can't perform Docker operations without Docker connection details`
-    );
-    throw new Error(
-      `[${name}] DockerService not found, cannot perform Docker operations`
-    );
-  }
 
   if (!server || !username || (!password && !passwordStdin)) {
-    chatService.errorLine(
+    agent.errorLine(
       `[${name}] server, username, and password are required`
     );
     throw new Error(
@@ -104,11 +93,11 @@ export async function execute(
     cmd += ` --email ${shellEscape(email)}`;
   }
 
-  chatService.infoLine(
+  agent.infoLine(
     `[${name}] Authenticating to registry ${server}...`
   );
   // Don't log the full command as it may contain sensitive information
-  chatService.infoLine(
+  agent.infoLine(
     `[${name}] Executing: ${dockerCmd} login ${server} -u ${username} [password hidden]`
   );
 
@@ -125,7 +114,7 @@ export async function execute(
       ...execOptions,
       timeout: timeout * 1000,
     });
-    chatService.systemLine(
+    agent.infoLine(
       `[${name}] Successfully authenticated to registry ${server}`
     );
     return {
@@ -138,7 +127,7 @@ export async function execute(
     };
   } catch (err: any) {
     // Error message follows the required format
-    chatService.errorLine(`[${name}] Error: ${err.message}`);
+    agent.errorLine(`[${name}] Error: ${err.message}`);
     throw new Error(`[${name}] ${err.shortMessage || err.message}`);
   }
 }

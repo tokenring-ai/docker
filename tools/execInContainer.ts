@@ -1,6 +1,5 @@
-import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
+import Agent from "@tokenring-ai/agent/Agent";
+import {shellEscape} from "@tokenring-ai/utility/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
@@ -41,14 +40,9 @@ export async function execute(
     user,
     timeoutSeconds = 30,
   }: ExecInContainerArgs,
-  registry: Registry
+  agent: Agent
 ): Promise<ExecInContainerResult> {
-  const chatService = registry.requireFirstServiceByType(ChatService);
-  const dockerService = registry.requireFirstServiceByType(DockerService);
-  if (!dockerService) {
-    // Throw error instead of returning or printing
-    throw new Error(`[${name}] DockerService not found, cannot perform Docker operations`);
-  }
+  const dockerService = agent.requireFirstServiceByType(DockerService);
 
   if (!container || !command) {
     throw new Error(`[${name}] container and command are required`);
@@ -127,10 +121,10 @@ export async function execute(
   cmd += ` ${commandList.map((arg) => shellEscape(arg)).join(" ")}`;
 
   // Informational messages prefixed with tool name
-  chatService.infoLine(
+  agent.infoLine(
     `[execInContainer] Executing command in container ${container}...`,
   );
-  chatService.infoLine(`[execInContainer] Executing: ${cmd}`);
+  agent.infoLine(`[execInContainer] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -139,7 +133,7 @@ export async function execute(
       maxBuffer: 5 * 1024 * 1024,
     });
 
-    chatService.systemLine(
+    agent.infoLine(
       `[execInContainer] Command executed successfully in container ${container}`,
     );
     return {

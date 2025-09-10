@@ -1,6 +1,5 @@
-import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
-import {shellEscape} from "@token-ring/utility/shellEscape";
+import Agent from "@tokenring-ai/agent/Agent";
+import {shellEscape} from "@tokenring-ai/utility/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
@@ -23,14 +22,10 @@ export const name = "docker/dockerStack";
 
 export async function execute(
   {action, stackName, composeFile, timeoutSeconds = 60}: DockerStackArgs,
-  registry: Registry
+  agent: Agent
 ): Promise<DockerCommandResult> {
-  const chatService = registry.requireFirstServiceByType(ChatService);
-  const dockerService = registry.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireFirstServiceByType(DockerService);
 
-  if (!dockerService) {
-    throw new Error(`[${name}] DockerService not found, can't perform Docker operations without Docker connection details`);
-  }
 
   if (!action || !stackName) {
     throw new Error(`[${name}] action and stackName are required`);
@@ -82,7 +77,7 @@ export async function execute(
       throw new Error(`[${name}] Unknown action: ${action}`);
   }
 
-  chatService.infoLine(`[dockerStack] Executing: ${cmd}`);
+  agent.infoLine(`[dockerStack] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -90,7 +85,7 @@ export async function execute(
       timeout: timeout * 1000,
       maxBuffer: 1024 * 1024,
     });
-    chatService.systemLine(
+    agent.infoLine(
       `[dockerStack] Successfully executed ${action} on stack ${stackName}`,
     );
     return {
