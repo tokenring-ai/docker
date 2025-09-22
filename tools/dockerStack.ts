@@ -24,7 +24,7 @@ export async function execute(
   {action, stackName, composeFile, timeoutSeconds = 60}: DockerStackArgs,
   agent: Agent
 ): Promise<DockerCommandResult> {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
 
   if (!action || !stackName) {

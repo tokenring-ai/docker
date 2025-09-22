@@ -38,7 +38,7 @@ export async function execute(
   }: ListImagesArgs,
   agent: Agent,
 ): Promise<ListImagesResult> {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
   let dockerCmd = "docker";

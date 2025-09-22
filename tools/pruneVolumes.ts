@@ -29,7 +29,7 @@ export async function execute(
   },
   agent: Agent,
 ): Promise<PruneVolumesResult> {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
   let dockerCmd = "docker";

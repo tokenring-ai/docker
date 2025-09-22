@@ -39,7 +39,7 @@ export async function execute(
   }: CreateNetworkArgs,
   agent: Agent
 ): Promise<CreateNetworkResult> {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
   if (!networkName) {
     const errMsg = "name is required";

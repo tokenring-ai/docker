@@ -34,7 +34,7 @@ export async function execute(
   },
   agent: Agent,
 ): Promise<RemoveImageResult> {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
 
   if (!images) {

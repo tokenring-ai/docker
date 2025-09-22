@@ -25,7 +25,7 @@ export async function execute(
   },
   agent: Agent,
 ): Promise<StopContainerResult> {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
   // Validate containers argument
   if (!containers) {

@@ -36,7 +36,7 @@ export async function execute(
   }: BuildImageArgs,
   agent: Agent
 ): Promise<BuildResult> {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
   if (!context || !tag) {
     const msg = "context and tag are required";

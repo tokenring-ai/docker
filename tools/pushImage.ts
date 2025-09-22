@@ -21,7 +21,7 @@ export async function execute(
   {tag, allTags = false, timeoutSeconds = 300}: { tag: string; allTags: boolean; timeoutSeconds: number },
   agent: Agent,
 ): Promise<PushImageResult> {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
 
   if (!tag) {

@@ -21,8 +21,8 @@ export async function execute(
   {image, cmd, workdir, timeoutSeconds = 60, mountSrc}: DockerRunArgs,
   agent: Agent
 ): Promise<DockerCommandResult> {
-  const filesystem = agent.requireFirstServiceByType(FileSystemService);
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const filesystem = agent.requireServiceByType(FileSystemService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
   if (!image || !cmd) {
     throw new Error(`[${name}] image and cmd required`);

@@ -41,7 +41,7 @@ export async function execute(
   }: GetContainerLogsArgs,
   agent: Agent
 ): Promise<GetContainerLogsResult> {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
 
   if (!containerName) {

@@ -32,7 +32,7 @@ export async function execute(
   },
   agent: Agent,
 ): Promise<StartContainerResult> {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
   if (!containers) {
     throw new Error(`[${name}] containers is required`);

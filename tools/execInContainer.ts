@@ -42,7 +42,7 @@ export async function execute(
   }: ExecInContainerArgs,
   agent: Agent
 ): Promise<ExecInContainerResult> {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
   if (!container || !command) {
     throw new Error(`[${name}] container and command are required`);

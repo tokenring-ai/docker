@@ -20,7 +20,7 @@ export async function execute(
   }: { containers: string | string[]; force?: boolean; volumes?: boolean; link?: boolean; timeoutSeconds?: number; },
   agent: Agent,
 ) {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
 
   if (!containers) {

@@ -30,7 +30,7 @@ export async function execute(
   },
   agent: Agent,
 ): Promise<TagImageResult> {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
   if (!sourceImage || !targetImage) {
     throw new Error(`[${name}] sourceImage and targetImage are required`);

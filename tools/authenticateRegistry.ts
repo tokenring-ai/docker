@@ -35,7 +35,7 @@ export async function execute(
   }: AuthenticateRegistryArgs,
   agent: Agent
 ): Promise<AuthResult> {
-  const dockerService = agent.requireFirstServiceByType(DockerService);
+  const dockerService = agent.requireServiceByType(DockerService);
 
 
   if (!server || !username || (!password && !passwordStdin)) {
