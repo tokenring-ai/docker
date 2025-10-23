@@ -6,18 +6,18 @@ import * as tools from "./tools.ts";
 
 export const DockerConfigSchema = z.any().optional();
 
-export const packageInfo: TokenRingPackage = {
+export default {
   name: packageJSON.name,
   version: packageJSON.version,
   description: packageJSON.description,
   install(agentTeam: AgentTeam) {
     const config = agentTeam.getConfigSlice('docker', DockerConfigSchema);
     if (config) {
-      agentTeam.addTools(packageInfo, tools);
+      agentTeam.addTools(packageJSON.name, tools);
       agentTeam.addServices(new DockerService(config));
     }
   }
-};
+} as TokenRingPackage;
 
 export {default as DockerService} from "./DockerService.ts";
 export {default as DockerSandboxProvider} from "./DockerSandboxProvider.ts";
