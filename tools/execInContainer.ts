@@ -1,11 +1,12 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import {DockerCommandResult} from "../types.ts";
 
-export const name = "docker/execInContainer";
+const name = "docker/execInContainer";
 
 interface ExecInContainerArgs {
   container: string;
@@ -28,7 +29,7 @@ interface ExecInContainerResult extends DockerCommandResult {
  * Execute a command in a running Docker container
  */
 
-export async function execute(
+async function execute(
   {
     container,
     command,
@@ -39,7 +40,7 @@ export async function execute(
     privileged = false,
     user,
     timeoutSeconds = 30,
-  }: ExecInContainerArgs,
+  }: z.infer<typeof inputSchema>,
   agent: Agent
 ): Promise<ExecInContainerResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -150,9 +151,9 @@ export async function execute(
   }
 }
 
-export const description = "Execute a command in a running Docker container";
+const description = "Execute a command in a running Docker container";
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   container: z.string().describe("Container name or ID"),
   command: z
     .union([z.string(), z.array(z.string())])
@@ -172,7 +173,7 @@ export const inputSchema = z.object({
     .optional()
     .describe("Working directory inside the container"),
   env: z
-    .record(z.string())
+    .record(z.string(), z.string())
     .optional()
     .default({})
     .describe("Environment variables to set"),
@@ -192,3 +193,7 @@ export const inputSchema = z.object({
     .default(30)
     .describe("Timeout in seconds"),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

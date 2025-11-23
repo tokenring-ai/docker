@@ -1,5 +1,6 @@
-import {AgentTeam, TokenRingPackage} from "@tokenring-ai/agent";
+import TokenRingApp from "@tokenring-ai/app";
 import {ChatService} from "@tokenring-ai/chat";
+import {TokenRingPlugin} from "@tokenring-ai/app";
 import {z} from "zod";
 import DockerService from "./DockerService.ts";
 import packageJSON from './package.json' with {type: 'json'};
@@ -11,16 +12,16 @@ export default {
   name: packageJSON.name,
   version: packageJSON.version,
   description: packageJSON.description,
-  install(agentTeam: AgentTeam) {
-    const config = agentTeam.getConfigSlice('docker', DockerConfigSchema);
+  install(app: TokenRingApp) {
+    const config = app.getConfigSlice('docker', DockerConfigSchema);
     if (config) {
-      agentTeam.waitForService(ChatService, chatService =>
+      app.waitForService(ChatService, chatService =>
         chatService.addTools(packageJSON.name, tools)
       );
-      agentTeam.addServices(new DockerService(config));
+      app.addServices(new DockerService(config));
     }
   }
-} as TokenRingPackage;
+} as TokenRingPlugin;
 
 export {default as DockerService} from "./DockerService.ts";
 export {default as DockerSandboxProvider} from "./DockerSandboxProvider.ts";

@@ -1,4 +1,5 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -24,16 +25,16 @@ interface GetContainerStatsResult extends DockerCommandResult {
  * Get stats from a Docker container
  */
 
-export const name = "docker/getContainerStats";
+const name = "docker/getContainerStats";
 
-export async function execute(
+async function execute(
   {
     containers,
     all = false,
     noStream = true,
     format = "json",
     timeoutSeconds = 10,
-  }: GetContainerStatsArgs,
+  }: z.infer<typeof inputSchema>,
   agent: Agent
 ): Promise<GetContainerStatsResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -146,8 +147,8 @@ export async function execute(
   }
 }
 
-export const description = "Get stats from a Docker container";
-export const inputSchema = z
+const description = "Get stats from a Docker container";
+const inputSchema = z
   .object({
     containers: z
       .union([z.string(), z.array(z.string())])
@@ -167,3 +168,7 @@ export const inputSchema = z
     timeoutSeconds: z.number().int().default(10).describe("Timeout in seconds"),
   })
   .strict();
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

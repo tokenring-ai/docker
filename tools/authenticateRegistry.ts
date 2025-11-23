@@ -1,11 +1,12 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import {DockerCommandResult} from "../types.ts";
 
-export const name = "docker/authenticateRegistry";
+const name = "docker/authenticateRegistry";
 
 interface AuthenticateRegistryArgs {
   server: string;
@@ -24,7 +25,7 @@ interface AuthResult extends DockerCommandResult {
 /**
  * Authenticate against a Docker registry
  */
-export async function execute(
+async function execute(
   {
     server,
     username,
@@ -32,7 +33,7 @@ export async function execute(
     email,
     passwordStdin = false,
     timeoutSeconds = 30,
-  }: AuthenticateRegistryArgs,
+  }: z.infer<typeof inputSchema>,
   agent: Agent
 ): Promise<AuthResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -132,8 +133,9 @@ export async function execute(
   }
 }
 
-export const description = "Authenticate against a Docker registry";
-export const inputSchema = z.object({
+const description = "Authenticate against a Docker registry";
+
+const inputSchema = z.object({
   server: z
     .string()
     .describe("The registry server URL (e.g., 'https://index.docker.io/v1/')"),
@@ -152,3 +154,7 @@ export const inputSchema = z.object({
     .default(30)
     .optional(),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

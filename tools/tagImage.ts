@@ -1,10 +1,11 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
-export const name = "docker/tagImage";
+const name = "docker/tagImage";
 
 interface TagImageResult {
   ok: boolean;
@@ -18,16 +19,12 @@ interface TagImageResult {
 /**
  * Tag a Docker image
  */
-export async function execute(
+async function execute(
   {
     sourceImage,
     targetImage,
     timeoutSeconds = 30,
-  }: {
-    sourceImage: string;
-    targetImage: string;
-    timeoutSeconds: number;
-  },
+  }: z.infer<typeof inputSchema>,
   agent: Agent,
 ): Promise<TagImageResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -90,9 +87,9 @@ export async function execute(
   };
 }
 
-export const description = "Tag a Docker image with a new name and/or tag";
+const description = "Tag a Docker image with a new name and/or tag";
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   sourceImage: z.string().describe("The source image to tag"),
   targetImage: z.string().describe("The target image name and tag"),
   timeoutSeconds: z
@@ -102,3 +99,7 @@ export const inputSchema = z.object({
     .default(30)
     .optional(),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

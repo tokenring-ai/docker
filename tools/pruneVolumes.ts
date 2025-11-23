@@ -1,11 +1,12 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
 // Export the tool name in the required format
-export const name = "docker/pruneVolumes";
+const name = "docker/pruneVolumes";
 
 interface PruneVolumesResult {
   ok: boolean;
@@ -19,14 +20,11 @@ interface PruneVolumesResult {
 /**
  * Prune unused Docker volumes
  */
-export async function execute(
+async function execute(
   {
     filter,
     timeoutSeconds = 60,
-  }: {
-    filter: string;
-    timeoutSeconds: number;
-  },
+  }: z.infer<typeof inputSchema>,
   agent: Agent,
 ): Promise<PruneVolumesResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -105,9 +103,9 @@ export async function execute(
   };
 }
 
-export const description = "Prune unused Docker volumes";
+const description = "Prune unused Docker volumes";
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   filter: z
     .string()
     .describe("Filter volumes based on conditions provided")
@@ -118,3 +116,7 @@ export const inputSchema = z.object({
     .default(false),
   timeoutSeconds: z.number().int().describe("Timeout in seconds").default(60),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

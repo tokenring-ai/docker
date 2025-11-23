@@ -1,10 +1,11 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
-export const name = "docker/stopContainer";
+const name = "docker/stopContainer";
 
 interface StopContainerResult {
   ok: boolean;
@@ -17,12 +18,8 @@ interface StopContainerResult {
 /**
  * Stop one or more Docker containers
  */
-export async function execute(
-  {containers, time = 10, timeoutSeconds = 30}: {
-    containers: string | string[];
-    time?: number;
-    timeoutSeconds?: number;
-  },
+async function execute(
+  {containers, time = 10, timeoutSeconds = 30}: z.infer<typeof inputSchema>,
   agent: Agent,
 ): Promise<StopContainerResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -96,14 +93,11 @@ export async function execute(
   };
 }
 
-export const description = "Stop one or more Docker containers";
+const description = "Stop one or more Docker containers";
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   containers: z
-    .union([z.string(), z.array(z.string())], {
-      required_error: "containers is required",
-      invalid_type_error: "containers must be a string or array of strings",
-    })
+    .union([z.string(), z.array(z.string())])
     .describe("Container ID(s) or name(s) to stop"),
   time: z
     .number()
@@ -112,3 +106,7 @@ export const inputSchema = z.object({
     .describe("Seconds to wait for stop before killing the container"),
   timeoutSeconds: z.number().int().default(30).describe("Timeout in seconds"),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

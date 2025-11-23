@@ -1,11 +1,12 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import {DockerCommandResult} from "../types.ts";
 
-export const name = "docker/createNetwork";
+const name = "docker/createNetwork";
 
 interface CreateNetworkArgs {
   name: string;
@@ -26,7 +27,7 @@ interface CreateNetworkResult extends DockerCommandResult {
 /**
  * Create a Docker network
  */
-export async function execute(
+async function execute(
   {
     name: networkName,
     driver = "bridge",
@@ -36,7 +37,7 @@ export async function execute(
     gateway,
     ipRange,
     timeoutSeconds = 30,
-  }: CreateNetworkArgs,
+  }: z.infer<typeof inputSchema>,
   agent: Agent
 ): Promise<CreateNetworkResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -141,12 +142,12 @@ export async function execute(
   }
 }
 
-export const description = "Create a Docker network";
+const description = "Create a Docker network";
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   name: z.string().describe("The name of the network"),
   driver: z.string().describe("Driver to manage the network").default("bridge"),
-  options: z.record(z.string()).describe("Driver specific options").default({}),
+  options: z.record(z.string(), z.string()).describe("Driver specific options").default({}),
   internal: z
     .boolean()
     .describe("Restrict external access to the network")
@@ -159,3 +160,7 @@ export const inputSchema = z.object({
     .optional(),
   timeoutSeconds: z.number().int().describe("Timeout in seconds").default(30),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

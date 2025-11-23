@@ -1,4 +1,5 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -18,10 +19,10 @@ interface DockerStackArgs {
  * Docker Stack management tool: deploy, update, remove Docker stacks in local Docker Swarm mode
  */
 
-export const name = "docker/dockerStack";
+const name = "docker/dockerStack";
 
-export async function execute(
-  {action, stackName, composeFile, timeoutSeconds = 60}: DockerStackArgs,
+async function execute(
+  {action, stackName, composeFile, timeoutSeconds = 60}: z.infer<typeof inputSchema>,
   agent: Agent
 ): Promise<DockerCommandResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -101,10 +102,10 @@ export async function execute(
   }
 }
 
-export const description =
+const description =
   "Launch, update, or remove a Docker stack from the local Docker Swarm. Actions: deploy (requires composeFile), remove, ps.";
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   action: z
     .enum(["deploy", "remove", "ps"])
     .describe("Action to perform: 'deploy', 'remove', or 'ps'."),
@@ -119,3 +120,7 @@ export const inputSchema = z.object({
     .describe("Timeout for the stack operation in seconds (default: 60).")
     .optional(),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

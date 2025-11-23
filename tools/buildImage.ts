@@ -1,11 +1,12 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import {DockerCommandResult} from "../types.ts";
 
-export const name = "docker/buildImage";
+const name = "docker/buildImage";
 
 interface BuildImageArgs {
   context: string;
@@ -24,7 +25,7 @@ interface BuildResult extends DockerCommandResult {
 /**
  * Build a Docker image
  */
-export async function execute(
+async function execute(
   {
     context,
     tag,
@@ -33,7 +34,7 @@ export async function execute(
     noCache = false,
     pull = false,
     timeoutSeconds = 300,
-  }: BuildImageArgs,
+  }: z.infer<typeof inputSchema>,
   agent: Agent
 ): Promise<BuildResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -122,9 +123,9 @@ export async function execute(
   }
 }
 
-export const description = "Build a Docker image from a Dockerfile";
+const description = "Build a Docker image from a Dockerfile";
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   context: z
     .string()
     .describe("The build context (directory containing Dockerfile)"),
@@ -134,7 +135,7 @@ export const inputSchema = z.object({
     .describe("Path to the Dockerfile (relative to context)")
     .optional(),
   buildArgs: z
-    .record(z.string())
+    .record(z.string(), z.string())
     .describe("Build arguments to pass to the build")
     .optional(),
   noCache: z
@@ -154,3 +155,7 @@ export const inputSchema = z.object({
     .default(300)
     .optional(),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

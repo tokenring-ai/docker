@@ -1,10 +1,11 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
-export const name = "docker/pushImage";
+const name = "docker/pushImage";
 
 interface PushImageResult {
   ok: boolean;
@@ -17,8 +18,8 @@ interface PushImageResult {
 /**
  * Push a Docker image to a registry
  */
-export async function execute(
-  {tag, allTags = false, timeoutSeconds = 300}: { tag: string; allTags: boolean; timeoutSeconds: number },
+async function execute(
+  {tag, allTags = false, timeoutSeconds = 300}: z.infer<typeof inputSchema>,
   agent: Agent,
 ): Promise<PushImageResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -85,8 +86,8 @@ export async function execute(
   };
 }
 
-export const description = "Push a Docker image to a registry";
-export const inputSchema = z.object({
+const description = "Push a Docker image to a registry";
+const inputSchema = z.object({
   tag: z.string().describe("The image tag to push"),
   allTags: z
     .boolean()
@@ -100,3 +101,7 @@ export const inputSchema = z.object({
     .default(300)
     .optional(),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

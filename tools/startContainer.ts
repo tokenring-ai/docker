@@ -1,11 +1,12 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
 // Export tool name for consistent messaging
-export const name = "docker/startContainer";
+const name = "docker/startContainer";
 
 interface StartContainerResult {
   ok: boolean;
@@ -18,18 +19,13 @@ interface StartContainerResult {
 /**
  * Start one or more Docker containers
  */
-export async function execute(
+async function execute(
   {
     containers,
     attach = false,
     interactive = false,
     timeoutSeconds = 30,
-  }: {
-    containers: string[];
-    attach: boolean;
-    interactive: boolean;
-    timeoutSeconds: number;
-  },
+  }: z.infer<typeof inputSchema>,
   agent: Agent,
 ): Promise<StartContainerResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -110,13 +106,13 @@ export async function execute(
   };
 }
 
-export const description = "Start one or more Docker containers";
+const description = "Start one or more Docker containers";
 
-export const inputSchema = z
+const inputSchema = z
   .object({
-    containers: z.union([z.string(), z.array(z.string())], {
-      description: "Container ID(s) or name(s) to start",
-    }),
+    containers: z.union([z.string(), z.array(z.string())]).describe(
+      "Container ID(s) or name(s) to start",
+    ),
     attach: z
       .boolean()
       .optional()
@@ -135,3 +131,7 @@ export const inputSchema = z
       .describe("Timeout in seconds"),
   })
   .strict();
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

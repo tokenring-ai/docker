@@ -1,4 +1,4 @@
-import {TokenRingService} from "@tokenring-ai/agent/types";
+import {TokenRingService} from "@tokenring-ai/app/types";
 
 export interface DockerServiceParams {
   host?: string;

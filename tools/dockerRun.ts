@@ -1,10 +1,11 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import type {DockerCommandResult} from "../types.ts";
 
-export const name = "docker/dockerRun";
+const name = "docker/dockerRun";
 
 interface DockerRunArgs {
   image?: string;
@@ -17,8 +18,8 @@ interface DockerRunArgs {
 /**
  * Runs a shell command in an ephemeral Docker container
  */
-export async function execute(
-  {image, cmd, workdir, timeoutSeconds = 60, mountSrc}: DockerRunArgs,
+async function execute(
+  {image, cmd, workdir, timeoutSeconds = 60, mountSrc}: z.infer<typeof inputSchema>,
   agent: Agent
 ): Promise<DockerCommandResult> {
   const filesystem = agent.requireServiceByType(FileSystemService);
@@ -98,10 +99,10 @@ export async function execute(
   }
 }
 
-export const description =
+const description =
   "Runs a shell command in an ephemeral Docker container (docker run --rm). Returns the result (stdout, stderr, exit code). Now also supports mounting the source directory at a custom path.";
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   image: z.string().describe("Docker image name (e.g., ubuntu:latest)"),
   cmd: z.string().describe("Command to run in the container (e.g., 'ls -l /')"),
   workdir: z
@@ -120,3 +121,7 @@ export const inputSchema = z.object({
       "Bind-mount the source directory at this target path inside the container (optional)",
     ),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

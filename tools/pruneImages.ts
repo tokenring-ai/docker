@@ -1,10 +1,11 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
-export const name = "docker/pruneImages";
+const name = "docker/pruneImages";
 
 interface PruneImagesResult {
   ok: boolean;
@@ -17,8 +18,8 @@ interface PruneImagesResult {
 /**
  * Prune unused Docker images
  */
-export async function execute(
-  {all = false, filter, timeoutSeconds = 60}: { all?: boolean; filter?: string; timeoutSeconds?: number },
+async function execute(
+  {all = false, filter, timeoutSeconds = 60}: z.infer<typeof inputSchema>,
   agent: Agent,
 ): Promise<PruneImagesResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -82,6 +83,7 @@ export async function execute(
   agent.infoLine(
     `[${name}] Successfully pruned unused Docker images. Space reclaimed: ${spaceReclaimed}`,
   );
+
   return {
     ok: true,
     exitCode: exitCode,
@@ -91,9 +93,9 @@ export async function execute(
   };
 }
 
-export const description = "Prune unused Docker images";
+const description = "Prune unused Docker images";
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   all: z
     .boolean()
     .default(false)
@@ -102,3 +104,7 @@ export const inputSchema = z.object({
   force: z.boolean().default(false).describe("Whether to force removal of images"),
   timeoutSeconds: z.number().int().default(60).describe("Timeout in seconds"),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

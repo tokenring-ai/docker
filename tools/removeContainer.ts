@@ -1,4 +1,5 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -8,16 +9,16 @@ import DockerService from "../DockerService.ts";
  * Remove one or more Docker containers
  */
 
-export const name = "docker/removeContainer";
+const name = "docker/removeContainer";
 
-export async function execute(
+async function execute(
   {
     containers,
     force = false,
     volumes = false,
     link = false,
     timeoutSeconds = 30,
-  }: { containers: string | string[]; force?: boolean; volumes?: boolean; link?: boolean; timeoutSeconds?: number; },
+  }: z.infer<typeof inputSchema>,
   agent: Agent,
 ) {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -109,9 +110,9 @@ export async function execute(
   }
 }
 
-export const description = "Remove one or more Docker containers";
+const description = "Remove one or more Docker containers";
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   containers: z
     .union([z.string(), z.array(z.string())])
     .describe("Container ID(s) or name(s) to remove"),
@@ -120,3 +121,7 @@ export const inputSchema = z.object({
   link: z.boolean().default(false).describe("Whether to remove the specified link"),
   timeoutSeconds: z.number().int().default(30).describe("Timeout in seconds"),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

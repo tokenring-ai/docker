@@ -1,4 +1,5 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -7,7 +8,7 @@ import DockerService from "../DockerService.ts";
 /**
  * Exported tool name in the format "packageName/toolName".
  */
-export const name = "docker/removeImage";
+const name = "docker/removeImage";
 
 interface RemoveImageResult {
   ok: boolean;
@@ -20,18 +21,13 @@ interface RemoveImageResult {
 /**
  * Remove one or more Docker images
  */
-export async function execute(
+async function execute(
   {
     images,
     force = false,
     noPrune = false,
     timeoutSeconds = 30,
-  }: {
-    images: string[];
-    force: boolean;
-    noPrune: boolean;
-    timeoutSeconds: number;
-  },
+  }: z.infer<typeof inputSchema>,
   agent: Agent,
 ): Promise<RemoveImageResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -115,9 +111,9 @@ export async function execute(
   };
 }
 
-export const description = "Remove one or more Docker images";
+const description = "Remove one or more Docker images";
 
-export const inputSchema = z
+const inputSchema = z
   .object({
     images: z.array(z.string()).describe("Image ID(s) or name(s) to remove"),
     force: z.boolean().optional().default(false).describe("Whether to force removal of the image"),
@@ -125,3 +121,7 @@ export const inputSchema = z
     timeoutSeconds: z.number().int().optional().default(30).describe("Timeout in seconds"),
   })
   .strict();
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

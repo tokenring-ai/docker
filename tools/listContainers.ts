@@ -1,4 +1,5 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -26,9 +27,9 @@ interface ListContainersResult extends DockerCommandResult {
  * List Docker containers
  */
 
-export const name = "docker/listContainers";
+const name = "docker/listContainers";
 
-export async function execute(
+async function execute(
   {
     all = false,
     quiet = false,
@@ -37,7 +38,7 @@ export async function execute(
     size = false,
     format = "json",
     timeoutSeconds = 30,
-  }: ListContainersArgs,
+  }: z.infer<typeof inputSchema>,
   agent: Agent
 ): Promise<ListContainersResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -155,9 +156,9 @@ export async function execute(
   }
 }
 
-export const description = "List Docker containers";
+const description = "List Docker containers";
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   all: z
     .boolean()
     .describe("Whether to show all containers (default shows just running)")
@@ -178,3 +179,7 @@ export const inputSchema = z.object({
     .default("json"),
   timeoutSeconds: z.number().int().describe("Timeout in seconds").default(30),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

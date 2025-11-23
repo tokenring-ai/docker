@@ -1,11 +1,12 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import {DockerCommandResult} from "../types.ts";
 
-export const name = "docker/getContainerLogs";
+const name = "docker/getContainerLogs";
 
 interface GetContainerLogsArgs {
   name: string;
@@ -28,7 +29,7 @@ interface GetContainerLogsResult extends DockerCommandResult {
  * Get logs from a Docker container
  */
 
-export async function execute(
+async function execute(
   {
     name: containerName,
     follow = false,
@@ -38,7 +39,7 @@ export async function execute(
     tail = 100,
     details = false,
     timeoutSeconds = 30,
-  }: GetContainerLogsArgs,
+  }: z.infer<typeof inputSchema>,
   agent: Agent
 ): Promise<GetContainerLogsResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -134,9 +135,9 @@ export async function execute(
   }
 }
 
-export const description = "Get logs from a Docker container";
+const description = "Get logs from a Docker container";
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   name: z.string().describe("The container name or ID"),
   follow: z
     .boolean()
@@ -178,3 +179,7 @@ export const inputSchema = z.object({
     .default(30)
     .describe("Timeout in seconds"),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;
