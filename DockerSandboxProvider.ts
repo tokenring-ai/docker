@@ -4,7 +4,7 @@ import SandboxProvider, {
   type SandboxOptions,
   type SandboxResult
 } from "@tokenring-ai/sandbox/SandboxProvider";
-import {shellEscape} from "@tokenring-ai/utility/shellEscape";
+import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 
 export interface DockerSandboxProviderParams extends TLSConfig {

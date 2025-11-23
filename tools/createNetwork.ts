@@ -1,5 +1,5 @@
 import Agent from "@tokenring-ai/agent/Agent";
-import {shellEscape} from "@tokenring-ai/utility/shellEscape";
+import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
