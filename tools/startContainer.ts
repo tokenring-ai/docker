@@ -99,7 +99,7 @@ async function execute(
   );
   return {
     ok: true,
-    exitCode: exitCode,
+    exitCode: exitCode ?? 0,
     stdout: stdout?.trim() || "",
     stderr: stderr?.trim() || "",
     containers: containerList,

@@ -79,7 +79,7 @@ async function execute(
   agent.infoLine(`[pushImage] Successfully pushed image ${tag}`);
   return {
     ok: true,
-    exitCode: exitCode,
+    exitCode: exitCode ?? 0,
     stdout: stdout?.trim() || "",
     stderr: stderr?.trim() || "",
     tag: tag,
