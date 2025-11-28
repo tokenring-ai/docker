@@ -4,7 +4,7 @@ import {TokenRingPlugin} from "@tokenring-ai/app";
 import {z} from "zod";
 import DockerService from "./DockerService.ts";
 import packageJSON from './package.json' with {type: 'json'};
-import * as tools from "./tools.ts";
+import tools from "./tools.ts";
 
 export const DockerConfigSchema = z.any().optional();
 
