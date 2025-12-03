@@ -1,5 +1,5 @@
 // Re-import existing JavaScript tools so we can migrate incrementally
-import {default as dockerRun} from "./tools/dockerRun.js";
+import dockerRun from "./tools/dockerRun.js";
 
 export default {
   dockerRun,
