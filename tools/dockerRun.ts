@@ -7,19 +7,11 @@ import type {DockerCommandResult} from "../types.ts";
 
 const name = "docker/dockerRun";
 
-interface DockerRunArgs {
-  image?: string;
-  cmd?: string;
-  workdir?: string;
-  timeoutSeconds?: number;
-  mountSrc?: string;
-}
-
 /**
  * Runs a shell command in an ephemeral Docker container
  */
 async function execute(
-  {image, cmd, workdir, timeoutSeconds = 60, mountSrc}: z.infer<typeof inputSchema>,
+  {image, cmd, timeoutSeconds = 60}: z.infer<typeof inputSchema>,
   agent: Agent
 ): Promise<DockerCommandResult> {
   const filesystem = agent.requireServiceByType(FileSystemService);
@@ -55,28 +47,13 @@ async function execute(
     }
   }
 
-  // Add working directory
-  if (workdir) {
-    dockerArgs.push("-w", workdir);
-  }
-
-  // Add mount if specified
-  if (mountSrc) {
-    try {
-      const base = filesystem.getBaseDirectory();
-      dockerArgs.push("-v", `${base}:${mountSrc}`);
-    } catch (_e) {
-      // If base directory is not available, skip mounting
-    }
-  }
-
   // Add image and command
   dockerArgs.push(image, "sh", "-c", cmd);
 
   const timeout = Math.max(5, Math.min(timeoutSeconds || 60, 600));
 
   // Create the final command with timeout
-  const finalCommand: string[] = ["timeout", `${timeout}s`, "docker", ...dockerArgs];
+  const finalCommand: string[] = ["timeout", `${timeout}s`, "docker -v `pwd`:/workdir:rw -w /workdir ", ...dockerArgs];
 
   agent.infoLine(`[${name}] Executing: ${finalCommand.join(" ")}`);
 
@@ -100,26 +77,16 @@ async function execute(
 }
 
 const description =
-  "Runs a shell command in an ephemeral Docker container (docker run --rm). Returns the result (stdout, stderr, exit code). Now also supports mounting the source directory at a custom path.";
+  "Runs a shell command in an ephemeral Docker container (docker run --rm). Returns the result (stdout, stderr, exit code). The base directory for the project is bind mounted at /workdir, and the working directory of the container is set to /workdir";
 
 const inputSchema = z.object({
   image: z.string().describe("Docker image name (e.g., ubuntu:latest)"),
   cmd: z.string().describe("Command to run in the container (e.g., 'ls -l /')"),
-  workdir: z
-    .string()
-    .optional()
-    .describe("Working directory inside the container (optional)"),
   timeoutSeconds: z
     .number()
     .int()
     .optional()
     .describe("Timeout for the command, in seconds (default: 60)."),
-  mountSrc: z
-    .string()
-    .optional()
-    .describe(
-      "Bind-mount the source directory at this target path inside the container (optional)",
-    ),
 });
 
 export default {
