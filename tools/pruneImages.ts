@@ -107,4 +107,4 @@ const inputSchema = z.object({
 
 export default {
   name, description, inputSchema, execute,
-} as TokenRingToolDefinition<typeof inputSchema>;
+} satisfies TokenRingToolDefinition<typeof inputSchema>;
