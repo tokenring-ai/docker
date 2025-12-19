@@ -1,19 +1,18 @@
 # @tokenring-ai/docker
 
-A comprehensive Docker integration package for Token Ring AI agents, providing both ephemeral container execution and persistent container management capabilities.
+Docker integration package for Token Ring AI agents, providing both ephemeral container execution and persistent container management capabilities.
 
 ## Overview
 
-The `@tokenring-ai/docker` package enables AI agents to interact with Docker through a configurable service and a rich set of tools for common Docker operations. It supports local Docker via Unix socket, remote hosts via TCP or SSH, and optional TLS configuration for secure connections.
+The `@tokenring-ai/docker` package enables AI agents to interact with Docker through a configurable service and a set of tools for Docker operations. It supports local Docker via Unix socket, remote hosts via TCP or SSH, and optional TLS configuration for secure connections.
 
 ### Key Features
 
 - **Ephemeral Container Execution**: Run one-off commands in temporary containers using the `dockerRun` tool
 - **Persistent Container Management**: Create, manage, and execute commands in long-running containers via `DockerSandboxProvider`
-- **Comprehensive Tool Suite**: 18+ tools covering image building, container management, resource listing, logging, and more
-- **Secure CLI Execution**: All operations use `execa` for secure command execution with proper timeout handling
-- **Flexible Configuration**: Support for custom Docker hosts, TLS certificates, and connection parameters
+- **Secure Configuration**: Service-based Docker configuration with TLS support
 - **Agent Integration**: Seamless integration with Token Ring's agent ecosystem and service architecture
+- **Shell Safety**: All operations use proper shell escaping and timeout management
 
 ## Installation
 
@@ -24,30 +23,41 @@ npm install @tokenring-ai/docker
 ## Dependencies
 
 - **Peer Dependencies**:
-  - `@tokenring-ai/agent` ^0.1.0
-  - `@tokenring-ai/filesystem` ^0.1.0
-  - `@tokenring-ai/sandbox` ^0.1.0
-  - `@tokenring-ai/utility` ^0.1.0
+  - `@tokenring-ai/app` ^0.2.0
+  - `@tokenring-ai/chat` ^0.2.0
+  - `@tokenring-ai/agent` ^0.2.0
+  - `@tokenring-ai/filesystem` ^0.2.0
+  - `@tokenring-ai/sandbox` ^0.2.0
+  - `@tokenring-ai/utility` ^0.2.0
 - **Runtime Dependencies**:
-  - `execa` ^9.6.0
+  - `execa` ^9.6.1
+  - `zod` (catalog)
   - `glob-gitignore` ^1.0.15
 - **External Requirements**: Docker CLI must be installed and accessible on the host machine
 
 ## Setup and Configuration
 
-### 1. Service Registration
+### Plugin Integration (Recommended)
+
+The package integrates as a Token Ring plugin:
+
+```typescript
+import { TokenRingApp } from "@tokenring-ai/app";
+import dockerPlugin from "@tokenring-ai/docker";
+
+const app = new TokenRingApp();
+app.use(dockerPlugin);
+```
+
+### Service Registration
+
+Alternatively, register the service directly:
 
 ```typescript
 import { ServiceRegistry } from "@tokenring-ai/registry";
 import { DockerService } from "@tokenring-ai/docker";
-import { FileSystemService } from "@tokenring-ai/filesystem";
 
 const registry = new ServiceRegistry();
-
-// Register required services
-registry.registerService(new FileSystemService({ 
-  baseDirectory: process.cwd() 
-}));
 
 registry.registerService(new DockerService({
   host: "unix:///var/run/docker.sock", // Default
@@ -58,48 +68,36 @@ registry.registerService(new DockerService({
 }));
 ```
 
-### 2. Plugin Integration
-
-The package can also be used as a Token Ring plugin:
-
-```typescript
-import { TokenRingApp } from "@tokenring-ai/app";
-import dockerPlugin from "@tokenring-ai/docker";
-
-const app = new TokenRingApp();
-app.use(dockerPlugin);
-```
-
 ## Package Structure
 
 ```
 pkg/docker/
-├── index.ts              # Main exports and plugin definition
-├── package.json          # Package metadata and dependencies
-├── tsconfig.json         # TypeScript configuration
-├── types.ts              # Shared interfaces (TLSConfig, DockerCommandResult)
-├── DockerService.ts      # Core service for Docker configuration
-├── DockerSandboxProvider.ts # Sandbox implementation for persistent containers
-├── tools.ts              # Re-exports all available tools
-├── tools/                # Individual tool modules (18+ tools)
-│   ├── dockerRun.ts      # Run ephemeral containers
-│   ├── buildImage.ts     # Build images from Dockerfile
-│   ├── listImages.ts     # List Docker images
-│   ├── listContainers.ts # List Docker containers
-│   ├── getContainerLogs.ts # Retrieve container logs
-│   ├── execInContainer.ts # Execute commands in running containers
-│   ├── startContainer.ts # Start stopped containers
-│   ├── stopContainer.ts  # Stop running containers
-│   ├── removeContainer.ts # Remove containers
-│   ├── pushImage.ts      # Push images to registry
-│   ├── tagImage.ts       # Tag images
-│   ├── pruneImages.ts    # Prune unused images
-│   ├── pruneVolumes.ts   # Prune unused volumes
-│   ├── createNetwork.ts  # Create Docker networks
-│   ├── dockerStack.ts    # Manage Docker stacks
+├── index.ts                    # Main exports and DockerConfigSchema
+├── plugin.ts                   # TokenRing plugin integration
+├── package.json               # Package metadata and dependencies
+├── types.ts                   # Shared interfaces (TLSConfig, DockerCommandResult)
+├── DockerService.ts           # Core service for Docker configuration
+├── DockerSandboxProvider.ts   # Sandbox implementation for persistent containers
+├── tools.ts                   # Re-exports available tools
+├── tools/                     # Individual tool modules
+│   ├── dockerRun.ts           # Run ephemeral containers
+│   ├── listContainers.ts      # List Docker containers
+│   ├── buildImage.ts          # Build images from Dockerfile
+│   ├── execInContainer.ts     # Execute commands in running containers
+│   ├── listImages.ts          # List Docker images
+│   ├── getContainerLogs.ts    # Retrieve container logs
+│   ├── getContainerStats.ts   # Get container statistics
+│   ├── startContainer.ts      # Start stopped containers
+│   ├── stopContainer.ts       # Stop running containers
+│   ├── removeContainer.ts     # Remove containers
+│   ├── pushImage.ts           # Push images to registry
+│   ├── tagImage.ts            # Tag images
+│   ├── pruneImages.ts         # Prune unused images
+│   ├── pruneVolumes.ts        # Prune unused volumes
+│   ├── createNetwork.ts       # Create Docker networks
+│   ├── dockerStack.ts         # Manage Docker stacks
 │   └── authenticateRegistry.ts # Authenticate with registries
-└── README.md             # This documentation
-├── LICENSE               # MIT License
+└── README.md                  # This documentation
 ```
 
 ## Core Components
@@ -123,9 +121,25 @@ interface DockerServiceParams {
 - `getHost(): string` - Returns the configured Docker host
 - `getTLSConfig(): TLSConfig` - Returns TLS configuration object
 
+**Properties**:
+- `name = "DockerService"` - Service identifier
+- `description = "Provides Docker functionality"` - Service description
+- `static constructorProperties` - Schema for service registration
+
 ### DockerSandboxProvider
 
 **Description**: Extends `@tokenring-ai/sandbox/SandboxProvider` to manage persistent Docker containers.
+
+**Constructor Parameters**:
+```typescript
+interface DockerSandboxProviderParams extends TLSConfig {
+  host?: string;
+  tlsVerify?: boolean;
+  tlsCACert?: string;
+  tlsCert?: string;
+  tlsKey?: string;
+}
+```
 
 **Key Methods**:
 - `createContainer(options: SandboxOptions): Promise<SandboxResult>`
@@ -159,32 +173,20 @@ console.log(result.stdout);
 
 ## Available Tools
 
-### Container Management
-- **dockerRun**: Execute commands in ephemeral containers
-- **startContainer**: Start one or more containers
-- **stopContainer**: Stop one or more containers
-- **removeContainer**: Remove one or more containers
+### Core Tools (Currently Implemented)
 
-### Image Management
-- **buildImage**: Build images from Dockerfile
-- **listImages**: List Docker images with filtering and formatting
-- **pushImage**: Push images to registries
-- **tagImage**: Tag images with new names
-- **pruneImages**: Prune unused images
+- **dockerRun**: Execute commands in ephemeral containers (automatically cleaned up)
+- **listContainers**: List Docker containers with filtering and formatting options
+- **buildImage**: Build Docker images from Dockerfile with build arguments
+- **execInContainer**: Execute commands in running containers with environment and working directory options
 
-### Container Operations
-- **listContainers**: List containers with filtering and formatting
-- **getContainerLogs**: Retrieve container logs with various options
-- **getContainerStats**: Get container statistics
-- **execInContainer**: Execute commands in running containers
+### Extended Tool Suite (Available via tools directory)
 
-### Network and Volume Management
-- **createNetwork**: Create Docker networks
-- **pruneVolumes**: Prune unused volumes
-
-### Advanced Operations
-- **dockerStack**: Manage Docker stacks (deploy, remove, ps)
-- **authenticateRegistry**: Authenticate with Docker registries
+- **Image Management**: `buildImage`, `listImages`, `pushImage`, `tagImage`, `pruneImages`
+- **Container Management**: `listContainers`, `startContainer`, `stopContainer`, `removeContainer`
+- **Container Operations**: `execInContainer`, `getContainerLogs`, `getContainerStats`
+- **Resource Management**: `pruneVolumes`, `createNetwork`
+- **Advanced Operations**: `dockerStack`, `authenticateRegistry`
 
 ## Usage Examples
 
@@ -198,9 +200,7 @@ const agent = new Agent(registry);
 const result = await dockerRun.execute({
   image: "ubuntu:22.04",
   cmd: "ls -la /usr/bin",
-  workdir: "/tmp",
-  timeoutSeconds: 30,
-  mountSrc: "/host-src" // Mounts filesystem base directory
+  timeoutSeconds: 30
 }, agent);
 
 if (result.ok) {
@@ -210,13 +210,36 @@ if (result.ok) {
 }
 ```
 
-### 2. Image Building and Pushing
+### 2. Container Management
 
 ```typescript
-import { buildImage, pushImage } from "@tokenring-ai/docker/tools";
+import { listContainers, execInContainer } from "@tokenring-ai/docker/tools";
 
-// Build the image
-const buildResult = await buildImage.execute({
+// List all containers
+const containers = await listContainers.execute({
+  all: true,
+  format: "json"
+}, agent);
+
+// Execute command in a running container
+if (containers.containers && containers.containers.length > 0) {
+  const containerId = containers.containers[0].Id;
+  const result = await execInContainer.execute({
+    container: containerId,
+    command: "cat /etc/os-release",
+    timeoutSeconds: 30
+  }, agent);
+  
+  console.log(result.stdout);
+}
+```
+
+### 3. Image Building
+
+```typescript
+import { buildImage } from "@tokenring-ai/docker/tools";
+
+const result = await buildImage.execute({
   context: "./myapp",
   tag: "myrepo/myapp:v1.0.0",
   dockerfile: "Dockerfile",
@@ -225,41 +248,9 @@ const buildResult = await buildImage.execute({
   timeoutSeconds: 600
 }, agent);
 
-if (buildResult.ok) {
-  // Push to registry
-  const pushResult = await pushImage.execute({
-    tag: "myrepo/myapp:v1.0.0",
-    timeoutSeconds: 300
-  }, agent);
-  
-  console.log("Image pushed successfully");
+if (result.ok) {
+  console.log("Image built successfully:", result.tag);
 }
-```
-
-### 3. Container Lifecycle Management
-
-```typescript
-import { listContainers, startContainer, stopContainer } from "@tokenring-ai/docker/tools";
-
-// List all containers
-const containers = await listContainers.execute({
-  all: true,
-  format: "json"
-}, agent);
-
-// Start stopped containers
-for (const container of containers.containers || []) {
-  await startContainer.execute({
-    containers: container.Id,
-    timeoutSeconds: 30
-  }, agent);
-}
-
-// Stop running containers
-await stopContainer.execute({
-  containers: containers.containers?.map(c => c.Id) || [],
-  timeoutSeconds: 30
-}, agent);
 ```
 
 ### 4. Persistent Container Management
@@ -303,10 +294,10 @@ await provider.removeContainer(containerId);
 - **tlsKey**: Path to client key file
 
 ### Tool-Specific Configuration
-- **Timeouts**: Automatically clamped (5-600s for most operations, up to 1800s for builds)
+- **Timeouts**: Automatically clamped per tool (5-600s for most operations, up to 1800s for builds)
 - **Output Formats**: JSON for structured data, table for human-readable output
-- **Mounts**: Support for host directory mounting via `FileSystemService`
-- **Filters**: Advanced filtering for lists and operations
+- **Shell Escaping**: Automatic shell escaping for all command arguments
+- **Buffer Management**: Configurable maxBuffer sizes per operation
 
 ## API Reference
 
@@ -316,6 +307,9 @@ await provider.removeContainer(containerId);
 // Main service and provider
 export { default as DockerService } from "./DockerService.ts";
 export { default as DockerSandboxProvider } from "./DockerSandboxProvider.ts";
+
+// Configuration schema
+export const DockerConfigSchema = z.any().optional();
 
 // All tools
 export * from "./tools.ts";
@@ -354,6 +348,28 @@ interface TLSConfig {
   tlsCert?: string;
   tlsKey?: string;
 }
+```
+
+## Plugin Integration
+
+The package automatically integrates with Token Ring applications:
+
+```typescript
+// In plugin.ts
+export default {
+  name: packageJSON.name,
+  version: packageJSON.version,
+  description: packageJSON.description,
+  install(app: TokenRingApp) {
+    const config = app.getConfigSlice('docker', DockerConfigSchema);
+    if (config) {
+      app.waitForService(ChatService, chatService =>
+        chatService.addTools(packageJSON.name, tools)
+      );
+      app.addServices(new DockerService(config));
+    }
+  }
+} satisfies TokenRingPlugin;
 ```
 
 ## Development and Testing
@@ -402,4 +418,4 @@ MIT License - see LICENSE file for details.
 
 ## Version
 
-0.1.0 - Early development stage; APIs may evolve.
+0.2.0 - Added plugin integration and comprehensive Docker tool suite.
