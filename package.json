@@ -19,7 +19,15 @@
   },
   "license": "MIT",
   "scripts": {
-    "eslint": "eslint --fix ./"
+    "eslint": "eslint --fix ./",
+    "test": "vitest run",
+    "build": "tsc --noEmit",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "vitest": "catalog:",
+    "typescript": "catalog:"
+  }
 }
