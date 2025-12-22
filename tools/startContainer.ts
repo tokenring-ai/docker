@@ -6,7 +6,7 @@ import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
 // Export tool name for consistent messaging
-const name = "docker/startContainer";
+const name = "docker_startContainer";
 
 interface StartContainerResult {
   ok: boolean;

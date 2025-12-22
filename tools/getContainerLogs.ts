@@ -6,7 +6,7 @@ import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import {DockerCommandResult} from "../types.ts";
 
-const name = "docker/getContainerLogs";
+const name = "docker_getContainerLogs";
 
 interface GetContainerLogsArgs {
   name: string;

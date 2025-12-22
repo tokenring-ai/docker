@@ -25,7 +25,7 @@ interface GetContainerStatsResult extends DockerCommandResult {
  * Get stats from a Docker container
  */
 
-const name = "docker/getContainerStats";
+const name = "docker_getContainerStats";
 
 async function execute(
   {

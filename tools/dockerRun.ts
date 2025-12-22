@@ -5,7 +5,7 @@ import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import type {DockerCommandResult} from "../types.ts";
 
-const name = "docker/dockerRun";
+const name = "docker_dockerRun";
 
 /**
  * Runs a shell command in an ephemeral Docker container

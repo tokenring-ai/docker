@@ -5,7 +5,7 @@ import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
-const name = "docker/pushImage";
+const name = "docker_pushImage";
 
 interface PushImageResult {
   ok: boolean;

@@ -27,7 +27,7 @@ interface ListContainersResult extends DockerCommandResult {
  * List Docker containers
  */
 
-const name = "docker/listContainers";
+const name = "docker_listContainers";
 
 async function execute(
   {

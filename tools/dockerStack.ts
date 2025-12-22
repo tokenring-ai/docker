@@ -19,7 +19,7 @@ interface DockerStackArgs {
  * Docker Stack management tool: deploy, update, remove Docker stacks in local Docker Swarm mode
  */
 
-const name = "docker/dockerStack";
+const name = "docker_dockerStack";
 
 async function execute(
   {action, stackName, composeFile, timeoutSeconds = 60}: z.infer<typeof inputSchema>,

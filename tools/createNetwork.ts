@@ -6,7 +6,7 @@ import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import {DockerCommandResult} from "../types.ts";
 
-const name = "docker/createNetwork";
+const name = "docker_createNetwork";
 
 interface CreateNetworkArgs {
   name: string;

@@ -5,7 +5,7 @@ import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
-const name = "docker/pruneImages";
+const name = "docker_pruneImages";
 
 interface PruneImagesResult {
   ok: boolean;

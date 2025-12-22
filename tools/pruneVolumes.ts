@@ -6,7 +6,7 @@ import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
 // Export the tool name in the required format
-const name = "docker/pruneVolumes";
+const name = "docker_pruneVolumes";
 
 interface PruneVolumesResult {
   ok: boolean;

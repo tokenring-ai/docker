@@ -5,7 +5,7 @@ import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
-const name = "docker/tagImage";
+const name = "docker_tagImage";
 
 interface TagImageResult {
   ok: boolean;

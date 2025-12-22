@@ -9,7 +9,7 @@ import DockerService from "../DockerService.ts";
  * Remove one or more Docker containers
  */
 
-const name = "docker/removeContainer";
+const name = "docker_removeContainer";
 
 async function execute(
   {

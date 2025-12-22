@@ -5,7 +5,7 @@ import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
-const name = "docker/stopContainer";
+const name = "docker_stopContainer";
 
 interface StopContainerResult {
   ok: boolean;

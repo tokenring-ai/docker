@@ -26,7 +26,7 @@ interface ListImagesResult extends DockerCommandResult {
  * List Docker images
  */
 
-const name = "docker/listImages";
+const name = "docker_listImages";
 
 async function execute(
   {

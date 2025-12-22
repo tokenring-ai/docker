@@ -6,7 +6,7 @@ import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import {DockerCommandResult} from "../types.ts";
 
-const name = "docker/execInContainer";
+const name = "docker_execInContainer";
 
 interface ExecInContainerArgs {
   container: string;

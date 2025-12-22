@@ -6,7 +6,7 @@ import {z} from "zod";
 import DockerService from "../DockerService.ts";
 import {DockerCommandResult} from "../types.ts";
 
-const name = "docker/buildImage";
+const name = "docker_buildImage";
 
 interface BuildImageArgs {
   context: string;

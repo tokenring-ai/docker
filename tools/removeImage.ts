@@ -8,7 +8,7 @@ import DockerService from "../DockerService.ts";
 /**
  * Exported tool name in the format "packageName/toolName".
  */
-const name = "docker/removeImage";
+const name = "docker_removeImage";
 
 interface RemoveImageResult {
   ok: boolean;
