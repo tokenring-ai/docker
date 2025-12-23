@@ -8,17 +8,6 @@ import {DockerCommandResult} from "../types.ts";
 
 const name = "docker_getContainerLogs";
 
-interface GetContainerLogsArgs {
-  name: string;
-  follow?: boolean;
-  timestamps?: boolean;
-  since?: string;
-  until?: string;
-  tail?: number;
-  details?: boolean;
-  timeoutSeconds?: number;
-}
-
 interface GetContainerLogsResult extends DockerCommandResult {
   logs?: string;
   lineCount?: number;

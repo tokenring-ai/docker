@@ -8,18 +8,6 @@ import {DockerCommandResult} from "../types.ts";
 
 const name = "docker_execInContainer";
 
-interface ExecInContainerArgs {
-  container: string;
-  command: string | string[];
-  interactive?: boolean;
-  tty?: boolean;
-  workdir?: string;
-  env?: Record<string, string>;
-  privileged?: boolean;
-  user?: string;
-  timeoutSeconds?: number;
-}
-
 interface ExecInContainerResult extends DockerCommandResult {
   container?: string;
   command?: string;

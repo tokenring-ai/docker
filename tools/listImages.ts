@@ -7,16 +7,6 @@ import DockerService from "../DockerService.ts";
 import {DockerCommandResult} from "../types.ts";
 
 type FormatType = "json" | "table" | string;
-
-interface ListImagesArgs {
-  all?: boolean;
-  quiet?: boolean;
-  digests?: boolean;
-  filter?: string;
-  format?: FormatType;
-  timeoutSeconds?: number;
-}
-
 interface ListImagesResult extends DockerCommandResult {
   images?: any;
   count?: number;

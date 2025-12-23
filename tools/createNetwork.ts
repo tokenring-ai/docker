@@ -8,17 +8,6 @@ import {DockerCommandResult} from "../types.ts";
 
 const name = "docker_createNetwork";
 
-interface CreateNetworkArgs {
-  name: string;
-  driver?: string;
-  options?: Record<string, string>;
-  internal?: boolean;
-  subnet?: string;
-  gateway?: string;
-  ipRange?: string;
-  timeoutSeconds?: number;
-}
-
 interface CreateNetworkResult extends DockerCommandResult {
   name?: string;
   id?: string;

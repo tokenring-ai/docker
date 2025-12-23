@@ -16,34 +16,6 @@ export interface TLSConfig {
 }
 
 export default class DockerService implements TokenRingService {
-  static constructorProperties = {
-    host: {
-      type: "string",
-      required: false,
-      description:
-        "Docker host URL (e.g., tcp://remote-host:2375 or ssh://user@host). Defaults to unix:///var/run/docker.sock",
-    },
-    tlsVerify: {
-      type: "boolean",
-      required: false,
-      description: "Whether to verify TLS certificates",
-    },
-    tlsCACert: {
-      type: "string",
-      required: false,
-      description: "Path to CA certificate file",
-    },
-    tlsCert: {
-      type: "string",
-      required: false,
-      description: "Path to client certificate file",
-    },
-    tlsKey: {
-      type: "string",
-      required: false,
-      description: "Path to client key file",
-    },
-  } as const;
   name = "DockerService";
   description = "Provides Docker functionality";
   private readonly host: string;

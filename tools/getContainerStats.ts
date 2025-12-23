@@ -8,14 +8,6 @@ import {DockerCommandResult} from "../types.ts";
 
 type FormatType = "json" | "table" | string;
 
-interface GetContainerStatsArgs {
-  containers: string | string[];
-  all?: boolean;
-  noStream?: boolean;
-  format?: FormatType;
-  timeoutSeconds?: number;
-}
-
 interface GetContainerStatsResult extends DockerCommandResult {
   stats?: any;
   containers?: string[];

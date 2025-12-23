@@ -8,13 +8,6 @@ import {DockerCommandResult} from "../types.ts";
 
 type StackAction = "deploy" | "remove" | "ps";
 
-interface DockerStackArgs {
-  action: StackAction;
-  stackName: string;
-  composeFile?: string;
-  timeoutSeconds?: number;
-}
-
 /**
  * Docker Stack management tool: deploy, update, remove Docker stacks in local Docker Swarm mode
  */

@@ -8,16 +8,6 @@ import {DockerCommandResult} from "../types.ts";
 
 type FormatType = "json" | "table" | string;
 
-interface ListContainersArgs {
-  all?: boolean;
-  quiet?: boolean;
-  limit?: number;
-  filter?: string;
-  size?: boolean;
-  format?: FormatType;
-  timeoutSeconds?: number;
-}
-
 interface ListContainersResult extends DockerCommandResult {
   containers?: any;
   count?: number;

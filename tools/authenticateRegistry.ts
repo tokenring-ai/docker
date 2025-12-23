@@ -8,15 +8,6 @@ import {DockerCommandResult} from "../types.ts";
 
 const name = "docker_authenticateRegistry";
 
-interface AuthenticateRegistryArgs {
-  server: string;
-  username: string;
-  password: string;
-  email?: string;
-  passwordStdin?: boolean;
-  timeoutSeconds?: number;
-}
-
 interface AuthResult extends DockerCommandResult {
   server?: string;
   username?: string;

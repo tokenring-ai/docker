@@ -8,16 +8,6 @@ import {DockerCommandResult} from "../types.ts";
 
 const name = "docker_buildImage";
 
-interface BuildImageArgs {
-  context: string;
-  tag: string;
-  dockerfile?: string;
-  buildArgs?: Record<string, string>;
-  noCache?: boolean;
-  pull?: boolean;
-  timeoutSeconds?: number;
-}
-
 interface BuildResult extends DockerCommandResult {
   tag?: string;
 }
