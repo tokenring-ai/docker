@@ -17,7 +17,7 @@ The `@tokenring-ai/docker` package enables AI agents to interact with Docker thr
 ## Installation
 
 ```bash
-npm install @tokenring-ai/docker
+bun install @tokenring-ai/docker
 ```
 
 ## Dependencies
@@ -80,7 +80,7 @@ pkg/docker/
 ├── DockerSandboxProvider.ts   # Sandbox implementation for persistent containers
 ├── tools.ts                   # Re-exports available tools
 ├── tools/                     # Individual tool modules
-│   ├── dockerRun.ts           # Run ephemeral containers
+│   ├── dockerRun.ts           # Run ephemeral containers (currently exported)
 │   ├── listContainers.ts      # List Docker containers
 │   ├── buildImage.ts          # Build images from Dockerfile
 │   ├── execInContainer.ts     # Execute commands in running containers
@@ -107,6 +107,7 @@ pkg/docker/
 **Description**: A Token Ring service that configures Docker connection parameters. It provides host and TLS settings to all Docker operations.
 
 **Constructor Parameters**:
+
 ```typescript
 interface DockerServiceParams {
   host?: string; // Default: "unix:///var/run/docker.sock"
@@ -131,6 +132,7 @@ interface DockerServiceParams {
 **Description**: Extends `@tokenring-ai/sandbox/SandboxProvider` to manage persistent Docker containers.
 
 **Constructor Parameters**:
+
 ```typescript
 interface DockerSandboxProviderParams extends TLSConfig {
   host?: string;
@@ -149,6 +151,7 @@ interface DockerSandboxProviderParams extends TLSConfig {
 - `removeContainer(containerId: string): Promise<void>`
 
 **Example Usage**:
+
 ```typescript
 import { DockerSandboxProvider } from "@tokenring-ai/docker";
 
@@ -173,14 +176,13 @@ console.log(result.stdout);
 
 ## Available Tools
 
-### Core Tools (Currently Implemented)
+### Currently Exported Tools
 
-- **dockerRun**: Execute commands in ephemeral containers (automatically cleaned up)
-- **listContainers**: List Docker containers with filtering and formatting options
-- **buildImage**: Build Docker images from Dockerfile with build arguments
-- **execInContainer**: Execute commands in running containers with environment and working directory options
+- **dockerRun**: Execute commands in ephemeral containers (currently the only tool exported via tools.ts)
 
-### Extended Tool Suite (Available via tools directory)
+### Available Tools (Not Currently Exported)
+
+The tools directory contains additional Docker operations that can be extended:
 
 - **Image Management**: `buildImage`, `listImages`, `pushImage`, `tagImage`, `pruneImages`
 - **Container Management**: `listContainers`, `startContainer`, `stopContainer`, `removeContainer`
@@ -269,9 +271,9 @@ const { containerId } = await provider.createContainer({
 
 // Execute multiple commands
 const commands = [
-  "npm install",
-  "npm run build",
-  "npm test"
+  "bun install",
+  "bun run build",
+  "bun test"
 ];
 
 for (const cmd of commands) {
@@ -311,7 +313,7 @@ export { default as DockerSandboxProvider } from "./DockerSandboxProvider.ts";
 // Configuration schema
 export const DockerConfigSchema = z.any().optional();
 
-// All tools
+// Currently exported tools
 export * from "./tools.ts";
 
 // Types
@@ -373,15 +375,6 @@ export default {
 ```
 
 ## Development and Testing
-
-### Build and Lint
-
-```bash
-# Run ESLint
-npm run eslint
-
-# No specific build step - TypeScript compiles on import
-```
 
 ### Testing
 
