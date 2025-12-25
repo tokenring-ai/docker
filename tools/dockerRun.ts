@@ -60,7 +60,7 @@ async function execute(
   try {
     const result = await filesystem.executeCommand(finalCommand, {
       timeoutSeconds: timeout,
-    });
+    }, agent);
 
     return {
       ok: result.ok,
