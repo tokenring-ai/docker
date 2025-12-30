@@ -1,5 +1,5 @@
 import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";

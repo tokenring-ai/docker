@@ -1,5 +1,5 @@
 import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
