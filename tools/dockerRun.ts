@@ -25,25 +25,25 @@ async function execute(
   const dockerArgs: string[] = ["run", "--rm"];
 
   // Add host if not using default
-  if (dockerService.getHost() !== "unix:///var/run/docker.sock") {
-    dockerArgs.unshift("-H", dockerService.getHost());
+  if (dockerService.options.host) {
+    dockerArgs.unshift("-H", dockerService.options.host);
   }
 
+  const {tls} = dockerService.options;
   // Add TLS settings if needed
-  const tlsConfig = dockerService.getTLSConfig();
-  if (tlsConfig.tlsVerify) {
+  if (tls?.verify) {
     dockerArgs.unshift("--tls");
 
-    if (tlsConfig.tlsCACert) {
-      dockerArgs.unshift(`--tlscacert=${tlsConfig.tlsCACert}`);
+    if (tls.caCert) {
+      dockerArgs.unshift(`--tlscacert=${tls.caCert}`);
     }
 
-    if (tlsConfig.tlsCert) {
-      dockerArgs.unshift(`--tlscert=${tlsConfig.tlsCert}`);
+    if (tls.cert) {
+      dockerArgs.unshift(`--tlscert=${tls.cert}`);
     }
 
-    if (tlsConfig.tlsKey) {
-      dockerArgs.unshift(`--tlskey=${tlsConfig.tlsKey}`);
+    if (tls.key) {
+      dockerArgs.unshift(`--tlskey=${tls.key}`);
     }
   }
 

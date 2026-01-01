@@ -38,30 +38,7 @@ async function execute(
   }
 
   // Build Docker command with host and TLS settings
-  let dockerCmd = "docker";
-
-  // Add host if not using default
-  if (dockerService.getHost() !== "unix:///var/run/docker.sock") {
-    dockerCmd += ` -H ${shellEscape(dockerService.getHost())}`;
-  }
-
-  // Add TLS settings if needed
-  const tlsConfig = dockerService.getTLSConfig();
-  if (tlsConfig.tlsVerify) {
-    dockerCmd += " --tls";
-
-    if (tlsConfig.tlsCACert) {
-      dockerCmd += ` --tlscacert=${shellEscape(tlsConfig.tlsCACert)}`;
-    }
-
-    if (tlsConfig.tlsCert) {
-      dockerCmd += ` --tlscert=${shellEscape(tlsConfig.tlsCert)}`;
-    }
-
-    if (tlsConfig.tlsKey) {
-      dockerCmd += ` --tlskey=${shellEscape(tlsConfig.tlsKey)}`;
-    }
-  }
+  const dockerCmd = dockerService.buildDockerCmd();
 
   // Construct the docker network create command
   const timeout = Math.max(5, Math.min(timeoutSeconds, 120));
