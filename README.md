@@ -4,7 +4,7 @@ Docker integration package for Token Ring AI agents, providing both ephemeral co
 
 ## Overview
 
-The `@tokenring-ai/docker` package enables AI agents to interact with Docker through a configurable service and a set of tools for Docker operations. It supports local Docker via Unix socket, remote hosts via TCP or SSH, and optional TLS configuration for secure connections.
+The `@tokenring-ai/docker` package enables AI agents to interact with Docker through a configurable service and a set of tools for Docker operations. It supports local Docker via Unix socket, remote hosts via TCP, and optional TLS configuration for secure connections.
 
 ### Key Features
 
@@ -20,62 +20,36 @@ The `@tokenring-ai/docker` package enables AI agents to interact with Docker thr
 bun install @tokenring-ai/docker
 ```
 
-## Dependencies
-
-- **Peer Dependencies**:
-  - `@tokenring-ai/app` ^0.2.0
-  - `@tokenring-ai/chat` ^0.2.0
-  - `@tokenring-ai/agent` ^0.2.0
-  - `@tokenring-ai/filesystem` ^0.2.0
-  - `@tokenring-ai/sandbox` ^0.2.0
-  - `@tokenring-ai/utility` ^0.2.0
-- **Runtime Dependencies**:
-  - `execa` ^9.6.1
-  - `zod` (catalog)
-  - `glob-gitignore` ^1.0.15
-- **External Requirements**: Docker CLI must be installed and accessible on the host machine
-
 ## Setup and Configuration
-
-### Plugin Integration (Recommended)
-
-The package integrates as a Token Ring plugin:
-
-```typescript
-import { TokenRingApp } from "@tokenring-ai/app";
-import dockerPlugin from "@tokenring-ai/docker";
-
-const app = new TokenRingApp();
-app.use(dockerPlugin);
-```
 
 ### Service Registration
 
 Alternatively, register the service directly:
 
 ```typescript
-import { ServiceRegistry } from "@tokenring-ai/registry";
-import { DockerService } from "@tokenring-ai/docker";
+import { DockerService, DockerSandboxProvider } from "@tokenring-ai/docker";
+import { SandboxService } from "@tokenring-ai/sandbox";
 
-const registry = new ServiceRegistry();
+const dockerService = new DockerService({
+  host: "unix:///var/run/docker.sock",
+});
 
-registry.registerService(new DockerService({
-  host: "unix:///var/run/docker.sock", // Default
-  tlsVerify: false, // Optional TLS
-  tlsCACert: "/path/to/ca.crt", // Optional
-  tlsCert: "/path/to/client.crt", // Optional
-  tlsKey: "/path/to/client.key" // Optional
-}));
+app.addServices(dockerService);
+
+app.waitForService(SandboxService, sandboxService => {
+  sandboxService.registerProvider("docker", new DockerSandboxProvider(dockerService));
+});
 ```
 
 ## Package Structure
 
 ```
 pkg/docker/
-├── index.ts                    # Main exports and DockerConfigSchema
+├── index.ts                    # Main exports (DockerService, DockerSandboxProvider)
 ├── plugin.ts                   # TokenRing plugin integration
 ├── package.json               # Package metadata and dependencies
-├── types.ts                   # Shared interfaces (TLSConfig, DockerCommandResult)
+├── schema.ts                  # Docker configuration schema
+├── types.ts                   # Shared interfaces (DockerCommandResult)
 ├── DockerService.ts           # Core service for Docker configuration
 ├── DockerSandboxProvider.ts   # Sandbox implementation for persistent containers
 ├── tools.ts                   # Re-exports available tools
@@ -90,6 +64,7 @@ pkg/docker/
 │   ├── startContainer.ts      # Start stopped containers
 │   ├── stopContainer.ts       # Stop running containers
 │   ├── removeContainer.ts     # Remove containers
+│   ├── removeImage.ts         # Remove Docker images
 │   ├── pushImage.ts           # Push images to registry
 │   ├── tagImage.ts            # Tag images
 │   ├── pruneImages.ts         # Prune unused images
@@ -104,62 +79,90 @@ pkg/docker/
 
 ### DockerService
 
-**Description**: A Token Ring service that configures Docker connection parameters. It provides host and TLS settings to all Docker operations.
+**Description**: A Token Ring service that configures Docker connection parameters. It builds Docker CLI commands with proper host and TLS settings.
 
 **Constructor Parameters**:
 
 ```typescript
-interface DockerServiceParams {
-  host?: string; // Default: "unix:///var/run/docker.sock"
-  tlsVerify?: boolean; // Default: false
-  tlsCACert?: string;
-  tlsCert?: string;
-  tlsKey?: string;
+interface DockerConfig {
+  host?: string;                    // Docker daemon address (e.g., "unix:///var/run/docker.sock")
+  tls?: {
+    verify?: boolean;              // Default: false
+    caCert?: string;               // Path to CA certificate
+    cert?: string;                 // Path to client certificate
+    key?: string;                  // Path to client key
+  };
 }
 ```
 
 **Key Methods**:
-- `getHost(): string` - Returns the configured Docker host
-- `getTLSConfig(): TLSConfig` - Returns TLS configuration object
+
+- `buildDockerCmd(): string` - Builds the Docker CLI command with host and TLS settings
 
 **Properties**:
+
 - `name = "DockerService"` - Service identifier
 - `description = "Provides Docker functionality"` - Service description
-- `static constructorProperties` - Schema for service registration
-
-### DockerSandboxProvider
-
-**Description**: Extends `@tokenring-ai/sandbox/SandboxProvider` to manage persistent Docker containers.
-
-**Constructor Parameters**:
-
-```typescript
-interface DockerSandboxProviderParams extends TLSConfig {
-  host?: string;
-  tlsVerify?: boolean;
-  tlsCACert?: string;
-  tlsCert?: string;
-  tlsKey?: string;
-}
-```
-
-**Key Methods**:
-- `createContainer(options: SandboxOptions): Promise<SandboxResult>`
-- `executeCommand(containerId: string, command: string): Promise<ExecuteResult>`
-- `stopContainer(containerId: string): Promise<void>`
-- `getLogs(containerId: string): Promise<LogsResult>`
-- `removeContainer(containerId: string): Promise<void>`
+- `options` - The configuration options passed to the constructor
 
 **Example Usage**:
 
 ```typescript
-import { DockerSandboxProvider } from "@tokenring-ai/docker";
+import DockerService from "./DockerService.ts";
 
-const provider = new DockerSandboxProvider({
-  host: "tcp://remote:2375",
-  tlsVerify: true
+const dockerService = new DockerService({
+  host: "unix:///var/run/docker.sock",
+  tls: {
+    verify: true,
+    caCert: "/path/to/ca.crt",
+    cert: "/path/to/client.crt",
+    key: "/path/to/client.key",
+  },
 });
 
+const dockerCmd = dockerService.buildDockerCmd();
+// Returns: "docker --tls --tlscacert=/path/to/ca.crt --tlscert=/path/to/client.crt --tlskey=/path/to/client.key"
+```
+
+### DockerSandboxProvider
+
+**Description**: Implements `SandboxProvider` to manage persistent Docker containers. Creates detached containers that can execute multiple commands over time.
+
+**Constructor Parameters**:
+
+```typescript
+constructor(readonly dockerService: DockerService) {}
+```
+
+**Key Methods**:
+
+- `createContainer(options: SandboxOptions): Promise<SandboxResult>` - Create a new persistent container
+- `executeCommand(containerId: string, command: string): Promise<ExecuteResult>` - Execute a command in a running container
+- `stopContainer(containerId: string): Promise<void>` - Stop a running container
+- `getLogs(containerId: string): Promise<LogsResult>` - Get container logs
+- `removeContainer(containerId: string): Promise<void>` - Remove a container
+
+**SandboxOptions**:
+
+```typescript
+interface SandboxOptions {
+  image?: string;                  // Docker image (default: "ubuntu:latest")
+  workingDir?: string;            // Working directory inside the container
+  environment?: Record<string, string>;  // Environment variables
+  timeout?: number;               // Timeout in seconds (default: 30)
+}
+```
+
+**Example Usage**:
+
+```typescript
+import DockerSandboxProvider from "./DockerSandboxProvider.ts";
+import DockerService from "./DockerService.ts";
+
+const dockerService = new DockerService({});
+const provider = new DockerSandboxProvider(dockerService);
+
+// Create a persistent container
 const { containerId } = await provider.createContainer({
   image: "python:3.9",
   environment: { PYTHONPATH: "/app" },
@@ -167,11 +170,15 @@ const { containerId } = await provider.createContainer({
 });
 
 const result = await provider.executeCommand(
-  containerId, 
+  containerId,
   "python -c 'print(\"Hello from container\")'"
 );
 
 console.log(result.stdout);
+
+// Clean up
+await provider.stopContainer(containerId);
+await provider.removeContainer(containerId);
 ```
 
 ## Available Tools
@@ -184,7 +191,7 @@ console.log(result.stdout);
 
 The tools directory contains additional Docker operations that can be extended:
 
-- **Image Management**: `buildImage`, `listImages`, `pushImage`, `tagImage`, `pruneImages`
+- **Image Management**: `buildImage`, `listImages`, `pushImage`, `tagImage`, `pruneImages`, `removeImage`
 - **Container Management**: `listContainers`, `startContainer`, `stopContainer`, `removeContainer`
 - **Container Operations**: `execInContainer`, `getContainerLogs`, `getContainerStats`
 - **Resource Management**: `pruneVolumes`, `createNetwork`
@@ -231,7 +238,7 @@ if (containers.containers && containers.containers.length > 0) {
     command: "cat /etc/os-release",
     timeoutSeconds: 30
   }, agent);
-  
+
   console.log(result.stdout);
 }
 ```
@@ -260,7 +267,7 @@ if (result.ok) {
 ```typescript
 import { DockerSandboxProvider } from "@tokenring-ai/docker";
 
-const provider = new DockerSandboxProvider();
+const provider = new DockerSandboxProvider(dockerService);
 
 // Create a persistent container
 const { containerId } = await provider.createContainer({
@@ -289,13 +296,38 @@ await provider.removeContainer(containerId);
 ## Configuration Options
 
 ### DockerService Configuration
-- **host**: Docker daemon address (default: unix socket)
-- **tlsVerify**: Enable TLS verification (default: false)
-- **tlsCACert**: Path to CA certificate file
-- **tlsCert**: Path to client certificate file
-- **tlsKey**: Path to client key file
+
+```typescript
+const DockerConfigSchema = z.object({
+  host: z.string().optional(),
+  tls: z.object({
+    verify: z.boolean().default(false),
+    caCert: z.string().optional(),
+    cert: z.string().optional(),
+    key: z.string().optional(),
+  }).optional(),
+});
+```
+
+**Configuration Options**:
+
+- **host**: Docker daemon address (e.g., `unix:///var/run/docker.sock`, `tcp://remote:2375`)
+- **tls.verify**: Enable TLS verification (default: false)
+- **tls.caCert**: Path to CA certificate file
+- **tls.cert**: Path to client certificate file
+- **tls.key**: Path to client key file
+
+### Plugin Configuration
+
+```typescript
+const packageConfigSchema = z.object({
+  docker: DockerConfigSchema.optional(),
+  sandbox: SandboxServiceConfigSchema.optional(),
+});
+```
 
 ### Tool-Specific Configuration
+
 - **Timeouts**: Automatically clamped per tool (5-600s for most operations, up to 1800s for builds)
 - **Output Formats**: JSON for structured data, table for human-readable output
 - **Shell Escaping**: Automatic shell escaping for all command arguments
@@ -311,29 +343,16 @@ export { default as DockerService } from "./DockerService.ts";
 export { default as DockerSandboxProvider } from "./DockerSandboxProvider.ts";
 
 // Configuration schema
-export const DockerConfigSchema = z.any().optional();
+export { DockerConfigSchema } from "./schema.ts";
 
 // Currently exported tools
-export * from "./tools.ts";
+export default from "./tools.ts";
 
 // Types
-export { TLSConfig, DockerCommandResult } from "./types.ts";
+export { DockerCommandResult } from "./types.ts";
 ```
 
-### Tool Interface
-
-All tools follow this pattern:
-
-```typescript
-interface ToolDefinition {
-  name: string;
-  description: string;
-  inputSchema: ZodSchema;
-  execute: (args: any, agent: Agent) => Promise<DockerCommandResult>;
-}
-```
-
-### Common Result Types
+### DockerCommandResult Interface
 
 ```typescript
 interface DockerCommandResult {
@@ -343,12 +362,18 @@ interface DockerCommandResult {
   stderr?: string;
   error?: string;
 }
+```
 
-interface TLSConfig {
-  tlsVerify: boolean;
-  tlsCACert?: string;
-  tlsCert?: string;
-  tlsKey?: string;
+### Tool Interface
+
+All tools follow this pattern:
+
+```typescript
+interface TokenRingToolDefinition<T = z.ZodType> {
+  name: string;                    // Tool name (e.g., "docker_dockerRun")
+  description: string;            // Tool description
+  inputSchema: T;                 // Zod schema for input validation
+  execute: (args: any, agent: Agent) => Promise<DockerCommandResult>;
 }
 ```
 
@@ -358,33 +383,69 @@ The package automatically integrates with Token Ring applications:
 
 ```typescript
 // In plugin.ts
+import { TokenRingPlugin } from "@tokenring-ai/app";
+import { ChatService } from "@tokenring-ai/chat";
+import { SandboxService } from "@tokenring-ai/sandbox";
+import { SandboxServiceConfigSchema } from "@tokenring-ai/sandbox/schema";
+import { z } from "zod";
+import DockerSandboxProvider from "./DockerSandboxProvider.ts";
+import DockerService from "./DockerService.ts";
+import packageJSON from './package.json' with {type: 'json'};
+import { DockerConfigSchema } from "./schema.ts";
+import tools from "./tools.ts";
+
+const packageConfigSchema = z.object({
+  docker: DockerConfigSchema.optional(),
+  sandbox: SandboxServiceConfigSchema.optional(),
+});
+
 export default {
   name: packageJSON.name,
   version: packageJSON.version,
   description: packageJSON.description,
-  install(app: TokenRingApp) {
-    const config = app.getConfigSlice('docker', DockerConfigSchema);
-    if (config) {
-      app.waitForService(ChatService, chatService =>
-        chatService.addTools(packageJSON.name, tools)
-      );
-      app.addServices(new DockerService(config));
+  install(app, config) {
+    if (! config.docker) return;
+    app.waitForService(ChatService, chatService =>
+      chatService.addTools(packageJSON.name, tools)
+    );
+    const dockerService = new DockerService(config.docker);
+    app.addServices(dockerService);
+
+    if (config.sandbox) {
+      app.waitForService(SandboxService, sandboxService => {
+        for (const name in config.sandbox!.providers) {
+          const provider = config.sandbox!.providers[name];
+          if (provider.type === "docker") {
+            sandboxService.registerProvider(name, new DockerSandboxProvider(dockerService));
+          }
+        }
+      });
     }
-  }
-} satisfies TokenRingPlugin;
+  },
+  config: packageConfigSchema
+} satisfies TokenRingPlugin<typeof packageConfigSchema>;
 ```
 
 ## Development and Testing
 
 ### Testing
 
-The package is designed to be tested through integration with the Token Ring agent ecosystem. Use tools like `listContainers` to verify functionality:
+The package uses vitest for testing:
 
-```typescript
-import { listContainers } from "@tokenring-ai/docker/tools";
+```bash
+bun test
+```
 
-const result = await listContainers.execute({ all: true }, agent);
-console.log("Available containers:", result.containers);
+### Build
+
+```bash
+bun run build
+```
+
+### Linting
+
+```bash
+bun run eslint
 ```
 
 ## Limitations and Considerations
@@ -395,20 +456,8 @@ console.log("Available containers:", result.containers);
 - **Buffer Limits**: Large outputs may hit `maxBuffer` limits (configurable per tool)
 - **Error Handling**: Tools throw exceptions on failure; implement proper error handling in agent workflows
 - **Security**: All commands are executed via shell; ensure proper input validation and sanitization
-
-## Best Practices
-
-1. **Use Ephemeral Containers**: For isolated, one-off operations
-2. **Persistent Containers**: For stateful, long-running tasks
-3. **Input Validation**: Leverage Zod schemas for all tool inputs
-4. **Timeout Management**: Set appropriate timeouts for operations
-5. **Error Handling**: Implement comprehensive error handling in agent workflows
-6. **Resource Management**: Clean up resources after use to prevent leaks
+- **JavaScript Tools**: Some tools are written in JavaScript and may need to be migrated to TypeScript
 
 ## License
 
-MIT License - see LICENSE file for details.
-
-## Version
-
-0.2.0 - Added plugin integration and comprehensive Docker tool suite.
+MIT License - see [LICENSE](./LICENSE) file for details.
