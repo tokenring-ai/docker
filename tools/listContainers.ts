@@ -75,8 +75,8 @@ async function execute(
     cmd += ` --format ${shellEscape(format)}`;
   }
 
-  agent.infoLine(`[${name}] Listing containers...`);
-  agent.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoMessage(`[${name}] Listing containers...`);
+  agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -103,7 +103,7 @@ async function execute(
       containers = stdout.trim();
     }
 
-    agent.infoLine(`[${name}] Successfully listed containers`);
+    agent.infoMessage(`[${name}] Successfully listed containers`);
     return {
       ok: true,
       exitCode: exitCode,

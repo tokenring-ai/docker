@@ -41,17 +41,17 @@ async function execute(
 
   const cmd = `timeout ${timeout}s ${dockerCmd} tag ${shellEscape(sourceImage)} ${shellEscape(targetImage)}`;
 
-  agent.infoLine(
+  agent.infoMessage(
     `[${name}] Tagging image ${sourceImage} as ${targetImage}...`,
   );
-  agent.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
   const {stdout, stderr, exitCode} = await execa(cmd, {
     shell: true,
     timeout: timeout * 1000,
     maxBuffer: 1024 * 1024,
   });
-  agent.infoLine(
+  agent.infoMessage(
     `[${name}] Successfully tagged image ${sourceImage} as ${targetImage}`,
   );
   return {

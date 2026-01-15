@@ -44,8 +44,8 @@ async function execute(
   // Add tag
   cmd += ` ${shellEscape(tag)}`;
 
-  agent.infoLine(`[pushImage] Pushing image ${tag}...`);
-  agent.infoLine(`[pushImage] Executing: ${cmd}`);
+  agent.infoMessage(`[pushImage] Pushing image ${tag}...`);
+  agent.infoMessage(`[pushImage] Executing: ${cmd}`);
 
   const {stdout, stderr, exitCode} = await execa(cmd, {
     shell: true,
@@ -53,7 +53,7 @@ async function execute(
     maxBuffer: 5 * 1024 * 1024,
   });
 
-  agent.infoLine(`[pushImage] Successfully pushed image ${tag}`);
+  agent.infoMessage(`[pushImage] Successfully pushed image ${tag}`);
   return {
     ok: true,
     exitCode: exitCode ?? 0,

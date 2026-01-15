@@ -33,7 +33,7 @@ async function execute(
 
   if (!networkName) {
     const errMsg = "name is required";
-    // Removed agent.errorLine per specification
+    // Removed agent.errorMessage per specification
     throw new Error(`[${name}] ${errMsg}`);
   }
 
@@ -77,8 +77,8 @@ async function execute(
   // Add network name
   cmd += ` ${shellEscape(networkName)}`;
 
-  agent.infoLine(`[${name}] Creating Docker network ${networkName}...`);
-  agent.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoMessage(`[${name}] Creating Docker network ${networkName}...`);
+  agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -90,7 +90,7 @@ async function execute(
     // The output is the network ID
     const networkId = stdout.trim();
 
-    agent.infoLine(
+    agent.infoMessage(
       `[${name}] Successfully created Docker network ${networkName} (${networkId})`
     );
     return {
@@ -103,7 +103,7 @@ async function execute(
     };
   } catch (err: any) {
     const errMsg = err.message || "Unknown error";
-    // Removed agent.errorLine per specification
+    // Removed agent.errorMessage per specification
     throw new Error(`[${name}] ${errMsg}`);
   }
 }

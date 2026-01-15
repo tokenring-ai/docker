@@ -55,7 +55,7 @@ async function execute(
   // Create the final command with timeout
   const finalCommand: string[] = ["timeout", `${timeout}s`, "docker -v `pwd`:/workdir:rw -w /workdir ", ...dockerArgs];
 
-  agent.infoLine(`[${name}] Executing: ${finalCommand.join(" ")}`);
+  agent.infoMessage(`[${name}] Executing: ${finalCommand.join(" ")}`);
 
   try {
     const result = await filesystem.executeCommand(finalCommand, {

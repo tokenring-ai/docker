@@ -87,10 +87,10 @@ async function execute(
   cmd += ` ${commandList.map((arg) => shellEscape(arg)).join(" ")}`;
 
   // Informational messages prefixed with tool name
-  agent.infoLine(
+  agent.infoMessage(
     `[execInContainer] Executing command in container ${container}...`,
   );
-  agent.infoLine(`[execInContainer] Executing: ${cmd}`);
+  agent.infoMessage(`[execInContainer] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -99,7 +99,7 @@ async function execute(
       maxBuffer: 5 * 1024 * 1024,
     });
 
-    agent.infoLine(
+    agent.infoMessage(
       `[execInContainer] Command executed successfully in container ${container}`,
     );
     return {

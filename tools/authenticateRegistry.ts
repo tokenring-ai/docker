@@ -31,7 +31,7 @@ async function execute(
 
 
   if (!server || !username || (!password && !passwordStdin)) {
-    agent.errorLine(
+    agent.errorMessage(
       `[${name}] server, username, and password are required`
     );
     throw new Error(
@@ -62,11 +62,11 @@ async function execute(
     cmd += ` --email ${shellEscape(email)}`;
   }
 
-  agent.infoLine(
+  agent.infoMessage(
     `[${name}] Authenticating to registry ${server}...`
   );
   // Don't log the full command as it may contain sensitive information
-  agent.infoLine(
+  agent.infoMessage(
     `[${name}] Executing: ${dockerCmd} login ${server} -u ${username} [password hidden]`
   );
 
@@ -83,7 +83,7 @@ async function execute(
       ...execOptions,
       timeout: timeout * 1000,
     });
-    agent.infoLine(
+    agent.infoMessage(
       `[${name}] Successfully authenticated to registry ${server}`
     );
     return {
@@ -96,7 +96,7 @@ async function execute(
     };
   } catch (err: any) {
     // Error message follows the required format
-    agent.errorLine(`[${name}] Error: ${err.message}`);
+    agent.errorMessage(`[${name}] Error: ${err.message}`);
     throw new Error(`[${name}] ${err.shortMessage || err.message}`);
   }
 }

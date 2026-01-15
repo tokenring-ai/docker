@@ -69,10 +69,10 @@ async function execute(
 
   cmd += ` ${shellEscape(containerName)}`;
 
-  agent.infoLine(
+  agent.infoMessage(
     `[${name}] Getting logs from container ${containerName}...`
   );
-  agent.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -84,7 +84,7 @@ async function execute(
     const logs = stdout.trim();
     const logLines = logs.split("\n");
 
-    agent.infoLine(
+    agent.infoMessage(
       `[${name}] Successfully retrieved logs from container ${containerName}`
     );
     return {

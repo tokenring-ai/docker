@@ -50,10 +50,10 @@ async function execute(
   // Append container identifiers
   cmd += ` ${containerList.map((c) => shellEscape(c)).join(" ")}`;
 
-  agent.infoLine(
+  agent.infoMessage(
     `[${name}] Stopping container(s): ${containerList.join(", ")}...`,
   );
-  agent.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
   const {stdout, stderr, exitCode} = await execa(cmd, {
     shell: true,
@@ -61,7 +61,7 @@ async function execute(
     maxBuffer: 1024 * 1024,
   });
 
-  agent.infoLine(
+  agent.infoMessage(
     `[${name}] Successfully stopped container(s): ${containerList.join(", ")}`,
   );
   return {

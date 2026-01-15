@@ -64,10 +64,10 @@ async function execute(
   cmd += ` ${imageList.map((image) => shellEscape(image)).join(" ")}`;
 
   // Informational messages using the standardized prefix
-  agent.infoLine(
+  agent.infoMessage(
     `[${name}] Removing image(s): ${imageList.join(", ")}...`,
   );
-  agent.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
   const {stdout, stderr, exitCode} = await execa(cmd, {
     shell: true,
@@ -75,7 +75,7 @@ async function execute(
     maxBuffer: 1024 * 1024,
   });
 
-  agent.infoLine(
+  agent.infoMessage(
     `[${name}] Successfully removed image(s): ${imageList.join(", ")}`,
   );
 

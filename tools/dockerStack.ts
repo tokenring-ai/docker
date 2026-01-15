@@ -48,7 +48,7 @@ async function execute(
       throw new Error(`[${name}] Unknown action: ${action}`);
   }
 
-  agent.infoLine(`[dockerStack] Executing: ${cmd}`);
+  agent.infoMessage(`[dockerStack] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -56,7 +56,7 @@ async function execute(
       timeout: timeout * 1000,
       maxBuffer: 1024 * 1024,
     });
-    agent.infoLine(
+    agent.infoMessage(
       `[dockerStack] Successfully executed ${action} on stack ${stackName}`,
     );
     return {

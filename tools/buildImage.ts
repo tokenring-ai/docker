@@ -67,8 +67,8 @@ async function execute(
   // Add context
   cmd += ` ${shellEscape(context)}`;
 
-  agent.infoLine(`[${name}] Building image ${tag}...`);
-  agent.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoMessage(`[${name}] Building image ${tag}...`);
+  agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -76,7 +76,7 @@ async function execute(
       timeout: timeout * 1000,
       maxBuffer: 5 * 1024 * 1024,
     });
-    agent.infoLine(`[${name}] Successfully built image ${tag}`);
+    agent.infoMessage(`[${name}] Successfully built image ${tag}`);
     return {
       ok: true,
       exitCode: exitCode,

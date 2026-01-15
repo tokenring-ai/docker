@@ -59,10 +59,10 @@ async function execute(
   // Add containers
   cmd += ` ${containerList.map((container) => shellEscape(container)).join(" ")}`;
 
-  agent.infoLine(
+  agent.infoMessage(
     `[${name}] Removing container(s): ${containerList.join(", ")}...`,
   );
-  agent.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
   try {
     const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -71,7 +71,7 @@ async function execute(
       maxBuffer: 1024 * 1024,
     });
 
-    agent.infoLine(
+    agent.infoMessage(
       `[${name}] Successfully removed container(s): ${containerList.join(", ")}`,
     );
     return {

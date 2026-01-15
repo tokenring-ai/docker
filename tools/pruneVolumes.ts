@@ -41,8 +41,8 @@ async function execute(
     cmd += ` --filter ${shellEscape(filter)}`;
   }
 
-  agent.infoLine(`[${name}] Pruning unused Docker volumes...`);
-  agent.infoLine(`[${name}] Executing: ${cmd}`);
+  agent.infoMessage(`[${name}] Pruning unused Docker volumes...`);
+  agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
   const {stdout, stderr, exitCode} = await execa(cmd, {
     shell: true,
@@ -67,7 +67,7 @@ async function execute(
       .filter((line) => line.trim()).length;
   }
 
-  agent.infoLine(
+  agent.infoMessage(
     `[${name}] Successfully pruned unused Docker volumes. Space reclaimed: ${spaceReclaimed}`,
   );
   return {
