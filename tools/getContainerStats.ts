@@ -18,6 +18,7 @@ interface GetContainerStatsResult extends DockerCommandResult {
  */
 
 const name = "docker_getContainerStats";
+const displayName = "Docker/getContainerStats";
 
 async function execute(
   {
@@ -139,5 +140,5 @@ const inputSchema = z
   .strict();
 
 export default {
-  name, description, inputSchema, execute,
+  name, displayName, description, inputSchema, execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

@@ -13,6 +13,7 @@ type StackAction = "deploy" | "remove" | "ps";
  */
 
 const name = "docker_dockerStack";
+const displayName = "Docker/dockerStack";
 
 async function execute(
   {action, stackName, composeFile, timeoutSeconds = 60}: z.infer<typeof inputSchema>,
@@ -92,5 +93,5 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, description, inputSchema, execute,
+  name, displayName, description, inputSchema, execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

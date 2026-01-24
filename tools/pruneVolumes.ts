@@ -7,6 +7,7 @@ import DockerService from "../DockerService.ts";
 
 // Export the tool name in the required format
 const name = "docker_pruneVolumes";
+const displayName = "Docker/pruneVolumes";
 
 interface PruneVolumesResult {
   ok: boolean;
@@ -95,5 +96,5 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, description, inputSchema, execute,
+  name, displayName, description, inputSchema, execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

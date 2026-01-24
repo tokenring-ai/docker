@@ -21,7 +21,7 @@ export default {
   install(app, config) {
     if (! config.docker) return;
     app.waitForService(ChatService, chatService =>
-      chatService.addTools(packageJSON.name, tools)
+      chatService.addTools(tools)
     );
     const dockerService = new DockerService(config.docker);
     app.addServices(dockerService);

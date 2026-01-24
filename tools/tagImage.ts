@@ -6,6 +6,7 @@ import {z} from "zod";
 import DockerService from "../DockerService.ts";
 
 const name = "docker_tagImage";
+const displayName = "Docker/tagImage";
 
 interface TagImageResult {
   ok: boolean;
@@ -78,5 +79,5 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, description, inputSchema, execute,
+  name, displayName, description, inputSchema, execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

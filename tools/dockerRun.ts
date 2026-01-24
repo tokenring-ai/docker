@@ -6,6 +6,7 @@ import DockerService from "../DockerService.ts";
 import type {DockerCommandResult} from "../types.ts";
 
 const name = "docker_dockerRun";
+const displayName = "Docker/dockerRun";
 
 /**
  * Runs a shell command in an ephemeral Docker container
@@ -90,5 +91,5 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, description, inputSchema, execute,
+  name, displayName, description, inputSchema, execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

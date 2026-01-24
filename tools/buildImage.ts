@@ -7,6 +7,7 @@ import DockerService from "../DockerService.ts";
 import {DockerCommandResult} from "../types.ts";
 
 const name = "docker_buildImage";
+const displayName = "Docker/buildImage";
 
 interface BuildResult extends DockerCommandResult {
   tag?: string;
@@ -124,5 +125,5 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, description, inputSchema, execute,
+  name, displayName, description, inputSchema, execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

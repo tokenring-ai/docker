@@ -7,6 +7,7 @@ import DockerService from "../DockerService.ts";
 
 // Export tool name for consistent messaging
 const name = "docker_startContainer";
+const displayName = "Docker/startContainer";
 
 interface StartContainerResult {
   ok: boolean;
@@ -110,5 +111,5 @@ const inputSchema = z
   .strict();
 
 export default {
-  name, description, inputSchema, execute,
+  name, displayName, description, inputSchema, execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

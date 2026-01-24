@@ -17,6 +17,7 @@ interface ListImagesResult extends DockerCommandResult {
  */
 
 const name = "docker_listImages";
+const displayName = "Docker/listImages";
 
 async function execute(
   {
@@ -142,5 +143,5 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, description, inputSchema, execute,
+  name, displayName, description, inputSchema, execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

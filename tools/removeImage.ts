@@ -9,6 +9,7 @@ import DockerService from "../DockerService.ts";
  * Exported tool name in the format "packageName/toolName".
  */
 const name = "docker_removeImage";
+const displayName = "Docker/removeImage";
 
 interface RemoveImageResult {
   ok: boolean;
@@ -100,5 +101,5 @@ const inputSchema = z
   .strict();
 
 export default {
-  name, description, inputSchema, execute,
+  name, displayName, description, inputSchema, execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

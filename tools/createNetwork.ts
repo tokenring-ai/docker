@@ -7,6 +7,7 @@ import DockerService from "../DockerService.ts";
 import {DockerCommandResult} from "../types.ts";
 
 const name = "docker_createNetwork";
+const displayName = "Docker/createNetwork";
 
 interface CreateNetworkResult extends DockerCommandResult {
   name?: string;
@@ -128,5 +129,5 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, description, inputSchema, execute,
+  name, displayName, description, inputSchema, execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;
