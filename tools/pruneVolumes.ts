@@ -25,9 +25,9 @@ async function execute(
   {
     filter,
     timeoutSeconds = 60,
-  }: z.infer<typeof inputSchema>,
+  }: z.output<typeof inputSchema>,
   agent: Agent,
-): Promise<PruneVolumesResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -72,12 +72,15 @@ async function execute(
     `[${name}] Successfully pruned unused Docker volumes. Space reclaimed: ${spaceReclaimed}`,
   );
   return {
-    ok: true,
-    exitCode: exitCode ?? 0,
-    stdout: stdout?.trim() || "",
-    stderr: stderr?.trim() || "",
-    spaceReclaimed: spaceReclaimed,
-    volumesDeleted: volumesDeleted,
+    type: 'json' as const,
+    data: {
+      ok: true,
+      exitCode: exitCode ?? 0,
+      stdout: stdout?.trim() || "",
+      stderr: stderr?.trim() || "",
+      spaceReclaimed: spaceReclaimed,
+      volumesDeleted: volumesDeleted,
+    }
   };
 }
 

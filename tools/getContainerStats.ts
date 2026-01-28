@@ -27,14 +27,10 @@ async function execute(
     noStream = true,
     format = "json",
     timeoutSeconds = 10,
-  }: z.infer<typeof inputSchema>,
+  }: z.output<typeof inputSchema>,
   agent: Agent
-): Promise<GetContainerStatsResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
-
-  if (!containers) {
-    throw new Error(`[${name}] containers is required`);
-  }
 
   // Convert single container to array
   const containerList = Array.isArray(containers) ? containers : [containers];
@@ -105,12 +101,15 @@ async function execute(
       `[${name}] Successfully retrieved stats for container(s): ${containerList.join(", ")}`
     );
     return {
-      ok: true,
-      exitCode: exitCode,
-      stats: stats,
-      containers: containerList,
-      stdout: stdout?.trim() || "",
-      stderr: stderr?.trim() || "",
+      type: 'json' as const,
+      data: {
+        ok: true,
+        exitCode: exitCode,
+        stats: stats,
+        containers: containerList,
+        stdout: stdout?.trim() || "",
+        stderr: stderr?.trim() || "",
+      }
     };
   } catch (err: any) {
     throw new Error(`[${name}] Error: ${err.message}`);

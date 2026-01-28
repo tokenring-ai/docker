@@ -20,15 +20,10 @@ interface StopContainerResult {
  * Stop one or more Docker containers
  */
 async function execute(
-  {containers, time = 10, timeoutSeconds = 30}: z.infer<typeof inputSchema>,
+  {containers, time = 10, timeoutSeconds = 30}: z.output<typeof inputSchema>,
   agent: Agent,
-): Promise<StopContainerResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
-
-  // Validate containers argument
-  if (!containers) {
-    throw new Error(`[${name}] containers is required`);
-  }
 
   // Convert single container to array
   const containerList = Array.isArray(containers) ? containers : [containers];
@@ -66,11 +61,14 @@ async function execute(
     `[${name}] Successfully stopped container(s): ${containerList.join(", ")}`,
   );
   return {
-    ok: true,
-    exitCode: exitCode ?? 0,
-    stdout: stdout?.trim() || "",
-    stderr: stderr?.trim() || "",
-    containers: containerList,
+    type: 'json' as const,
+    data: {
+      ok: true,
+      exitCode: exitCode ?? 0,
+      stdout: stdout?.trim() || "",
+      stderr: stderr?.trim() || "",
+      containers: containerList,
+    }
   };
 }
 

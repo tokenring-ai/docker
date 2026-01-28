@@ -29,15 +29,10 @@ async function execute(
     tail = 100,
     details = false,
     timeoutSeconds = 30,
-  }: z.infer<typeof inputSchema>,
+  }: z.output<typeof inputSchema>,
   agent: Agent
-): Promise<GetContainerLogsResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
-
-
-  if (!containerName) {
-    throw new Error(`[${name}] name is required`);
-  }
 
   // Build Docker command with host and TLS settings
   const dockerCmd = dockerService.buildDockerCmd();
@@ -89,13 +84,16 @@ async function execute(
       `[${name}] Successfully retrieved logs from container ${containerName}`
     );
     return {
-      ok: true,
-      exitCode: exitCode,
-      logs: logs,
-      lineCount: logLines.length,
-      container: containerName,
-      stdout: stdout?.trim() || "",
-      stderr: stderr?.trim() || "",
+      type: 'json' as const,
+      data: {
+        ok: true,
+        exitCode: exitCode,
+        logs: logs,
+        lineCount: logLines.length,
+        container: containerName,
+        stdout: stdout?.trim() || "",
+        stderr: stderr?.trim() || "",
+      }
     };
   } catch (err: any) {
     throw new Error(`[${name}] Error: ${err.message}`);

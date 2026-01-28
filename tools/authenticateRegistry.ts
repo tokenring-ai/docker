@@ -25,20 +25,10 @@ async function execute(
     email,
     passwordStdin = false,
     timeoutSeconds = 30,
-  }: z.infer<typeof inputSchema>,
+  }: z.output<typeof inputSchema>,
   agent: Agent
-): Promise<AuthResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
-
-
-  if (!server || !username || (!password && !passwordStdin)) {
-    agent.errorMessage(
-      `[${name}] server, username, and password are required`
-    );
-    throw new Error(
-      `[${name}] server, username, and password are required`
-    );
-  }
 
   // Build Docker command with host and TLS settings
   const dockerCmd = dockerService.buildDockerCmd();
@@ -88,12 +78,15 @@ async function execute(
       `[${name}] Successfully authenticated to registry ${server}`
     );
     return {
-      ok: true,
-      exitCode: exitCode,
-      stdout: stdout?.trim() || "",
-      stderr: stderr?.trim() || "",
-      server: server,
-      username: username,
+      type: 'json' as const,
+      data: {
+        ok: true,
+        exitCode: exitCode,
+        stdout: stdout?.trim() || "",
+        stderr: stderr?.trim() || "",
+        server: server,
+        username: username,
+      }
     };
   } catch (err: any) {
     // Error message follows the required format

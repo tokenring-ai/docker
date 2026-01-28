@@ -27,9 +27,9 @@ async function execute(
     filter,
     format = "json",
     timeoutSeconds = 30,
-  }: z.infer<typeof inputSchema>,
+  }: z.output<typeof inputSchema>,
   agent: Agent,
-): Promise<ListImagesResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -101,17 +101,20 @@ async function execute(
 
     agent.infoMessage(`[${name}] Successfully listed images`);
     return {
-      ok: true,
-      exitCode: exitCode,
-      images: images,
-      count: Array.isArray(images)
-        ? images.length
-        : stdout
-          .trim()
-          .split("\n")
-          .filter((line) => line.trim()).length,
-      stdout: stdout?.trim() || "",
-      stderr: stderr?.trim() || "",
+      type: 'json' as const,
+      data: {
+        ok: true,
+        exitCode: exitCode,
+        images: images,
+        count: Array.isArray(images)
+          ? images.length
+          : stdout
+            .trim()
+            .split("\n")
+            .filter((line) => line.trim()).length,
+        stdout: stdout?.trim() || "",
+        stderr: stderr?.trim() || "",
+      }
     };
   } catch (err: any) {
     // Throw error instead of returning an object

@@ -19,15 +19,10 @@ async function execute(
     volumes = false,
     link = false,
     timeoutSeconds = 30,
-  }: z.infer<typeof inputSchema>,
+  }: z.output<typeof inputSchema>,
   agent: Agent,
 ) {
   const dockerService = agent.requireServiceByType(DockerService);
-
-
-  if (!containers) {
-    throw new Error(`[${name}] containers is required`);
-  }
 
   // Convert single container to array
   const containerList = Array.isArray(containers) ? containers : [containers];
@@ -76,11 +71,14 @@ async function execute(
       `[${name}] Successfully removed container(s): ${containerList.join(", ")}`,
     );
     return {
-      ok: true,
-      exitCode: exitCode,
-      stdout: stdout?.trim() || "",
-      stderr: stderr?.trim() || "",
-      containers: containerList,
+      type: 'json' as const,
+      data: {
+        ok: true,
+        exitCode: exitCode,
+        stdout: stdout?.trim() || "",
+        stderr: stderr?.trim() || "",
+        containers: containerList,
+      }
     };
   } catch (err: any) {
     // Throw error instead of returning an error object

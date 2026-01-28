@@ -16,15 +16,10 @@ const name = "docker_dockerStack";
 const displayName = "Docker/dockerStack";
 
 async function execute(
-  {action, stackName, composeFile, timeoutSeconds = 60}: z.infer<typeof inputSchema>,
+  {action, stackName, composeFile, timeoutSeconds = 60}: z.output<typeof inputSchema>,
   agent: Agent
-): Promise<DockerCommandResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
-
-
-  if (!action || !stackName) {
-    throw new Error(`[${name}] action and stackName are required`);
-  }
 
   // Build Docker command with host and TLS settings
   const dockerCmd = dockerService.buildDockerCmd();
@@ -61,11 +56,14 @@ async function execute(
       `[dockerStack] Successfully executed ${action} on stack ${stackName}`,
     );
     return {
-      ok: true,
-      exitCode: exitCode,
-      stdout: stdout?.trim() || "",
-      stderr: stderr?.trim() || "",
-      error: undefined,
+      type: 'json' as const,
+      data: {
+        ok: true,
+        exitCode: exitCode,
+        stdout: stdout?.trim() || "",
+        stderr: stderr?.trim() || "",
+        error: undefined,
+      }
     };
   } catch (err: any) {
     // Propagate as an error with contextual information

@@ -20,9 +20,9 @@ interface PruneImagesResult {
  * Prune unused Docker images
  */
 async function execute(
-  {all = false, filter, timeoutSeconds = 60}: z.infer<typeof inputSchema>,
+  {all = false, filter, timeoutSeconds = 60}: z.output<typeof inputSchema>,
   agent: Agent,
-): Promise<PruneImagesResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -63,11 +63,14 @@ async function execute(
   );
 
   return {
-    ok: true,
-    exitCode: exitCode ?? 0,
-    stdout: stdout?.trim() || "",
-    stderr: stderr?.trim() || "",
-    spaceReclaimed: spaceReclaimed,
+    type: 'json' as const,
+    data: {
+      ok: true,
+      exitCode: exitCode ?? 0,
+      stdout: stdout?.trim() || "",
+      stderr: stderr?.trim() || "",
+      spaceReclaimed: spaceReclaimed,
+    }
   };
 }
 

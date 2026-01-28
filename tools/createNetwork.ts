@@ -27,16 +27,10 @@ async function execute(
     gateway,
     ipRange,
     timeoutSeconds = 30,
-  }: z.infer<typeof inputSchema>,
+  }: z.output<typeof inputSchema>,
   agent: Agent
-): Promise<CreateNetworkResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
-
-  if (!networkName) {
-    const errMsg = "name is required";
-    // Removed agent.errorMessage per specification
-    throw new Error(`[${name}] ${errMsg}`);
-  }
 
   // Build Docker command with host and TLS settings
   const dockerCmd = dockerService.buildDockerCmd();
@@ -95,16 +89,18 @@ async function execute(
       `[${name}] Successfully created Docker network ${networkName} (${networkId})`
     );
     return {
-      ok: true,
-      exitCode: exitCode,
-      stdout: stdout?.trim() || "",
-      stderr: stderr?.trim() || "",
-      name: networkName,
-      id: networkId,
+      type: 'json' as const,
+      data: {
+        ok: true,
+        exitCode: exitCode,
+        stdout: stdout?.trim() || "",
+        stderr: stderr?.trim() || "",
+        name: networkName,
+        id: networkId,
+      }
     };
   } catch (err: any) {
     const errMsg = err.message || "Unknown error";
-    // Removed agent.errorMessage per specification
     throw new Error(`[${name}] ${errMsg}`);
   }
 }

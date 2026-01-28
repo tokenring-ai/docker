@@ -20,15 +20,10 @@ interface PushImageResult {
  * Push a Docker image to a registry
  */
 async function execute(
-  {tag, allTags = false, timeoutSeconds = 300}: z.infer<typeof inputSchema>,
+  {tag, allTags = false, timeoutSeconds = 300}: z.output<typeof inputSchema>,
   agent: Agent,
-): Promise<PushImageResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
-
-
-  if (!tag) {
-    throw new Error(`[${name}] tag is required`);
-  }
 
   // Build Docker command with host and TLS settings
   const dockerCmd = dockerService.buildDockerCmd();
@@ -56,11 +51,14 @@ async function execute(
 
   agent.infoMessage(`[pushImage] Successfully pushed image ${tag}`);
   return {
-    ok: true,
-    exitCode: exitCode ?? 0,
-    stdout: stdout?.trim() || "",
-    stderr: stderr?.trim() || "",
-    tag: tag,
+    type: 'json' as const,
+    data: {
+      ok: true,
+      exitCode: exitCode ?? 0,
+      stdout: stdout?.trim() || "",
+      stderr: stderr?.trim() || "",
+      tag: tag,
+    }
   };
 }
 

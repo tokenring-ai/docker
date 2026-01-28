@@ -12,15 +12,11 @@ const displayName = "Docker/dockerRun";
  * Runs a shell command in an ephemeral Docker container
  */
 async function execute(
-  {image, cmd, timeoutSeconds = 60}: z.infer<typeof inputSchema>,
+  {image, cmd, timeoutSeconds = 60}: z.output<typeof inputSchema>,
   agent: Agent
-): Promise<DockerCommandResult> {
+) {
   const filesystem = agent.requireServiceByType(FileSystemService);
   const dockerService = agent.requireServiceByType(DockerService);
-
-  if (!image || !cmd) {
-    throw new Error(`[${name}] image and cmd required`);
-  }
 
   // Build Docker command arguments
   const dockerArgs: string[] = ["run", "--rm"];
@@ -64,13 +60,16 @@ async function execute(
     }, agent);
 
     return {
-      ok: result.ok,
-      exitCode: result.exitCode,
-      stdout: result.stdout?.trim() || "",
-      stderr: result.stderr?.trim() || "",
-      error: result.ok
-        ? undefined
-        : `Command failed with exit code ${result.exitCode}`,
+      type: 'json' as const,
+      data: {
+        ok: result.ok,
+        exitCode: result.exitCode,
+        stdout: result.stdout?.trim() || "",
+        stderr: result.stderr?.trim() || "",
+        error: result.ok
+          ? undefined
+          : `Command failed with exit code ${result.exitCode}`,
+      }
     };
   } catch (err: any) {
     throw new Error(`[${name}] ${err.message}`);

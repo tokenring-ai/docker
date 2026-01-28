@@ -25,15 +25,10 @@ async function execute(
     noCache = false,
     pull = false,
     timeoutSeconds = 300,
-  }: z.infer<typeof inputSchema>,
+  }: z.output<typeof inputSchema>,
   agent: Agent
-): Promise<BuildResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
-
-  if (!context || !tag) {
-    const msg = "context and tag are required";
-    throw new Error(`[${name}] ${msg}`);
-  }
 
   // Build Docker command with host and TLS settings
   const dockerCmd = dockerService.buildDockerCmd();
@@ -79,11 +74,14 @@ async function execute(
     });
     agent.infoMessage(`[${name}] Successfully built image ${tag}`);
     return {
-      ok: true,
-      exitCode: exitCode,
-      stdout: stdout?.trim() || "",
-      stderr: stderr?.trim() || "",
-      tag: tag,
+      type: 'json' as const,
+      data: {
+        ok: true,
+        exitCode: exitCode,
+        stdout: stdout?.trim() || "",
+        stderr: stderr?.trim() || "",
+        tag: tag,
+      }
     };
   } catch (err: any) {
     const message = err.shortMessage || err.message;

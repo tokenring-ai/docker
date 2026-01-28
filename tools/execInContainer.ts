@@ -29,14 +29,10 @@ async function execute(
     privileged = false,
     user,
     timeoutSeconds = 30,
-  }: z.infer<typeof inputSchema>,
+  }: z.output<typeof inputSchema>,
   agent: Agent
-): Promise<ExecInContainerResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
-
-  if (!container || !command) {
-    throw new Error(`[${name}] container and command are required`);
-  }
 
   // Convert command to array if it's a string
   const commandList = Array.isArray(command) ? command : [command];
@@ -104,12 +100,15 @@ async function execute(
       `[execInContainer] Command executed successfully in container ${container}`,
     );
     return {
-      ok: true,
-      exitCode: exitCode,
-      stdout: stdout?.trim() || "",
-      stderr: stderr?.trim() || "",
-      container: container,
-      command: commandList.join(" "),
+      type: 'json' as const,
+      data: {
+        ok: true,
+        exitCode: exitCode,
+        stdout: stdout?.trim() || "",
+        stderr: stderr?.trim() || "",
+        container: container,
+        command: commandList.join(" "),
+      }
     };
   } catch (err: any) {
     // Throw error instead of returning error object

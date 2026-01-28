@@ -25,14 +25,10 @@ async function execute(
     sourceImage,
     targetImage,
     timeoutSeconds = 30,
-  }: z.infer<typeof inputSchema>,
+  }: z.output<typeof inputSchema>,
   agent: Agent,
-): Promise<TagImageResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
-
-  if (!sourceImage || !targetImage) {
-    throw new Error(`[${name}] sourceImage and targetImage are required`);
-  }
 
   // Construct the docker tag command with Docker context settings
   const timeout = Math.max(5, Math.min(timeoutSeconds, 120));
@@ -56,12 +52,15 @@ async function execute(
     `[${name}] Successfully tagged image ${sourceImage} as ${targetImage}`,
   );
   return {
-    ok: true,
-    exitCode: exitCode ?? 0,
-    stdout: stdout?.trim() || "",
-    stderr: stderr?.trim() || "",
-    sourceImage: sourceImage,
-    targetImage: targetImage,
+    type: 'json' as const,
+    data: {
+      ok: true,
+      exitCode: exitCode ?? 0,
+      stdout: stdout?.trim() || "",
+      stderr: stderr?.trim() || "",
+      sourceImage: sourceImage,
+      targetImage: targetImage,
+    }
   };
 }
 

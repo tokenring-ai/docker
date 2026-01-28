@@ -28,15 +28,10 @@ async function execute(
     force = false,
     noPrune = false,
     timeoutSeconds = 30,
-  }: z.infer<typeof inputSchema>,
+  }: z.output<typeof inputSchema>,
   agent: Agent,
-): Promise<RemoveImageResult> {
+) {
   const dockerService = agent.requireServiceByType(DockerService);
-
-
-  if (!images) {
-    throw new Error(`[${name}] images is required`);
-  }
 
   // Convert single image to array (images is already an array per type, but keep for safety)
   const imageList = Array.isArray(images) ? images : [images];
@@ -81,11 +76,14 @@ async function execute(
   );
 
   return {
-    ok: true,
-    exitCode: exitCode ?? 0,
-    stdout: stdout?.trim() || "",
-    stderr: stderr?.trim() || "",
-    images: imageList,
+    type: 'json' as const,
+    data: {
+      ok: true,
+      exitCode: exitCode ?? 0,
+      stdout: stdout?.trim() || "",
+      stderr: stderr?.trim() || "",
+      images: imageList,
+    }
   };
 }
 
