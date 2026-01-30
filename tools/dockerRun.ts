@@ -1,9 +1,8 @@
 import Agent from "@tokenring-ai/agent/Agent";
 import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
-import {FileSystemService} from "@tokenring-ai/filesystem";
+import {TerminalService} from "@tokenring-ai/terminal";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
-import type {DockerCommandResult} from "../types.ts";
 
 const name = "docker_dockerRun";
 const displayName = "Docker/dockerRun";
@@ -15,7 +14,7 @@ async function execute(
   {image, cmd, timeoutSeconds = 60}: z.output<typeof inputSchema>,
   agent: Agent
 ) {
-  const filesystem = agent.requireServiceByType(FileSystemService);
+  const terminal = agent.requireServiceByType(TerminalService);
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command arguments
@@ -55,7 +54,7 @@ async function execute(
   agent.infoMessage(`[${name}] Executing: ${finalCommand.join(" ")}`);
 
   try {
-    const result = await filesystem.executeCommand(finalCommand, {
+    const result = await terminal.executeCommand(finalCommand[0], finalCommand.slice(1), {
       timeoutSeconds: timeout,
     }, agent);
 
