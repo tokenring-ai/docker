@@ -1,6 +1,6 @@
 {
   "name": "@tokenring-ai/docker",
-  "description": "Service that add file contents or file names to the chat memory.",
+  "description": "Docker integration package for Token Ring AI agents, providing comprehensive Docker operations through a configurable service and tools.",
   "version": "0.2.0",
   "dependencies": {
     "@tokenring-ai/app": "0.2.0",

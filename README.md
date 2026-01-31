@@ -1,6 +1,6 @@
 # @tokenring-ai/docker
 
-Docker integration package for Token Ring AI agents, providing ephemeral container execution via a configurable Docker service and tool.
+Docker integration package for Token Ring AI agents, providing comprehensive Docker operations through a configurable service and tools.
 
 ## Overview
 
@@ -14,6 +14,7 @@ The `@tokenring-ai/docker` package enables AI agents to interact with Docker thr
 - **Agent Integration**: Seamless integration with Token Ring's agent ecosystem and service architecture
 - **Shell Safety**: All operations use proper shell escaping and timeout management
 - **Sandbox Provider**: Integrates with the Token Ring sandbox system for container orchestration
+- **Comprehensive Toolset**: 18+ Docker tools for managing images, containers, networks, and more
 
 ## Installation
 
@@ -100,7 +101,25 @@ pkg/docker/
 ├── DockerService.ts                # Core service for Docker configuration
 ├── DockerSandboxProvider.ts        # Sandbox implementation for persistent containers
 ├── tools.ts                        # Exported tools
-└── tools/dockerRun.ts              # Run ephemeral containers
+└── tools/
+    ├── dockerRun.ts                # Run ephemeral containers
+    ├── listImages.ts               # List Docker images
+    ├── buildImage.ts               # Build Docker images
+    ├── listContainers.ts           # List Docker containers
+    ├── getContainerLogs.ts         # Get container logs
+    ├── getContainerStats.ts        # Get container statistics
+    ├── startContainer.ts           # Start a container
+    ├── stopContainer.ts            # Stop a container
+    ├── removeContainer.ts          # Remove a container
+    ├── removeImage.ts              # Remove an image
+    ├── tagImage.ts                 # Tag an image
+    ├── pushImage.ts                # Push an image to registry
+    ├── createNetwork.ts            # Create a Docker network
+    ├── dockerStack.ts              # Run Docker Compose stacks
+    ├── execInContainer.ts          # Execute command in container
+    ├── authenticateRegistry.ts     # Authenticate with Docker registry
+    ├── pruneImages.ts              # Remove unused images
+    └── pruneVolumes.ts             # Remove unused volumes
 ```
 
 ## Core Components
@@ -211,9 +230,9 @@ await provider.removeContainer(containerId);
 
 ## Tools
 
-### Exported Tools
+The package provides 18 Docker tools for comprehensive container and image management. Each tool follows the TokenRing tool pattern with proper input validation, error handling, and agent integration.
 
-The following tools are currently exported via the `tools.ts` file:
+### Exported Tools
 
 #### docker_dockerRun
 
@@ -409,7 +428,7 @@ export default {
   version: packageJSON.version,
   description: packageJSON.description,
   install(app, config) {
-    if (!config.docker) return;
+    if (! config.docker) return;
     app.waitForService(ChatService, chatService =>
       chatService.addTools(tools)
     );
@@ -460,6 +479,7 @@ bun run eslint
 - **Network Access**: Remote Docker hosts require network connectivity
 - **Error Handling**: Tools throw exceptions on failure; implement proper error handling in agent workflows
 - **Security**: All commands are executed via shell; ensure proper input validation and sanitization
+- **Resource Management**: Containers and images should be properly cleaned up to avoid resource exhaustion
 
 ## License
 
