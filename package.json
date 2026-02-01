@@ -10,6 +10,7 @@
     "@tokenring-ai/filesystem": "0.2.0",
     "@tokenring-ai/sandbox": "0.2.0",
     "@tokenring-ai/utility": "0.2.0",
+    "@tokenring-ai/terminal": "0.2.0",
     "execa": "^9.6.1",
     "glob-gitignore": "^1.0.15"
   },
