@@ -4,7 +4,7 @@ import {z} from "zod";
 import {DockerConfigSchema} from "./schema.ts";
 
 export default class DockerService implements TokenRingService {
-  name = "DockerService";
+  readonly name = "DockerService";
   description = "Provides Docker functionality";
   constructor(readonly options: z.output<typeof DockerConfigSchema>) {}
 

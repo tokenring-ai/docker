@@ -4,7 +4,6 @@ import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
 
 type StackAction = "deploy" | "remove" | "ps";
 
