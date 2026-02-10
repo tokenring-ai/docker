@@ -61,13 +61,15 @@ async function execute(
     return {
       type: 'json' as const,
       data: {
-        ok: result.ok,
-        exitCode: result.exitCode,
-        stdout: result.stdout?.trim() || "",
-        stderr: result.stderr?.trim() || "",
-        error: result.ok
+        ok: result.status === "success",
+        exitCode: result.status === "badExitCode" ? result.exitCode : 0,
+        error: result.status === "success"
           ? undefined
-          : `Command failed with exit code ${result.exitCode}`,
+          : result.status === "badExitCode"
+            ? `Command failed with exit code ${result.exitCode}`
+            : result.status === "timeout"
+              ? "Command timed out"
+              : result.error,
       }
     };
   } catch (err: any) {
