@@ -100,7 +100,7 @@ pkg/docker/
 ├── types.ts                        # Shared interfaces (DockerCommandResult)
 ├── DockerService.ts                # Core service for Docker configuration
 ├── DockerSandboxProvider.ts        # Sandbox implementation for persistent containers
-├── tools.ts                        # Exported tools
+├── tools.ts                        # Exported tools (dockerRun)
 └── tools/
     ├── dockerRun.ts                # Run ephemeral containers
     ├── listImages.ts               # List Docker images
@@ -234,37 +234,71 @@ The package provides 18 Docker tools for comprehensive container and image manag
 
 ### Exported Tools
 
-#### docker_dockerRun
+Currently exported from `tools.ts`:
 
-**Description**: Runs a shell command in an ephemeral Docker container (docker run --rm). Returns the result (stdout, stderr, exit code). The base directory for the project is bind mounted at /workdir, and the working directory of the container is set to /workdir.
+- **docker_dockerRun** - Run ephemeral containers
 
-**Input Schema**:
+### Available Tools (Not Yet Exported)
+
+The following tools are implemented but not yet exported from the main tools entry point:
+
+#### Docker Container Management
+
+- **docker_listContainers** - List Docker containers
+- **docker_startContainer** - Start a container
+- **docker_stopContainer** - Stop a container
+- **docker_removeContainer** - Remove a container
+- **docker_execInContainer** - Execute command in container
+
+#### Docker Image Management
+
+- **docker_listImages** - List Docker images
+- **docker_buildImage** - Build Docker images
+- **docker_removeImage** - Remove an image
+- **docker_tagImage** - Tag an image
+- **docker_pushImage** - Push an image to registry
+
+#### Docker Network Management
+
+- **docker_createNetwork** - Create a Docker network
+
+#### Docker Stack Management
+
+- **docker_dockerStack** - Run Docker Compose stacks
+
+#### Docker Logging and Stats
+
+- **docker_getContainerLogs** - Get container logs
+- **docker_getContainerStats** - Get container statistics
+
+#### Docker Registry
+
+- **docker_authenticateRegistry** - Authenticate with Docker registry
+
+#### Docker Pruning
+
+- **docker_pruneImages** - Remove unused images
+- **docker_pruneVolumes** - Remove unused volumes
+
+### Tool Implementation Details
+
+All tools follow this pattern:
+
+- **name**: Tool name in format `docker_<toolName>`
+- **displayName**: Display name in format `Docker/<toolName>`
+- **description**: Tool description
+- **inputSchema**: Zod schema for input validation
+- **execute**: Function that takes arguments and agent, returns DockerCommandResult
+
+Example tool result interface:
 
 ```typescript
-{
-  image: string;           // Docker image name (e.g., ubuntu:latest)
-  cmd: string;             // Command to run in the container (e.g., 'ls -l /')
-  timeoutSeconds?: number; // Timeout for the command, in seconds (default: 60)
-}
-```
-
-**Example Usage**:
-
-```typescript
-import {Agent} from "@tokenring-ai/agent";
-import * as tools from "@tokenring-ai/docker/tools";
-
-const agent = new Agent(registry);
-const result = await tools.dockerRun.execute({
-  image: "ubuntu:22.04",
-  cmd: "ls -la /usr/bin",
-  timeoutSeconds: 30
-}, agent);
-
-if (result.ok) {
-  console.log("Command output:", result.stdout);
-} else {
-  console.error("Error:", result.stderr);
+interface DockerCommandResult {
+  ok?: boolean;
+  exitCode?: number;
+  stdout?: string;
+  stderr?: string;
+  error?: string;
 }
 ```
 
@@ -321,6 +355,38 @@ for (const cmd of commands) {
 // Clean up
 await provider.stopContainer(containerId);
 await provider.removeContainer(containerId);
+```
+
+### 3. Docker Image Operations
+
+```typescript
+import {Agent} from "@tokenring-ai/agent";
+import * as tools from "@tokenring-ai/docker/tools";
+
+const agent = new Agent(registry);
+
+// Build an image
+const buildResult = await tools.dockerBuildImage.execute({
+  context: "./myapp",
+  tag: "myapp:latest",
+  dockerfile: "Dockerfile"
+}, agent);
+
+// List images
+const listResult = await tools.dockerListImages.execute({
+  all: true,
+  format: "json"
+}, agent);
+
+// Tag and push
+await tools.dockerTagImage.execute({
+  sourceImage: "myapp:latest",
+  targetImage: "myregistry/myapp:v1.0"
+}, agent);
+
+await tools.dockerPushImage.execute({
+  tag: "myregistry/myapp:v1.0"
+}, agent);
 ```
 
 ## Configuration Options
@@ -480,6 +546,7 @@ bun run eslint
 - **Error Handling**: Tools throw exceptions on failure; implement proper error handling in agent workflows
 - **Security**: All commands are executed via shell; ensure proper input validation and sanitization
 - **Resource Management**: Containers and images should be properly cleaned up to avoid resource exhaustion
+- **Tool Exports**: Not all implemented tools are currently exported from `tools.ts`; check individual tool files for available functionality
 
 ## License
 
