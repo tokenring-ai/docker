@@ -132,28 +132,31 @@ await provider.removeContainer(containerId);
 
 The package provides 18 Docker tools for comprehensive container and image management. Each tool follows the TokenRing tool pattern with proper input validation, error handling, and agent integration.
 
-### Currently Exported Tools
+### Exported Tools
 
-The following tools are currently exported from `tools.ts`:
+All tools are exported from `tools.ts` and can be imported individually or as a group:
 
-- **docker_dockerRun** - Run ephemeral containers
+```typescript
+import tools from "@tokenring-ai/docker/tools";
+// or import individually
+import {dockerRun, listContainers, buildImage} from "@tokenring-ai/docker/tools";
+```
 
-### Available Tools
-
-The following tools are implemented in the `tools/` directory and can be imported individually:
+The following tools are available:
 
 #### Docker Container Management
 
+- **docker_dockerRun** - Run ephemeral containers with bind mounts
 - **docker_listContainers** - List Docker containers
 - **docker_startContainer** - Start a container
 - **docker_stopContainer** - Stop a container
 - **docker_removeContainer** - Remove a container
-- **docker_execInContainer** - Execute command in container
+- **docker_execInContainer** - Execute command in running container
 
 #### Docker Image Management
 
 - **docker_listImages** - List Docker images
-- **docker_buildImage** - Build Docker images
+- **docker_buildImage** - Build Docker images from Dockerfile
 - **docker_removeImage** - Remove an image
 - **docker_tagImage** - Tag an image
 - **docker_pushImage** - Push an image to registry
@@ -164,7 +167,7 @@ The following tools are implemented in the `tools/` directory and can be importe
 
 #### Docker Stack Management
 
-- **docker_dockerStack** - Run Docker Compose stacks
+- **docker_dockerStack** - Run Docker Compose stacks in Swarm mode
 
 #### Docker Logging and Stats
 
@@ -184,12 +187,14 @@ The following tools are implemented in the `tools/` directory and can be importe
 
 #### docker_dockerRun
 
-Runs a shell command in an ephemeral Docker container.
+Runs a shell command in an ephemeral Docker container with the project directory bind-mounted.
 
 **Parameters**:
 - `image` (string): Docker image name (e.g., ubuntu:latest)
 - `cmd` (string): Command to run in the container
-- `timeoutSeconds` (number, optional): Timeout for the command in seconds (default: 60)
+- `timeoutSeconds` (number, optional): Timeout for the command in seconds (default: 60, max: 600)
+
+**Description**: Runs a shell command in an ephemeral Docker container (docker run --rm). Returns the result (stdout, stderr, exit code). The base directory for the project is bind mounted at /workdir, and the working directory of the container is set to /workdir.
 
 **Example**:
 ```typescript
@@ -553,6 +558,7 @@ Prune unused Docker images.
 **Parameters**:
 - `all` (boolean, optional): Remove all unused images, not just dangling (default: false)
 - `filter` (string, optional): Filter images based on conditions
+- `force` (boolean, optional): Whether to force removal (default: false)
 - `timeoutSeconds` (number, optional): Timeout in seconds (default: 60)
 
 **Example**:
@@ -571,6 +577,7 @@ Prune unused Docker volumes.
 
 **Parameters**:
 - `filter` (string, optional): Filter volumes based on conditions
+- `force` (boolean, optional): Whether to force removal (default: false)
 - `timeoutSeconds` (number, optional): Timeout in seconds (default: 60)
 
 **Example**:
@@ -749,7 +756,7 @@ import {TokenRingApp} from "@tokenring-ai/app";
 import {DockerService, DockerSandboxProvider} from "@tokenring-ai/docker";
 import {SandboxService} from "@tokenring-ai/sandbox";
 import {ChatService} from "@tokenring-ai/chat";
-import dockerRun from "@tokenring-ai/docker/tools/dockerRun";
+import tools from "@tokenring-ai/docker/tools";
 
 const app = new TokenRingApp();
 
@@ -760,7 +767,7 @@ const dockerService = new DockerService({
 app.addServices(dockerService);
 
 app.waitForService(ChatService, chatService => {
-  chatService.addTools([dockerRun]);
+  chatService.addTools(tools);
 });
 
 app.waitForService(SandboxService, sandboxService => {
@@ -783,10 +790,10 @@ export {DockerConfigSchema} from "@tokenring-ai/docker/schema";
 // Types
 export {DockerCommandResult} from "@tokenring-ai/docker/types";
 
-// Tools (import individually)
-import dockerRun from "@tokenring-ai/docker/tools/dockerRun";
-import listContainers from "@tokenring-ai/docker/tools/listContainers";
-// ... etc for all 18 tools
+// Tools (import individually or as a group)
+import tools from "@tokenring-ai/docker/tools";
+// or
+import {dockerRun, listContainers, buildImage} from "@tokenring-ai/docker/tools";
 ```
 
 ### DockerCommandResult Interface
@@ -826,7 +833,7 @@ pkg/docker/
 ├── types.ts                        # Shared interfaces (DockerCommandResult)
 ├── DockerService.ts                # Core service for Docker configuration
 ├── DockerSandboxProvider.ts        # Sandbox implementation for persistent containers
-├── tools.ts                        # Exported tools (currently only dockerRun)
+├── tools.ts                        # Exported tools (all 18 tools)
 └── tools/
     ├── dockerRun.ts                # Run ephemeral containers
     ├── listImages.ts               # List Docker images
@@ -878,8 +885,8 @@ bun run eslint
 - **Error Handling**: Tools throw exceptions on failure; implement proper error handling in agent workflows
 - **Security**: All commands are executed via shell; ensure proper input validation and sanitization
 - **Resource Management**: Containers and images should be properly cleaned up to avoid resource exhaustion
-- **Tool Exports**: Currently only `docker_dockerRun` is exported from `tools.ts`; other tools must be imported individually
 - **TLS Configuration**: TLS verification requires proper certificate files to be accessible
+- **Tool Files**: Tools are implemented as TypeScript files but imported with `.js` extension for compatibility
 
 ## License
 
