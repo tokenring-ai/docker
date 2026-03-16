@@ -70,8 +70,7 @@ async function execute(
   }
 }
 
-const description =
-  "Launch, update, or remove a Docker stack from the local Docker Swarm. Actions: deploy (requires composeFile), remove, ps.";
+const description = "Launch, update, or remove a Docker stack from the local Docker Swarm. Actions: deploy (requires composeFile), remove, ps.";
 
 const inputSchema = z.object({
   action: z

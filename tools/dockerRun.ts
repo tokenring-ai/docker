@@ -77,8 +77,7 @@ async function execute(
   }
 }
 
-const description =
-  "Runs a shell command in an ephemeral Docker container (docker run --rm). Returns the result (stdout, stderr, exit code). The base directory for the project is bind mounted at /workdir, and the working directory of the container is set to /workdir";
+const description = "Runs a shell command in an ephemeral Docker container (docker run --rm). Returns the result (stdout, stderr, exit code). The base directory for the project is bind mounted at /workdir, and the working directory of the container is set to /workdir";
 
 const inputSchema = z.object({
   image: z.string().describe("Docker image name (e.g., ubuntu:latest)"),
