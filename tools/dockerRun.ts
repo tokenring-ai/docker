@@ -49,7 +49,9 @@ async function execute(
   const timeout = Math.max(5, Math.min(timeoutSeconds || 60, 600));
 
   // Create the final command with timeout
-  const finalCommand: string[] = ["timeout", `${timeout}s`, "docker -v `pwd`:/workdir:rw -w /workdir ", ...dockerArgs];
+  // Add bind mount for working directory
+  dockerArgs.unshift("-v", `${process.cwd()}:/workdir:rw`, "-w", "/workdir");
+  const finalCommand: string[] = ["timeout", `${timeout}s`, "docker", ...dockerArgs];
 
   agent.infoMessage(`[${name}] Executing: ${finalCommand.join(" ")}`);
 

@@ -14,7 +14,7 @@ The `@tokenring-ai/docker` package enables AI agents to interact with Docker thr
 - **Agent Integration**: Seamless integration with Token Ring's agent ecosystem and service architecture
 - **Shell Safety**: All operations use proper shell escaping and timeout management
 - **Sandbox Provider**: Integrates with the Token Ring sandbox system for container orchestration
-- **Comprehensive Toolset**: 19 Docker tools for managing images, containers, networks, and more
+- **Comprehensive Toolset**: 18 Docker tools for managing images, containers, networks, and more
 
 ## Installation
 
@@ -130,7 +130,7 @@ await provider.removeContainer(containerId);
 
 ## Tools
 
-The package provides 19 Docker tools for comprehensive container and image management. Each tool follows the TokenRing tool pattern with proper input validation, error handling, and agent integration.
+The package provides 18 Docker tools for comprehensive container and image management. Each tool follows the TokenRing tool pattern with proper input validation, error handling, and agent integration.
 
 ### Exported Tools
 
@@ -558,10 +558,9 @@ Prune unused Docker images.
 **Parameters**:
 - `all` (boolean, optional): Remove all unused images, not just dangling (default: false)
 - `filter` (string, optional): Filter images based on conditions
-- `force` (boolean, optional): Force flag (always set internally to avoid interactive prompts)
 - `timeoutSeconds` (number, optional): Timeout in seconds (default: 60)
 
-**Note**: The `-f` flag is always used internally to avoid interactive prompts, regardless of the `force` parameter value.
+**Note**: The `-f` flag is always used internally to avoid interactive prompts.
 
 **Example**:
 ```typescript
@@ -579,10 +578,9 @@ Prune unused Docker volumes.
 
 **Parameters**:
 - `filter` (string, optional): Filter volumes based on conditions
-- `force` (boolean, optional): Force flag (always set internally to avoid interactive prompts)
 - `timeoutSeconds` (number, optional): Timeout in seconds (default: 60)
 
-**Note**: The `-f` flag is always used internally to avoid interactive prompts, regardless of the `force` parameter value.
+**Note**: The `-f` flag is always used internally to avoid interactive prompts.
 
 **Example**:
 ```typescript
@@ -837,7 +835,7 @@ pkg/docker/
 ├── types.ts                        # Shared interfaces (DockerCommandResult)
 ├── DockerService.ts                # Core service for Docker configuration
 ├── DockerSandboxProvider.ts        # Sandbox implementation for persistent containers
-├── tools.ts                        # Exported tools (all 19 tools)
+├── tools.ts                        # Exported tools (all 18 tools)
 └── tools/
     ├── dockerRun.ts                # Run ephemeral containers
     ├── listImages.ts               # List Docker images
@@ -905,7 +903,7 @@ bun run eslint
 - **Security**: All commands are executed via shell; ensure proper input validation and sanitization
 - **Resource Management**: Containers and images should be properly cleaned up to avoid resource exhaustion
 - **TLS Configuration**: TLS verification requires proper certificate files to be accessible
-- **Force Flags**: The `docker_pruneImages` and `docker_pruneVolumes` tools always use the `-f` flag internally to avoid interactive prompts, regardless of the `force` parameter value
+- **Force Flags**: The `docker_pruneImages` and `docker_pruneVolumes` tools always use the `-f` flag internally to avoid interactive prompts
 - **Timeout Limits**: Tools have maximum timeout limits to prevent indefinite execution
 - **Shell Escaping**: All user-provided strings are shell-escaped for safety
 
