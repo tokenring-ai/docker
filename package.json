@@ -1,6 +1,6 @@
 {
   "name": "@tokenring-ai/docker",
-  "description": "Docker integration package for Token Ring AI agents, providing comprehensive Docker operations through a configurable service and tools.",
+  "description": "Comprehensive container management and isolated sandboxing via Docker.",
   "version": "0.2.0",
   "dependencies": {
     "@tokenring-ai/app": "0.2.0",

@@ -8,4 +8,7 @@ export const DockerConfigSchema = z.object({
     cert: z.string().optional(),
     key: z.string().optional(),
   }).optional(),
+  sandbox: z.boolean().optional(),
 });
+
+export type DockerConfig = z.output<typeof DockerConfigSchema>;
