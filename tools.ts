@@ -1,10 +1,9 @@
 // Import all implemented tools
-import dockerRun from "./tools/dockerRun.ts";
-
 // Import all implemented tools
 import authenticateRegistry from "./tools/authenticateRegistry.ts";
 import buildImage from "./tools/buildImage.ts";
 import createNetwork from "./tools/createNetwork.ts";
+import dockerRun from "./tools/dockerRun.ts";
 import dockerStack from "./tools/dockerStack.ts";
 import execInContainer from "./tools/execInContainer.ts";
 import getContainerLogs from "./tools/getContainerLogs.ts";
