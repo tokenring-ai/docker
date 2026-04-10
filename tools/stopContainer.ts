@@ -1,5 +1,5 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -7,14 +7,6 @@ import DockerService from "../DockerService.ts";
 
 const name = "docker_stopContainer";
 const displayName = "Docker/stopContainer";
-
-interface StopContainerResult {
-  ok: boolean;
-  exitCode: number;
-  stdout: string;
-  stderr: string;
-  containers: string[];
-}
 
 /**
  * Stop one or more Docker containers
@@ -61,14 +53,14 @@ async function execute(
     `[${name}] Successfully stopped container(s): ${containerList.join(", ")}`,
   );
   return {
-    type: 'json' as const,
+    type: "json" as const,
     data: {
       ok: true,
       exitCode: exitCode ?? 0,
       stdout: stdout?.trim() || "",
       stderr: stderr?.trim() || "",
       containers: containerList,
-    }
+    },
   };
 }
 
@@ -87,5 +79,9 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

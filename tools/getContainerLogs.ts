@@ -1,19 +1,12 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
 
 const name = "docker_getContainerLogs";
 const displayName = "Docker/getContainerLogs";
-
-interface GetContainerLogsResult extends DockerCommandResult {
-  logs?: string;
-  lineCount?: number;
-  container?: string;
-}
 
 /**
  * Get logs from a Docker container
@@ -30,7 +23,7 @@ async function execute(
     details = false,
     timeoutSeconds = 30,
   }: z.output<typeof inputSchema>,
-  agent: Agent
+  agent: Agent,
 ) {
   const dockerService = agent.requireServiceByType(DockerService);
 
@@ -66,7 +59,7 @@ async function execute(
   cmd += ` ${shellEscape(containerName)}`;
 
   agent.infoMessage(
-    `[${name}] Getting logs from container ${containerName}...`
+    `[${name}] Getting logs from container ${containerName}...`,
   );
   agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
@@ -81,10 +74,10 @@ async function execute(
     const logLines = logs.split("\n");
 
     agent.infoMessage(
-      `[${name}] Successfully retrieved logs from container ${containerName}`
+      `[${name}] Successfully retrieved logs from container ${containerName}`,
     );
     return {
-      type: 'json' as const,
+      type: "json" as const,
       data: {
         ok: true,
         exitCode: exitCode,
@@ -93,7 +86,7 @@ async function execute(
         container: containerName,
         stdout: stdout?.trim() || "",
         stderr: stderr?.trim() || "",
-      }
+      },
     };
   } catch (err: any) {
     throw new Error(`[${name}] Error: ${err.message}`);
@@ -118,13 +111,13 @@ const inputSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Show logs since timestamp (e.g. 2013-01-02T13:23:37Z) or relative (e.g. 42m for 42 minutes)"
+      "Show logs since timestamp (e.g. 2013-01-02T13:23:37Z) or relative (e.g. 42m for 42 minutes)",
     ),
   until: z
     .string()
     .optional()
     .describe(
-      "Show logs before a timestamp (e.g. 2013-01-02T13:23:37Z) or relative (e.g. 42m for 42 minutes)"
+      "Show logs before a timestamp (e.g. 2013-01-02T13:23:37Z) or relative (e.g. 42m for 42 minutes)",
     ),
   tail: z
     .number()
@@ -146,5 +139,9 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

@@ -1,4 +1,4 @@
-import {TokenRingPlugin} from "@tokenring-ai/app";
+import type {TokenRingPlugin} from "@tokenring-ai/app";
 import {ChatService} from "@tokenring-ai/chat";
 import {SandboxService} from "@tokenring-ai/sandbox";
 import {z} from "zod";
@@ -28,14 +28,21 @@ export default {
   install(app, config) {
     applyEnv(config.docker);
 
-    app.waitForService(ChatService, chatService => chatService.addTools(tools));
+    app.waitForService(ChatService, (chatService) =>
+      chatService.addTools(tools),
+    );
 
-    const dockerService = new DockerService(DockerConfigSchema.parse(config.docker));
+    const dockerService = new DockerService(
+      DockerConfigSchema.parse(config.docker),
+    );
     app.addServices(dockerService);
 
     if (config.docker.sandbox) {
-      app.waitForService(SandboxService, sandboxService => {
-        sandboxService.registerProvider("docker", new DockerSandboxProvider(dockerService));
+      app.waitForService(SandboxService, (sandboxService) => {
+        sandboxService.registerProvider(
+          "docker",
+          new DockerSandboxProvider(dockerService),
+        );
       });
     }
   },

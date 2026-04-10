@@ -1,5 +1,5 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -8,14 +8,6 @@ import DockerService from "../DockerService.ts";
 // Export tool name for consistent messaging
 const name = "docker_startContainer";
 const displayName = "Docker/startContainer";
-
-interface StartContainerResult {
-  ok: boolean;
-  exitCode: number;
-  stdout: string;
-  stderr: string;
-  containers: string[];
-}
 
 /**
  * Start one or more Docker containers
@@ -72,14 +64,14 @@ async function execute(
     `[${name}] Successfully started container(s): ${containerList.join(", ")}`,
   );
   return {
-    type: 'json' as const,
+    type: "json" as const,
     data: {
       ok: true,
       exitCode: exitCode ?? 0,
       stdout: stdout?.trim() || "",
       stderr: stderr?.trim() || "",
       containers: containerList,
-    }
+    },
   };
 }
 
@@ -87,9 +79,9 @@ const description = "Start one or more Docker containers";
 
 const inputSchema = z
   .object({
-    containers: z.union([z.string(), z.array(z.string())]).describe(
-      "Container ID(s) or name(s) to start",
-    ),
+    containers: z
+      .union([z.string(), z.array(z.string())])
+      .describe("Container ID(s) or name(s) to start"),
     attach: z
       .boolean()
       .optional()
@@ -110,5 +102,9 @@ const inputSchema = z
   .strict();
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

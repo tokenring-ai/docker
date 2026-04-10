@@ -1,12 +1,14 @@
-import {TokenRingService} from "@tokenring-ai/app/types";
+import type {TokenRingService} from "@tokenring-ai/app/types";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
-import {z} from "zod";
-import {DockerConfigSchema} from "./schema.ts";
+import type {z} from "zod";
+import type {DockerConfigSchema} from "./schema.ts";
 
 export default class DockerService implements TokenRingService {
   readonly name = "DockerService";
   description = "Provides Docker functionality";
-  constructor(readonly options: z.output<typeof DockerConfigSchema>) {}
+
+  constructor(readonly options: z.output<typeof DockerConfigSchema>) {
+  }
 
   buildDockerCmd(): string {
     let dockerCmd = "docker";

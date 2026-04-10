@@ -1,5 +1,5 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {TerminalService} from "@tokenring-ai/terminal";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
@@ -12,7 +12,7 @@ const displayName = "Docker/dockerRun";
  */
 async function execute(
   {image, cmd, timeoutSeconds = 60}: z.output<typeof inputSchema>,
-  agent: Agent
+  agent: Agent,
 ) {
   const terminal = agent.requireServiceByType(TerminalService);
   const dockerService = agent.requireServiceByType(DockerService);
@@ -51,35 +51,47 @@ async function execute(
   // Create the final command with timeout
   // Add bind mount for working directory
   dockerArgs.unshift("-v", `${process.cwd()}:/workdir:rw`, "-w", "/workdir");
-  const finalCommand: string[] = ["timeout", `${timeout}s`, "docker", ...dockerArgs];
+  const finalCommand: string[] = [
+    "timeout",
+    `${timeout}s`,
+    "docker",
+    ...dockerArgs,
+  ];
 
   agent.infoMessage(`[${name}] Executing: ${finalCommand.join(" ")}`);
 
   try {
-    const result = await terminal.executeCommand(finalCommand[0], finalCommand.slice(1), {
-      timeoutSeconds: timeout,
-    }, agent);
+    const result = await terminal.executeCommand(
+      finalCommand[0],
+      finalCommand.slice(1),
+      {
+        timeoutSeconds: timeout,
+      },
+      agent,
+    );
 
     return {
-      type: 'json' as const,
+      type: "json" as const,
       data: {
         ok: result.status === "success",
         exitCode: result.status === "badExitCode" ? result.exitCode : 0,
-        error: result.status === "success"
-          ? undefined
-          : result.status === "badExitCode"
-            ? `Command failed with exit code ${result.exitCode}`
-            : result.status === "timeout"
-              ? "Command timed out"
-              : result.error,
-      }
+        error:
+          result.status === "success"
+            ? undefined
+            : result.status === "badExitCode"
+              ? `Command failed with exit code ${result.exitCode}`
+              : result.status === "timeout"
+                ? "Command timed out"
+                : result.error,
+      },
     };
   } catch (err: any) {
     throw new Error(`[${name}] ${err.message}`);
   }
 }
 
-const description = "Runs a shell command in an ephemeral Docker container (docker run --rm). Returns the result (stdout, stderr, exit code). The base directory for the project is bind mounted at /workdir, and the working directory of the container is set to /workdir";
+const description =
+  "Runs a shell command in an ephemeral Docker container (docker run --rm). Returns the result (stdout, stderr, exit code). The base directory for the project is bind mounted at /workdir, and the working directory of the container is set to /workdir";
 
 const inputSchema = z.object({
   image: z.string().describe("Docker image name (e.g., ubuntu:latest)"),
@@ -92,5 +104,9 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

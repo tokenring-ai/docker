@@ -1,11 +1,9 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
-
-type StackAction = "deploy" | "remove" | "ps";
 
 /**
  * Docker Stack management tool: deploy, update, remove Docker stacks in local Docker Swarm mode
@@ -15,8 +13,13 @@ const name = "docker_dockerStack";
 const displayName = "Docker/dockerStack";
 
 async function execute(
-  {action, stackName, composeFile, timeoutSeconds = 60}: z.output<typeof inputSchema>,
-  agent: Agent
+  {
+    action,
+    stackName,
+    composeFile,
+    timeoutSeconds = 60,
+  }: z.output<typeof inputSchema>,
+  agent: Agent,
 ) {
   const dockerService = agent.requireServiceByType(DockerService);
 
@@ -55,14 +58,14 @@ async function execute(
       `[dockerStack] Successfully executed ${action} on stack ${stackName}`,
     );
     return {
-      type: 'json' as const,
+      type: "json" as const,
       data: {
         ok: true,
         exitCode: exitCode,
         stdout: stdout?.trim() || "",
         stderr: stderr?.trim() || "",
         error: undefined,
-      }
+      },
     };
   } catch (err: any) {
     // Propagate as an error with contextual information
@@ -70,7 +73,8 @@ async function execute(
   }
 }
 
-const description = "Launch, update, or remove a Docker stack from the local Docker Swarm. Actions: deploy (requires composeFile), remove, ps.";
+const description =
+  "Launch, update, or remove a Docker stack from the local Docker Swarm. Actions: deploy (requires composeFile), remove, ps.";
 
 const inputSchema = z.object({
   action: z
@@ -89,5 +93,9 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

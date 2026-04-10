@@ -1,5 +1,5 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -71,14 +71,14 @@ async function execute(
       `[${name}] Successfully removed container(s): ${containerList.join(", ")}`,
     );
     return {
-      type: 'json' as const,
+      type: "json" as const,
       data: {
         ok: true,
         exitCode: exitCode,
         stdout: stdout?.trim() || "",
         stderr: stderr?.trim() || "",
         containers: containerList,
-      }
+      },
     };
   } catch (err: any) {
     // Throw error instead of returning an error object
@@ -92,12 +92,27 @@ const inputSchema = z.object({
   containers: z
     .union([z.string(), z.array(z.string())])
     .describe("Container ID(s) or name(s) to remove"),
-  force: z.boolean().default(false).describe("Whether to force the removal of a running container"),
-  volumes: z.boolean().default(false).describe("Whether to remove anonymous volumes associated with the container"),
-  link: z.boolean().default(false).describe("Whether to remove the specified link"),
+  force: z
+    .boolean()
+    .default(false)
+    .describe("Whether to force the removal of a running container"),
+  volumes: z
+    .boolean()
+    .default(false)
+    .describe(
+      "Whether to remove anonymous volumes associated with the container",
+    ),
+  link: z
+    .boolean()
+    .default(false)
+    .describe("Whether to remove the specified link"),
   timeoutSeconds: z.number().int().default(30).describe("Timeout in seconds"),
 });
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

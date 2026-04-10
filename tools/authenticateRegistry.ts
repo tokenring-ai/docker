@@ -1,18 +1,12 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
 
 const name = "docker_authenticateRegistry";
 const displayName = "Docker/authenticateRegistry";
-
-interface AuthResult extends DockerCommandResult {
-  server?: string;
-  username?: string;
-}
 
 /**
  * Authenticate against a Docker registry
@@ -26,7 +20,7 @@ async function execute(
     passwordStdin = false,
     timeoutSeconds = 30,
   }: z.output<typeof inputSchema>,
-  agent: Agent
+  agent: Agent,
 ) {
   const dockerService = agent.requireServiceByType(DockerService);
 
@@ -53,15 +47,15 @@ async function execute(
     cmd += ` --email ${shellEscape(email)}`;
   }
 
-  agent.infoMessage(
-    `[${name}] Authenticating to registry ${server}...`
-  );
+  agent.infoMessage(`[${name}] Authenticating to registry ${server}...`);
   // Don't log the full command as it may contain sensitive information
   agent.infoMessage(
-    `[${name}] Executing: ${dockerCmd} login ${server} -u ${username} [password hidden]`
+    `[${name}] Executing: ${dockerCmd} login ${server} -u ${username} [password hidden]`,
   );
 
-  const execOptions: { maxBuffer: number; input?: string } = {maxBuffer: 1024 * 1024};
+  const execOptions: { maxBuffer: number; input?: string } = {
+    maxBuffer: 1024 * 1024,
+  };
 
   // If using passwordStdin, we need to provide the password via stdin
   if (passwordStdin) {
@@ -75,10 +69,10 @@ async function execute(
       timeout: timeout * 1000,
     });
     agent.infoMessage(
-      `[${name}] Successfully authenticated to registry ${server}`
+      `[${name}] Successfully authenticated to registry ${server}`,
     );
     return {
-      type: 'json' as const,
+      type: "json" as const,
       data: {
         ok: true,
         exitCode: exitCode,
@@ -86,7 +80,7 @@ async function execute(
         stderr: stderr?.trim() || "",
         server: server,
         username: username,
-      }
+      },
     };
   } catch (err: any) {
     // Error message follows the required format
@@ -118,5 +112,9 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

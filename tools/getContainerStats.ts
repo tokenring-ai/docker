@@ -1,17 +1,9 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
-
-type FormatType = "json" | "table" | string;
-
-interface GetContainerStatsResult extends DockerCommandResult {
-  stats?: any;
-  containers?: string[];
-}
 
 /**
  * Get stats from a Docker container
@@ -28,7 +20,7 @@ async function execute(
     format = "json",
     timeoutSeconds = 10,
   }: z.output<typeof inputSchema>,
-  agent: Agent
+  agent: Agent,
 ) {
   const dockerService = agent.requireServiceByType(DockerService);
 
@@ -69,7 +61,7 @@ async function execute(
   cmd += ` ${containerList.map((container) => shellEscape(container)).join(" ")}`;
 
   agent.infoMessage(
-    `[${name}] Getting stats for container(s): ${containerList.join(", ")}...`
+    `[${name}] Getting stats for container(s): ${containerList.join(", ")}...`,
   );
   agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
@@ -98,10 +90,10 @@ async function execute(
     }
 
     agent.infoMessage(
-      `[${name}] Successfully retrieved stats for container(s): ${containerList.join(", ")}`
+      `[${name}] Successfully retrieved stats for container(s): ${containerList.join(", ")}`,
     );
     return {
-      type: 'json' as const,
+      type: "json" as const,
       data: {
         ok: true,
         exitCode: exitCode,
@@ -109,7 +101,7 @@ async function execute(
         containers: containerList,
         stdout: stdout?.trim() || "",
         stderr: stderr?.trim() || "",
-      }
+      },
     };
   } catch (err: any) {
     throw new Error(`[${name}] Error: ${err.message}`);
@@ -139,5 +131,9 @@ const inputSchema = z
   .strict();
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

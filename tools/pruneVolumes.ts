@@ -1,5 +1,5 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -9,23 +9,11 @@ import DockerService from "../DockerService.ts";
 const name = "docker_pruneVolumes";
 const displayName = "Docker/pruneVolumes";
 
-interface PruneVolumesResult {
-  ok: boolean;
-  exitCode: number;
-  stdout: string;
-  stderr: string;
-  spaceReclaimed: string;
-  volumesDeleted: number;
-}
-
 /**
  * Prune unused Docker volumes
  */
 async function execute(
-  {
-    filter,
-    timeoutSeconds = 60,
-  }: z.output<typeof inputSchema>,
+  {filter, timeoutSeconds = 60}: z.output<typeof inputSchema>,
   agent: Agent,
 ) {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -53,14 +41,14 @@ async function execute(
 
   // Parse the output to extract the amount of space reclaimed
   let spaceReclaimed = "0B";
-  const match = stdout.match(/Total reclaimed space: ([\d\.]+\s?[KMGT]?B)/i);
+  const match = stdout.match(/Total reclaimed space: ([\d.]+\s?[KMGT]?B)/i);
   if (match) {
     spaceReclaimed = match[1];
   }
 
   // Parse the output to extract the number of volumes deleted
   let volumesDeleted = 0;
-  const deletedMatch = stdout.match(/Deleted Volumes:\s*([^]*?)Total/);
+  const deletedMatch = stdout.match(/Deleted Volumes:\s*(\S*?)Total/);
   if (deletedMatch) {
     const deletedText = deletedMatch[1].trim();
     volumesDeleted = deletedText
@@ -72,7 +60,7 @@ async function execute(
     `[${name}] Successfully pruned unused Docker volumes. Space reclaimed: ${spaceReclaimed}`,
   );
   return {
-    type: 'json' as const,
+    type: "json" as const,
     data: {
       ok: true,
       exitCode: exitCode ?? 0,
@@ -80,7 +68,7 @@ async function execute(
       stderr: stderr?.trim() || "",
       spaceReclaimed: spaceReclaimed,
       volumesDeleted: volumesDeleted,
-    }
+    },
   };
 }
 
@@ -99,5 +87,9 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

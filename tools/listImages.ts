@@ -1,16 +1,9 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
-
-type FormatType = "json" | "table" | string;
-interface ListImagesResult extends DockerCommandResult {
-  images?: any;
-  count?: number;
-}
 
 /**
  * List Docker images
@@ -90,9 +83,7 @@ async function execute(
           .filter((line) => line.trim())
           .map((line) => JSON.parse(line));
       } catch (e: any) {
-        agent.errorMessage(
-          `[${name}] Error parsing JSON output: ${e.message}`
-        );
+        agent.errorMessage(`[${name}] Error parsing JSON output: ${e.message}`);
         images = stdout.trim();
       }
     } else {
@@ -101,7 +92,7 @@ async function execute(
 
     agent.infoMessage(`[${name}] Successfully listed images`);
     return {
-      type: 'json' as const,
+      type: "json" as const,
       data: {
         ok: true,
         exitCode: exitCode,
@@ -114,7 +105,7 @@ async function execute(
             .filter((line) => line.trim()).length,
         stdout: stdout?.trim() || "",
         stderr: stderr?.trim() || "",
-      }
+      },
     };
   } catch (err: any) {
     // Throw error instead of returning an object
@@ -146,5 +137,9 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

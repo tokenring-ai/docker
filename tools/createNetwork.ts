@@ -1,18 +1,12 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
 
 const name = "docker_createNetwork";
 const displayName = "Docker/createNetwork";
-
-interface CreateNetworkResult extends DockerCommandResult {
-  name?: string;
-  id?: string;
-}
 
 /**
  * Create a Docker network
@@ -28,7 +22,7 @@ async function execute(
     ipRange,
     timeoutSeconds = 30,
   }: z.output<typeof inputSchema>,
-  agent: Agent
+  agent: Agent,
 ) {
   const dockerService = agent.requireServiceByType(DockerService);
 
@@ -86,10 +80,10 @@ async function execute(
     const networkId = stdout.trim();
 
     agent.infoMessage(
-      `[${name}] Successfully created Docker network ${networkName} (${networkId})`
+      `[${name}] Successfully created Docker network ${networkName} (${networkId})`,
     );
     return {
-      type: 'json' as const,
+      type: "json" as const,
       data: {
         ok: true,
         exitCode: exitCode,
@@ -97,7 +91,7 @@ async function execute(
         stderr: stderr?.trim() || "",
         name: networkName,
         id: networkId,
-      }
+      },
     };
   } catch (err: any) {
     const errMsg = err.message || "Unknown error";
@@ -110,7 +104,10 @@ const description = "Create a Docker network";
 const inputSchema = z.object({
   name: z.string().describe("The name of the network"),
   driver: z.string().describe("Driver to manage the network").default("bridge"),
-  options: z.record(z.string(), z.string()).describe("Driver specific options").default({}),
+  options: z
+    .record(z.string(), z.string())
+    .describe("Driver specific options")
+    .default({}),
   internal: z
     .boolean()
     .describe("Restrict external access to the network")
@@ -125,5 +122,9 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

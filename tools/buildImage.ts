@@ -1,17 +1,12 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
 
 const name = "docker_buildImage";
 const displayName = "Docker/buildImage";
-
-interface BuildResult extends DockerCommandResult {
-  tag?: string;
-}
 
 /**
  * Build a Docker image
@@ -26,7 +21,7 @@ async function execute(
     pull = false,
     timeoutSeconds = 300,
   }: z.output<typeof inputSchema>,
-  agent: Agent
+  agent: Agent,
 ) {
   const dockerService = agent.requireServiceByType(DockerService);
 
@@ -74,14 +69,14 @@ async function execute(
     });
     agent.infoMessage(`[${name}] Successfully built image ${tag}`);
     return {
-      type: 'json' as const,
+      type: "json" as const,
       data: {
         ok: true,
         exitCode: exitCode,
         stdout: stdout?.trim() || "",
         stderr: stderr?.trim() || "",
         tag: tag,
-      }
+      },
     };
   } catch (err: any) {
     const message = err.shortMessage || err.message;
@@ -123,5 +118,9 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

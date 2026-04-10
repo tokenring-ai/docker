@@ -1,18 +1,12 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
-import {DockerCommandResult} from "../types.ts";
 
 const name = "docker_execInContainer";
 const displayName = "Docker/execInContainer";
-
-interface ExecInContainerResult extends DockerCommandResult {
-  container?: string;
-  command?: string;
-}
 
 /**
  * Execute a command in a running Docker container
@@ -30,7 +24,7 @@ async function execute(
     user,
     timeoutSeconds = 30,
   }: z.output<typeof inputSchema>,
-  agent: Agent
+  agent: Agent,
 ) {
   const dockerService = agent.requireServiceByType(DockerService);
 
@@ -100,7 +94,7 @@ async function execute(
       `[execInContainer] Command executed successfully in container ${container}`,
     );
     return {
-      type: 'json' as const,
+      type: "json" as const,
       data: {
         ok: true,
         exitCode: exitCode,
@@ -108,7 +102,7 @@ async function execute(
         stderr: stderr?.trim() || "",
         container: container,
         command: commandList.join(" "),
-      }
+      },
     };
   } catch (err: any) {
     // Throw error instead of returning error object
@@ -160,5 +154,9 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;
