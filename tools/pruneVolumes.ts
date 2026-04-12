@@ -1,5 +1,5 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -15,7 +15,7 @@ const displayName = "Docker/pruneVolumes";
 async function execute(
   {filter, timeoutSeconds = 60}: z.output<typeof inputSchema>,
   agent: Agent,
-) {
+): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -60,15 +60,8 @@ async function execute(
     `[${name}] Successfully pruned unused Docker volumes. Space reclaimed: ${spaceReclaimed}`,
   );
   return {
-    type: "json" as const,
-    data: {
-      ok: true,
-      exitCode: exitCode ?? 0,
-      stdout: stdout?.trim() || "",
-      stderr: stderr?.trim() || "",
-      spaceReclaimed: spaceReclaimed,
-      volumesDeleted: volumesDeleted,
-    },
+    summary: `Pruned unused Docker volumes, reclaimed ${spaceReclaimed}`,
+    result: JSON.stringify({ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", spaceReclaimed, volumesDeleted}),
   };
 }
 

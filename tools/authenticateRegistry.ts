@@ -1,5 +1,5 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -21,7 +21,7 @@ async function execute(
     timeoutSeconds = 30,
   }: z.output<typeof inputSchema>,
   agent: Agent,
-) {
+) : Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -72,15 +72,8 @@ async function execute(
       `[${name}] Successfully authenticated to registry ${server}`,
     );
     return {
-      type: "json" as const,
-      data: {
-        ok: true,
-        exitCode: exitCode,
-        stdout: stdout?.trim() || "",
-        stderr: stderr?.trim() || "",
-        server: server,
-        username: username,
-      },
+      summary: `Authenticated to Docker registry ${server} as ${username}`,
+      result: JSON.stringify({ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", server, username}),
     };
   } catch (err: any) {
     // Error message follows the required format

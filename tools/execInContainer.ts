@@ -1,5 +1,5 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -25,7 +25,7 @@ async function execute(
     timeoutSeconds = 30,
   }: z.output<typeof inputSchema>,
   agent: Agent,
-) {
+): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Convert command to array if it's a string
@@ -94,15 +94,8 @@ async function execute(
       `[execInContainer] Command executed successfully in container ${container}`,
     );
     return {
-      type: "json" as const,
-      data: {
-        ok: true,
-        exitCode: exitCode,
-        stdout: stdout?.trim() || "",
-        stderr: stderr?.trim() || "",
-        container: container,
-        command: commandList.join(" "),
-      },
+      summary: `Executed command in container ${container}`,
+      result: JSON.stringify({ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", container, command: commandList.join(" ")}),
     };
   } catch (err: any) {
     // Throw error instead of returning error object

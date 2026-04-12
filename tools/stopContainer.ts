@@ -1,5 +1,5 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -14,7 +14,7 @@ const displayName = "Docker/stopContainer";
 async function execute(
   {containers, time = 10, timeoutSeconds = 30}: z.output<typeof inputSchema>,
   agent: Agent,
-) {
+): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Convert single container to array
@@ -53,14 +53,8 @@ async function execute(
     `[${name}] Successfully stopped container(s): ${containerList.join(", ")}`,
   );
   return {
-    type: "json" as const,
-    data: {
-      ok: true,
-      exitCode: exitCode ?? 0,
-      stdout: stdout?.trim() || "",
-      stderr: stderr?.trim() || "",
-      containers: containerList,
-    },
+    summary: `Stopped container(s): ${containerList.join(", ")}`,
+    result: JSON.stringify({ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", containers: containerList}),
   };
 }
 

@@ -1,5 +1,5 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -14,7 +14,7 @@ const displayName = "Docker/pushImage";
 async function execute(
   {tag, allTags = false, timeoutSeconds = 300}: z.output<typeof inputSchema>,
   agent: Agent,
-) {
+): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -43,14 +43,8 @@ async function execute(
 
   agent.infoMessage(`[${name}] Successfully pushed image ${tag}`);
   return {
-    type: "json" as const,
-    data: {
-      ok: true,
-      exitCode: exitCode ?? 0,
-      stdout: stdout?.trim() || "",
-      stderr: stderr?.trim() || "",
-      tag: tag,
-    },
+    summary: `Pushed Docker image ${tag}`,
+    result: JSON.stringify({ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", tag}),
   };
 }
 

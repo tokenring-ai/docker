@@ -1,5 +1,5 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -20,7 +20,7 @@ async function execute(
     timeoutSeconds = 60,
   }: z.output<typeof inputSchema>,
   agent: Agent,
-) {
+): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -58,14 +58,8 @@ async function execute(
       `[dockerStack] Successfully executed ${action} on stack ${stackName}`,
     );
     return {
-      type: "json" as const,
-      data: {
-        ok: true,
-        exitCode: exitCode,
-        stdout: stdout?.trim() || "",
-        stderr: stderr?.trim() || "",
-        error: undefined,
-      },
+      summary: `Docker stack ${action} on "${stackName}" succeeded`,
+      result: JSON.stringify({ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", error: undefined}),
     };
   } catch (err: any) {
     // Propagate as an error with contextual information

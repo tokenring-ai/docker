@@ -1,5 +1,5 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
 import {TerminalService} from "@tokenring-ai/terminal";
 import {z} from "zod";
 import DockerService from "../DockerService.ts";
@@ -13,7 +13,7 @@ const displayName = "Docker/dockerRun";
 async function execute(
   {image, cmd, timeoutSeconds = 60}: z.output<typeof inputSchema>,
   agent: Agent,
-) {
+): Promise<TokenRingToolResult> {
   const terminal = agent.requireServiceByType(TerminalService);
   const dockerService = agent.requireServiceByType(DockerService);
 
@@ -70,20 +70,12 @@ async function execute(
       agent,
     );
 
+    const ok = result.status === "success";
+    const exitCode = result.status === "badExitCode" ? result.exitCode : 0;
+    const error = result.status === "success" ? undefined : result.status === "badExitCode" ? `Command failed with exit code ${result.exitCode}` : result.status === "timeout" ? "Command timed out" : result.error;
     return {
-      type: "json" as const,
-      data: {
-        ok: result.status === "success",
-        exitCode: result.status === "badExitCode" ? result.exitCode : 0,
-        error:
-          result.status === "success"
-            ? undefined
-            : result.status === "badExitCode"
-              ? `Command failed with exit code ${result.exitCode}`
-              : result.status === "timeout"
-                ? "Command timed out"
-                : result.error,
-      },
+      summary: ok ? `Ran docker container with image ${image}` : `Docker run failed: ${error}`,
+      result: JSON.stringify({ok, exitCode, error}),
     };
   } catch (err: any) {
     throw new Error(`[${name}] ${err.message}`);
