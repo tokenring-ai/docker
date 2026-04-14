@@ -43,7 +43,7 @@ async function execute(
       cmd = `timeout ${timeout}s ${dockerCmd} stack ps ${shellEscape(stackName)}`;
       break;
     default:
-      throw new Error(`[${name}] Unknown action: ${action}`);
+      throw new Error(`[${name}] Unknown action: ${action as string}`);
   }
 
   agent.infoMessage(`[dockerStack] Executing: ${cmd}`);
