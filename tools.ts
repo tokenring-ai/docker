@@ -1,4 +1,5 @@
 // Import all implemented tools
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat";
 // Import all implemented tools
 import authenticateRegistry from "./tools/authenticateRegistry.ts";
 import buildImage from "./tools/buildImage.ts";
@@ -19,7 +20,7 @@ import startContainer from "./tools/startContainer.ts";
 import stopContainer from "./tools/stopContainer.ts";
 import tagImage from "./tools/tagImage.ts";
 
-export default {
+export default [
   dockerRun,
   authenticateRegistry,
   buildImage,
@@ -38,26 +39,4 @@ export default {
   startContainer,
   stopContainer,
   tagImage,
-};
-
-// Export individual tools for direct import
-export {
-  authenticateRegistry,
-  buildImage,
-  createNetwork,
-  dockerRun,
-  dockerStack,
-  execInContainer,
-  getContainerLogs,
-  getContainerStats,
-  listContainers,
-  listImages,
-  pruneImages,
-  pruneVolumes,
-  pushImage,
-  removeContainer,
-  removeImage,
-  startContainer,
-  stopContainer,
-  tagImage,
-};
+] satisfies TokenRingToolDefinition<any>[]

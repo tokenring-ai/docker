@@ -29,7 +29,7 @@ export default {
     applyEnv(config.docker);
 
     app.waitForService(ChatService, (chatService) =>
-      chatService.addTools(tools),
+      chatService.addTools(...tools),
     );
 
     const dockerService = new DockerService(
