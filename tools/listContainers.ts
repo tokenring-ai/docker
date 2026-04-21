@@ -1,8 +1,8 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
-import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
 
 /**
@@ -13,15 +13,7 @@ const name = "docker_listContainers";
 const displayName = "Docker/listContainers";
 
 async function execute(
-  {
-    all = false,
-    quiet = false,
-    limit,
-    filter,
-    size = false,
-    format = "json",
-    timeoutSeconds = 30,
-  }: z.output<typeof inputSchema>,
+  { all = false, quiet = false, limit, filter, size = false, format = "json", timeoutSeconds = 30 }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -72,7 +64,7 @@ async function execute(
   agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
   try {
-    const {stdout, stderr, exitCode} = await execa(cmd, {
+    const { stdout, stderr, exitCode } = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 1024 * 1024,
@@ -86,8 +78,8 @@ async function execute(
         containers = stdout
           .trim()
           .split("\n")
-          .filter((line) => line.trim())
-          .map((line) => JSON.parse(line));
+          .filter(line => line.trim())
+          .map(line => JSON.parse(line));
       } catch (e: any) {
         // Throw parsing error instead of returning error object
         throw new Error(`[${name}] Error parsing JSON output: ${e.message}`);
@@ -97,10 +89,15 @@ async function execute(
     }
 
     agent.infoMessage(`[${name}] Successfully listed containers`);
-    const count = Array.isArray(containers) ? containers.length : stdout.trim().split("\n").filter((line) => line.trim()).length;
+    const count = Array.isArray(containers)
+      ? containers.length
+      : stdout
+          .trim()
+          .split("\n")
+          .filter(line => line.trim()).length;
     return {
       summary: `Listed ${count} Docker container(s)`,
-      result: JSON.stringify({ok: true, exitCode, containers, count, stdout: stdout?.trim() || "", stderr: stderr?.trim() || ""}),
+      result: JSON.stringify({ ok: true, exitCode, containers, count, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "" }),
     };
   } catch (err: any) {
     // Throw error instead of returning error object
@@ -111,24 +108,12 @@ async function execute(
 const description = "List Docker containers";
 
 const inputSchema = z.object({
-  all: z
-    .boolean()
-    .describe("Whether to show all containers (default shows just running)")
-    .default(false),
-  quiet: z
-    .boolean()
-    .describe("Whether to only display container IDs")
-    .default(false),
-  limit: z.number().int().describe("Number of containers to show").optional(),
-  filter: z
-    .string()
-    .describe("Filter output based on conditions provided")
-    .optional(),
+  all: z.boolean().describe("Whether to show all containers (default shows just running)").default(false),
+  quiet: z.boolean().describe("Whether to only display container IDs").default(false),
+  limit: z.number().int().describe("Number of containers to show").exactOptional(),
+  filter: z.string().describe("Filter output based on conditions provided").exactOptional(),
   size: z.boolean().describe("Display total file sizes").default(false),
-  format: z
-    .string()
-    .describe("Format the output (json or table)")
-    .default("json"),
+  format: z.string().describe("Format the output (json or table)").default("json"),
   timeoutSeconds: z.number().int().describe("Timeout in seconds").default(30),
 });
 

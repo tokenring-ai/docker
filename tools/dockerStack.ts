@@ -1,8 +1,8 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
-import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
 
 /**
@@ -12,15 +12,7 @@ import DockerService from "../DockerService.ts";
 const name = "docker_dockerStack";
 const displayName = "Docker/dockerStack";
 
-async function execute(
-  {
-    action,
-    stackName,
-    composeFile,
-    timeoutSeconds = 60,
-  }: z.output<typeof inputSchema>,
-  agent: Agent,
-): Promise<TokenRingToolResult> {
+async function execute({ action, stackName, composeFile, timeoutSeconds = 60 }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -49,17 +41,15 @@ async function execute(
   agent.infoMessage(`[dockerStack] Executing: ${cmd}`);
 
   try {
-    const {stdout, stderr, exitCode} = await execa(cmd, {
+    const { stdout, stderr, exitCode } = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 1024 * 1024,
     });
-    agent.infoMessage(
-      `[dockerStack] Successfully executed ${action} on stack ${stackName}`,
-    );
+    agent.infoMessage(`[dockerStack] Successfully executed ${action} on stack ${stackName}`);
     return {
       summary: `Docker stack ${action} on "${stackName}" succeeded`,
-      result: JSON.stringify({ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", error: undefined}),
+      result: JSON.stringify({ ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", error: undefined }),
     };
   } catch (err: any) {
     // Propagate as an error with contextual information
@@ -67,23 +57,13 @@ async function execute(
   }
 }
 
-const description =
-  "Launch, update, or remove a Docker stack from the local Docker Swarm. Actions: deploy (requires composeFile), remove, ps.";
+const description = "Launch, update, or remove a Docker stack from the local Docker Swarm. Actions: deploy (requires composeFile), remove, ps.";
 
 const inputSchema = z.object({
-  action: z
-    .enum(["deploy", "remove", "ps"])
-    .describe("Action to perform: 'deploy', 'remove', or 'ps'."),
+  action: z.enum(["deploy", "remove", "ps"]).describe("Action to perform: 'deploy', 'remove', or 'ps'."),
   stackName: z.string().describe("Name of the stack to deploy/remove/list."),
-  composeFile: z
-    .string()
-    .describe("Path to docker-compose.yml file (required for deploy)")
-    .optional(),
-  timeoutSeconds: z
-    .number()
-    .int()
-    .describe("Timeout for the stack operation in seconds (default: 60).")
-    .optional(),
+  composeFile: z.string().describe("Path to docker-compose.yml file (required for deploy)").exactOptional(),
+  timeoutSeconds: z.number().int().describe("Timeout for the stack operation in seconds (default: 60).").exactOptional(),
 });
 
 export default {

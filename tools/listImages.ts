@@ -1,8 +1,8 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
-import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
 
 /**
@@ -13,14 +13,7 @@ const name = "docker_listImages";
 const displayName = "Docker/listImages";
 
 async function execute(
-  {
-    all = false,
-    quiet = false,
-    digests = false,
-    filter,
-    format = "json",
-    timeoutSeconds = 30,
-  }: z.output<typeof inputSchema>,
+  { all = false, quiet = false, digests = false, filter, format = "json", timeoutSeconds = 30 }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -66,7 +59,7 @@ async function execute(
   agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
   try {
-    const {stdout, stderr, exitCode} = await execa(cmd, {
+    const { stdout, stderr, exitCode } = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 1024 * 1024,
@@ -80,8 +73,8 @@ async function execute(
         images = stdout
           .trim()
           .split("\n")
-          .filter((line) => line.trim())
-          .map((line) => JSON.parse(line));
+          .filter(line => line.trim())
+          .map(line => JSON.parse(line));
       } catch (e: any) {
         agent.errorMessage(`[${name}] Error parsing JSON output: ${e.message}`);
         images = stdout.trim();
@@ -91,10 +84,15 @@ async function execute(
     }
 
     agent.infoMessage(`[${name}] Successfully listed images`);
-    const count = Array.isArray(images) ? images.length : stdout.trim().split("\n").filter((line) => line.trim()).length;
+    const count = Array.isArray(images)
+      ? images.length
+      : stdout
+          .trim()
+          .split("\n")
+          .filter(line => line.trim()).length;
     return {
       summary: `Listed ${count} Docker image(s)`,
-      result: JSON.stringify({ok: true, exitCode, images, count, stdout: stdout?.trim() || "", stderr: stderr?.trim() || ""}),
+      result: JSON.stringify({ ok: true, exitCode, images, count, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "" }),
     };
   } catch (err: any) {
     // Throw error instead of returning an object
@@ -105,23 +103,11 @@ async function execute(
 const description = "List Docker images";
 
 const inputSchema = z.object({
-  all: z
-    .boolean()
-    .default(false)
-    .describe("Whether to show all images (default hides intermediate images)"),
-  quiet: z
-    .boolean()
-    .default(false)
-    .describe("Whether to only display image IDs"),
+  all: z.boolean().default(false).describe("Whether to show all images (default hides intermediate images)"),
+  quiet: z.boolean().default(false).describe("Whether to only display image IDs"),
   digests: z.boolean().default(false).describe("Whether to show digests"),
-  filter: z
-    .string()
-    .optional()
-    .describe("Filter output based on conditions provided"),
-  format: z
-    .string()
-    .default("json")
-    .describe("Format the output (json or table)"),
+  filter: z.string().exactOptional().describe("Filter output based on conditions provided"),
+  format: z.string().default("json").describe("Format the output (json or table)"),
   timeoutSeconds: z.number().int().default(30).describe("Timeout in seconds"),
 });
 

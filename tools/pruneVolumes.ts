@@ -1,8 +1,8 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
-import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
 
 // Export the tool name in the required format
@@ -12,10 +12,7 @@ const displayName = "Docker/pruneVolumes";
 /**
  * Prune unused Docker volumes
  */
-async function execute(
-  {filter, timeoutSeconds = 60}: z.output<typeof inputSchema>,
-  agent: Agent,
-): Promise<TokenRingToolResult> {
+async function execute({ filter, timeoutSeconds = 60 }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -33,7 +30,7 @@ async function execute(
   agent.infoMessage(`[${name}] Pruning unused Docker volumes...`);
   agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
-  const {stdout, stderr, exitCode} = await execa(cmd, {
+  const { stdout, stderr, exitCode } = await execa(cmd, {
     shell: true,
     timeout: timeout * 1000,
     maxBuffer: 1024 * 1024,
@@ -51,31 +48,21 @@ async function execute(
   const deletedMatch = stdout.match(/Deleted Volumes:\s*(\S*?)Total/);
   if (deletedMatch) {
     const deletedText = deletedMatch[1].trim();
-    volumesDeleted = deletedText
-      .split("\n")
-      .filter((line) => line.trim()).length;
+    volumesDeleted = deletedText.split("\n").filter(line => line.trim()).length;
   }
 
-  agent.infoMessage(
-    `[${name}] Successfully pruned unused Docker volumes. Space reclaimed: ${spaceReclaimed}`,
-  );
+  agent.infoMessage(`[${name}] Successfully pruned unused Docker volumes. Space reclaimed: ${spaceReclaimed}`);
   return {
     summary: `Pruned unused Docker volumes, reclaimed ${spaceReclaimed}`,
-    result: JSON.stringify({ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", spaceReclaimed, volumesDeleted}),
+    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", spaceReclaimed, volumesDeleted }),
   };
 }
 
 const description = "Prune unused Docker volumes";
 
 const inputSchema = z.object({
-  filter: z
-    .string()
-    .describe("Filter volumes based on conditions provided")
-    .optional(),
-  force: z
-    .boolean()
-    .describe("Whether to force removal of volumes")
-    .default(false),
+  filter: z.string().describe("Filter volumes based on conditions provided").exactOptional(),
+  force: z.boolean().describe("Whether to force removal of volumes").default(false),
   timeoutSeconds: z.number().int().describe("Timeout in seconds").default(60),
 });
 

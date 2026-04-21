@@ -1,8 +1,9 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
-import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { stripUndefinedKeys } from "@tokenring-ai/utility/object/stripObject";
+import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
 
 const name = "docker_authenticateRegistry";
@@ -12,16 +13,9 @@ const displayName = "Docker/authenticateRegistry";
  * Authenticate against a Docker registry
  */
 async function execute(
-  {
-    server,
-    username,
-    password,
-    email,
-    passwordStdin = false,
-    timeoutSeconds = 30,
-  }: z.output<typeof inputSchema>,
+  { server, username, password, email, passwordStdin = false, timeoutSeconds = 30 }: z.output<typeof inputSchema>,
   agent: Agent,
-) : Promise<TokenRingToolResult> {
+): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -49,11 +43,9 @@ async function execute(
 
   agent.infoMessage(`[${name}] Authenticating to registry ${server}...`);
   // Don't log the full command as it may contain sensitive information
-  agent.infoMessage(
-    `[${name}] Executing: ${dockerCmd} login ${server} -u ${username} [password hidden]`,
-  );
+  agent.infoMessage(`[${name}] Executing: ${dockerCmd} login ${server} -u ${username} [password hidden]`);
 
-  const execOptions: { maxBuffer: number; input?: string } = {
+  const execOptions: { maxBuffer: number; input?: string | undefined } = {
     maxBuffer: 1024 * 1024,
   };
 
@@ -63,17 +55,18 @@ async function execute(
   }
 
   try {
-    const {stdout, stderr, exitCode} = await execa(cmd, {
-      shell: true,
-      ...execOptions,
-      timeout: timeout * 1000,
-    });
-    agent.infoMessage(
-      `[${name}] Successfully authenticated to registry ${server}`,
+    const { stdout, stderr, exitCode } = await execa(
+      cmd,
+      stripUndefinedKeys({
+        shell: true,
+        ...execOptions,
+        timeout: timeout * 1000,
+      }),
     );
+    agent.infoMessage(`[${name}] Successfully authenticated to registry ${server}`);
     return {
       summary: `Authenticated to Docker registry ${server} as ${username}`,
-      result: JSON.stringify({ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", server, username}),
+      result: JSON.stringify({ ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", server, username }),
     };
   } catch (err: any) {
     // Error message follows the required format
@@ -85,23 +78,12 @@ async function execute(
 const description = "Authenticate against a Docker registry";
 
 const inputSchema = z.object({
-  server: z
-    .string()
-    .describe("The registry server URL (e.g., 'https://index.docker.io/v1/')"),
+  server: z.string().describe("The registry server URL (e.g., 'https://index.docker.io/v1/')"),
   username: z.string().describe("Username for the registry"),
   password: z.string().describe("Password for the registry"),
-  email: z.string().describe("Email for the registry account").optional(),
-  passwordStdin: z
-    .boolean()
-    .describe("Take the password from stdin")
-    .default(false)
-    .optional(),
-  timeoutSeconds: z
-    .number()
-    .int()
-    .describe("Timeout in seconds")
-    .default(30)
-    .optional(),
+  email: z.string().describe("Email for the registry account").exactOptional(),
+  passwordStdin: z.boolean().describe("Take the password from stdin").default(false).exactOptional(),
+  timeoutSeconds: z.number().int().describe("Timeout in seconds").default(30).exactOptional(),
 });
 
 export default {

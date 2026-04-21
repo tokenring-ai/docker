@@ -1,8 +1,8 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
-import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
-import {execa} from "execa";
-import {z} from "zod";
+import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
+import { execa } from "execa";
+import { z } from "zod";
 import DockerService from "../DockerService.ts";
 
 const name = "docker_buildImage";
@@ -12,15 +12,7 @@ const displayName = "Docker/buildImage";
  * Build a Docker image
  */
 async function execute(
-  {
-    context,
-    tag,
-    dockerfile,
-    buildArgs = {},
-    noCache = false,
-    pull = false,
-    timeoutSeconds = 300,
-  }: z.output<typeof inputSchema>,
+  { context, tag, dockerfile, buildArgs = {}, noCache = false, pull = false, timeoutSeconds = 300 }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -62,7 +54,7 @@ async function execute(
   agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
   try {
-    const {stdout, stderr, exitCode} = await execa(cmd, {
+    const { stdout, stderr, exitCode } = await execa(cmd, {
       shell: true,
       timeout: timeout * 1000,
       maxBuffer: 5 * 1024 * 1024,
@@ -70,7 +62,7 @@ async function execute(
     agent.infoMessage(`[${name}] Successfully built image ${tag}`);
     return {
       summary: `Built Docker image ${tag}`,
-      result: JSON.stringify({ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", tag}),
+      result: JSON.stringify({ ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", tag }),
     };
   } catch (err: any) {
     const message = err.shortMessage || err.message;
@@ -81,34 +73,13 @@ async function execute(
 const description = "Build a Docker image from a Dockerfile";
 
 const inputSchema = z.object({
-  context: z
-    .string()
-    .describe("The build context (directory containing Dockerfile)"),
+  context: z.string().describe("The build context (directory containing Dockerfile)"),
   tag: z.string().describe("The tag to apply to the built image"),
-  dockerfile: z
-    .string()
-    .describe("Path to the Dockerfile (relative to context)")
-    .optional(),
-  buildArgs: z
-    .record(z.string(), z.string())
-    .describe("Build arguments to pass to the build")
-    .optional(),
-  noCache: z
-    .boolean()
-    .describe("Whether to use cache when building the image")
-    .default(false)
-    .optional(),
-  pull: z
-    .boolean()
-    .describe("Whether to always pull newer versions of the base images")
-    .default(false)
-    .optional(),
-  timeoutSeconds: z
-    .number()
-    .int()
-    .describe("Timeout in seconds")
-    .default(300)
-    .optional(),
+  dockerfile: z.string().describe("Path to the Dockerfile (relative to context)").exactOptional(),
+  buildArgs: z.record(z.string(), z.string()).describe("Build arguments to pass to the build").exactOptional(),
+  noCache: z.boolean().describe("Whether to use cache when building the image").default(false).exactOptional(),
+  pull: z.boolean().describe("Whether to always pull newer versions of the base images").default(false).exactOptional(),
+  timeoutSeconds: z.number().int().describe("Timeout in seconds").default(300).exactOptional(),
 });
 
 export default {

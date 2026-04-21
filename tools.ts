@@ -1,5 +1,5 @@
 // Import all implemented tools
-import type {TokenRingToolDefinition} from "@tokenring-ai/chat";
+import type { TokenRingToolDefinition } from "@tokenring-ai/chat";
 // Import all implemented tools
 import authenticateRegistry from "./tools/authenticateRegistry.ts";
 import buildImage from "./tools/buildImage.ts";
@@ -39,4 +39,4 @@ export default [
   startContainer,
   stopContainer,
   tagImage,
-] satisfies TokenRingToolDefinition<any>[]
+] satisfies TokenRingToolDefinition<any>[];

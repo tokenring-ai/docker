@@ -1,14 +1,13 @@
-import type {TokenRingService} from "@tokenring-ai/app/types";
-import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
-import type {z} from "zod";
-import type {DockerConfigSchema} from "./schema.ts";
+import type { TokenRingService } from "@tokenring-ai/app/types";
+import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
+import type { z } from "zod";
+import type { DockerConfigSchema } from "./schema.ts";
 
 export default class DockerService implements TokenRingService {
   readonly name = "DockerService";
   description = "Provides Docker functionality";
 
-  constructor(readonly options: z.output<typeof DockerConfigSchema>) {
-  }
+  constructor(readonly options: z.output<typeof DockerConfigSchema>) {}
 
   buildDockerCmd(): string {
     let dockerCmd = "docker";
@@ -19,7 +18,7 @@ export default class DockerService implements TokenRingService {
 
     if (this.options.tls?.verify) {
       dockerCmd += " --tls";
-      const {caCert, cert, key} = this.options.tls;
+      const { caCert, cert, key } = this.options.tls;
 
       if (caCert) dockerCmd += ` --tlscacert=${shellEscape(caCert)}`;
       if (cert) dockerCmd += ` --tlscert=${shellEscape(cert)}`;

@@ -6,9 +6,9 @@
  * Common Docker command execution result
  */
 export interface DockerCommandResult {
-  ok?: boolean;
-  exitCode?: number;
-  stdout?: string;
-  stderr?: string;
-  error?: string;
+  ok?: boolean | undefined;
+  exitCode?: number | undefined;
+  stdout?: string | undefined;
+  stderr?: string | undefined;
+  error?: string | undefined;
 }
