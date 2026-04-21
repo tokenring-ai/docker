@@ -24,8 +24,7 @@ async function execute(
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Convert single container to array (maintained for backward compatibility)
-  const containerList = Array.isArray(containers) ? containers : [containers];
-  if (containerList.length === 0) {
+  if (containers.length === 0) {
     throw new Error(`[${name}] at least one container must be specified`);
   }
 
@@ -47,10 +46,10 @@ async function execute(
   }
 
   // Add containers
-  cmd += ` ${containerList.map((container) => shellEscape(container)).join(" ")}`;
+  cmd += ` ${containers.map((container) => shellEscape(container)).join(" ")}`;
 
   agent.infoMessage(
-    `[${name}] Starting container(s): ${containerList.join(", ")}...`,
+    `[${name}] Starting container(s): ${containers.join(", ")}...`,
   );
   agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
@@ -61,11 +60,11 @@ async function execute(
   });
 
   agent.infoMessage(
-    `[${name}] Successfully started container(s): ${containerList.join(", ")}`,
+    `[${name}] Successfully started container(s): ${containers.join(", ")}`,
   );
   return {
-    summary: `Started container(s): ${containerList.join(", ")}`,
-    result: JSON.stringify({ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", containers: containerList}),
+    summary: `Started container(s): ${containers.join(", ")}`,
+    result: JSON.stringify({ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", containers: containers}),
   };
 }
 
@@ -74,7 +73,7 @@ const description = "Start one or more Docker containers";
 const inputSchema = z
   .object({
     containers: z
-      .union([z.string(), z.array(z.string())])
+      .array(z.string())
       .describe("Container ID(s) or name(s) to start"),
     attach: z
       .boolean()

@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type {TokenRingToolDefinition, TokenRingToolResult} from "@tokenring-ai/chat/schema";
+import {arrayableToArray} from "@tokenring-ai/utility/array/arrayable";
 import {shellEscape} from "@tokenring-ai/utility/string/shellEscape";
 import {execa} from "execa";
 import {z} from "zod";
@@ -26,8 +27,7 @@ async function execute(
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Convert single image to array (images is already an array per type, but keep for safety)
-  const imageList = Array.isArray(images) ? images : [images];
-  if (imageList.length === 0) {
+  if (images.length === 0) {
     throw new Error(`[${name}] at least one image must be specified`);
   }
 
@@ -49,10 +49,10 @@ async function execute(
   }
 
   // Add images
-  cmd += ` ${imageList.map((image) => shellEscape(image)).join(" ")}`;
+  cmd += ` ${images.map((image) => shellEscape(image)).join(" ")}`;
 
   // Informational messages using the standardized prefix
-  agent.infoMessage(`[${name}] Removing image(s): ${imageList.join(", ")}...`);
+  agent.infoMessage(`[${name}] Removing image(s): ${images.join(", ")}...`);
   agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
   const {stdout, stderr, exitCode} = await execa(cmd, {
@@ -62,12 +62,12 @@ async function execute(
   });
 
   agent.infoMessage(
-    `[${name}] Successfully removed image(s): ${imageList.join(", ")}`,
+    `[${name}] Successfully removed image(s): ${images.join(", ")}`,
   );
 
   return {
-    summary: `Removed Docker image(s): ${imageList.join(", ")}`,
-    result: JSON.stringify({ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", images: imageList}),
+    summary: `Removed Docker image(s): ${images.join(", ")}`,
+    result: JSON.stringify({ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", images: images}),
   };
 }
 

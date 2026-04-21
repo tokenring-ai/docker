@@ -25,8 +25,7 @@ async function execute(
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Convert single container to array
-  const containerList = Array.isArray(containers) ? containers : [containers];
-  if (containerList.length === 0) {
+  if (containers.length === 0) {
     throw new Error(`[${name}] at least one container must be specified`);
   }
 
@@ -53,10 +52,10 @@ async function execute(
   }
 
   // Add containers
-  cmd += ` ${containerList.map((container) => shellEscape(container)).join(" ")}`;
+  cmd += ` ${containers.map((container) => shellEscape(container)).join(" ")}`;
 
   agent.infoMessage(
-    `[${name}] Removing container(s): ${containerList.join(", ")}...`,
+    `[${name}] Removing container(s): ${containers.join(", ")}...`,
   );
   agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
@@ -68,11 +67,11 @@ async function execute(
     });
 
     agent.infoMessage(
-      `[${name}] Successfully removed container(s): ${containerList.join(", ")}`,
+      `[${name}] Successfully removed container(s): ${containers.join(", ")}`,
     );
     return {
-      summary: `Removed container(s): ${containerList.join(", ")}`,
-      result: JSON.stringify({ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", containers: containerList}),
+      summary: `Removed container(s): ${containers.join(", ")}`,
+      result: JSON.stringify({ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", containers: containers}),
     };
   } catch (err: any) {
     // Throw error instead of returning an error object
@@ -84,7 +83,7 @@ const description = "Remove one or more Docker containers";
 
 const inputSchema = z.object({
   containers: z
-    .union([z.string(), z.array(z.string())])
+    .array(z.string())
     .describe("Container ID(s) or name(s) to remove"),
   force: z
     .boolean()

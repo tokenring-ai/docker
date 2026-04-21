@@ -18,8 +18,7 @@ async function execute(
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Convert single container to array
-  const containerList = Array.isArray(containers) ? containers : [containers];
-  if (containerList.length === 0) {
+  if (containers.length === 0) {
     throw new Error(`[${name}] at least one container must be specified`);
   }
 
@@ -36,10 +35,10 @@ async function execute(
   }
 
   // Append container identifiers
-  cmd += ` ${containerList.map((c) => shellEscape(c)).join(" ")}`;
+  cmd += ` ${containers.map((c) => shellEscape(c)).join(" ")}`;
 
   agent.infoMessage(
-    `[${name}] Stopping container(s): ${containerList.join(", ")}...`,
+    `[${name}] Stopping container(s): ${containers.join(", ")}...`,
   );
   agent.infoMessage(`[${name}] Executing: ${cmd}`);
 
@@ -50,11 +49,11 @@ async function execute(
   });
 
   agent.infoMessage(
-    `[${name}] Successfully stopped container(s): ${containerList.join(", ")}`,
+    `[${name}] Successfully stopped container(s): ${containers.join(", ")}`,
   );
   return {
-    summary: `Stopped container(s): ${containerList.join(", ")}`,
-    result: JSON.stringify({ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", containers: containerList}),
+    summary: `Stopped container(s): ${containers.join(", ")}`,
+    result: JSON.stringify({ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", containers: containers}),
   };
 }
 
@@ -62,7 +61,7 @@ const description = "Stop one or more Docker containers";
 
 const inputSchema = z.object({
   containers: z
-    .union([z.string(), z.array(z.string())])
+    .array(z.string())
     .describe("Container ID(s) or name(s) to stop"),
   time: z
     .number()

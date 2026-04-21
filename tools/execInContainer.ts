@@ -15,7 +15,7 @@ const displayName = "Docker/execInContainer";
 async function execute(
   {
     container,
-    command,
+    commands,
     interactive = false,
     tty = false,
     workdir,
@@ -28,9 +28,7 @@ async function execute(
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
-  // Convert command to array if it's a string
-  const commandList = Array.isArray(command) ? command : [command];
-  if (commandList.length === 0) {
+  if (commands.length === 0) {
     throw new Error(`[${name}] command cannot be empty`);
   }
 
@@ -75,7 +73,7 @@ async function execute(
   cmd += ` ${shellEscape(container)}`;
 
   // Add command
-  cmd += ` ${commandList.map((arg) => shellEscape(arg)).join(" ")}`;
+  cmd += ` ${commands.map((arg) => shellEscape(arg)).join(" ")}`;
 
   // Informational messages prefixed with tool name
   agent.infoMessage(
@@ -95,7 +93,7 @@ async function execute(
     );
     return {
       summary: `Executed command in container ${container}`,
-      result: JSON.stringify({ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", container, command: commandList.join(" ")}),
+      result: JSON.stringify({ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", container, command: commands.join(" ")}),
     };
   } catch (err: any) {
     // Throw error instead of returning error object
@@ -107,9 +105,9 @@ const description = "Execute a command in a running Docker container";
 
 const inputSchema = z.object({
   container: z.string().describe("Container name or ID"),
-  command: z
-    .union([z.string(), z.array(z.string())])
-    .describe("Command to execute"),
+  commands: z
+    .array(z.string())
+    .describe("Commands to execute"),
   interactive: z
     .boolean()
     .optional()
