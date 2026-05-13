@@ -817,7 +817,7 @@ await stopContainer.execute({ containers: ["my-container"] }, agent);
 To use the Docker package with Token Ring, register the plugin in your application configuration:
 
 ```typescript
-import { TokenRingApp } from "@tokenring-ai/app";
+import {TokenRingApp} from "@tokenring-ai/app";
 import dockerPlugin from "@tokenring-ai/docker/plugin";
 
 const app = new TokenRingApp();
@@ -834,10 +834,10 @@ await app.install(dockerPlugin, {
 Alternatively, register the services and tools manually:
 
 ```typescript
-import { TokenRingApp } from "@tokenring-ai/app";
-import { DockerService, DockerSandboxProvider } from "@tokenring-ai/docker";
-import { SandboxService } from "@tokenring-ai/sandbox";
-import { ChatService } from "@tokenring-ai/chat";
+import {TokenRingApp} from "@tokenring-ai/app";
+import {DockerService, DockerSandboxProvider} from "@tokenring-ai/docker";
+import {SandboxService} from "@tokenring-ai/sandbox";
+import {ChatService} from "@tokenring-ai/chat";
 import tools from "@tokenring-ai/docker/tools";
 
 const app = new TokenRingApp();
