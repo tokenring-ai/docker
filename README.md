@@ -7,7 +7,7 @@ Comprehensive container management and isolated sandboxing via Docker.
 The `@tokenring-ai/docker` package enables AI agents to interact with Docker through a configurable service and a set of
 tools for Docker operations. It supports local Docker via Unix socket, remote hosts via TCP, and optional TLS
 configuration for secure connections. The package provides a `DockerService` for configuration, a
-`DockerSandboxProvider` for persistent container management, and 19 tools for comprehensive Docker operations.
+`DockerSandboxProvider` for persistent container management, and 18 tools for comprehensive Docker operations.
 
 ### Key Features
 
@@ -18,7 +18,7 @@ configuration for secure connections. The package provides a `DockerService` for
 - **Agent Integration**: Seamless integration with Token Ring's agent ecosystem and service architecture
 - **Shell Safety**: All operations use proper shell escaping and timeout management
 - **Sandbox Provider**: Integrates with the Token Ring sandbox system for container orchestration
-- **Comprehensive Toolset**: 19 Docker tools for managing images, containers, networks, stacks, and more
+- **Comprehensive Toolset**: 18 Docker tools for managing images, containers, networks, stacks, and more
 
 ## Installation
 
@@ -138,7 +138,7 @@ await provider.removeContainer(containerId);
 
 ## Tools
 
-The package provides 19 Docker tools for comprehensive container and image management. Each tool follows the TokenRing
+The package provides 18 Docker tools for comprehensive container and image management. Each tool follows the TokenRing
 tool pattern with proper input validation, error handling, and agent integration.
 
 ### Exported Tools
@@ -938,7 +938,7 @@ pkg/docker/
 ├── types.ts                        # Shared interfaces (DockerCommandResult)
 ├── DockerService.ts                # Core service for Docker configuration
 ├── DockerSandboxProvider.ts        # Sandbox implementation for persistent containers
-├── tools.ts                        # Exported tools (all 19 tools)
+├── tools.ts                        # Exported tools (all 18 tools)
 └── tools/
     ├── dockerRun.ts                # Run ephemeral containers
     ├── listImages.ts               # List Docker images
@@ -964,12 +964,12 @@ pkg/docker/
 
 The package has the following dependencies:
 
-- `@tokenring-ai/app` (0.2.0) - Base application framework
-- `@tokenring-ai/chat` (0.2.0) - Chat service integration
-- `@tokenring-ai/agent` (0.2.0) - Agent orchestration
-- `@tokenring-ai/sandbox` (0.2.0) - Sandbox provider interface
-- `@tokenring-ai/utility` (0.2.0) - Shared utilities
-- `@tokenring-ai/terminal` (0.2.0) - Terminal service for command execution
+- `@tokenring-ai/app` (workspace:*) - Base application framework
+- `@tokenring-ai/chat` (workspace:*) - Chat service integration
+- `@tokenring-ai/agent` (workspace:*) - Agent orchestration
+- `@tokenring-ai/sandbox` (workspace:*) - Sandbox provider interface
+- `@tokenring-ai/utility` (workspace:*) - Shared utilities
+- `@tokenring-ai/terminal` (workspace:*) - Terminal service for command execution
 - `zod` (^4.3.6) - Schema validation
 - `execa` (^9.6.1) - Process execution
 
