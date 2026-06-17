@@ -11,7 +11,7 @@ const displayName = "Docker/pushImage";
 /**
  * Push a Docker image to a registry
  */
-async function execute({ tag, allTags = false, timeoutSeconds = 300 }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
+async function execute({ tag, allTags, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -48,8 +48,8 @@ async function execute({ tag, allTags = false, timeoutSeconds = 300 }: z.output<
 const description = "Push a Docker image to a registry";
 const inputSchema = z.object({
   tag: z.string().describe("The image tag to push"),
-  allTags: z.boolean().describe("Whether to push all tags of the image").default(false).exactOptional(),
-  timeoutSeconds: z.number().int().describe("Timeout in seconds").default(300).exactOptional(),
+  allTags: z.boolean().describe("Whether to push all tags of the image").default(false),
+  timeoutSeconds: z.number().default(120).describe("Timeout in seconds").default(300),
 });
 
 export default {

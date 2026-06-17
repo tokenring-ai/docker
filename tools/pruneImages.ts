@@ -11,7 +11,7 @@ const displayName = "Docker/pruneImages";
 /**
  * Prune unused Docker images
  */
-async function execute({ all = false, filter, timeoutSeconds = 60 }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
+async function execute({ all, filter, timeoutSeconds  }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -61,7 +61,7 @@ const inputSchema = z.object({
   all: z.boolean().default(false).describe("Whether to remove all unused images, not just dangling ones"),
   filter: z.string().exactOptional().describe("Filter images based on conditions provided"),
   force: z.boolean().default(false).describe("Whether to force removal of images"),
-  timeoutSeconds: z.number().int().default(60).describe("Timeout in seconds"),
+  timeoutSeconds: z.number().default(120).default(60).describe("Timeout in seconds"),
 });
 
 export default {

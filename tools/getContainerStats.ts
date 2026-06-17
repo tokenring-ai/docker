@@ -13,7 +13,7 @@ const name = "docker_getContainerStats";
 const displayName = "Docker/getContainerStats";
 
 async function execute(
-  { containers, all = false, noStream = true, format = "json", timeoutSeconds = 10 }: z.output<typeof inputSchema>,
+  { containers, all , noStream, format, timeoutSeconds  }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -97,7 +97,7 @@ const inputSchema = z
     all: z.boolean().default(false).describe("Whether to show all containers (default shows just running)"),
     noStream: z.boolean().default(true).describe("Whether to disable streaming stats and only pull one stat"),
     format: z.string().default("json").describe("Format the output (json or table)"),
-    timeoutSeconds: z.number().int().default(10).describe("Timeout in seconds"),
+    timeoutSeconds: z.number().default(120).default(10).describe("Timeout in seconds"),
   })
   .strict();
 

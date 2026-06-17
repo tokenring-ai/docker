@@ -10,7 +10,7 @@ const displayName = "Docker/dockerRun";
 /**
  * Runs a shell command in an ephemeral Docker container
  */
-async function execute({ image, cmd, timeoutSeconds = 60 }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
+async function execute({ image, cmd, timeoutSeconds  }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const terminal = agent.requireServiceByType(TerminalService);
   const dockerService = agent.requireServiceByType(DockerService);
 
@@ -87,7 +87,7 @@ const description =
 const inputSchema = z.object({
   image: z.string().describe("Docker image name (e.g., ubuntu:latest)"),
   cmd: z.string().describe("Command to run in the container (e.g., 'ls -l /')"),
-  timeoutSeconds: z.number().int().exactOptional().describe("Timeout for the command, in seconds (default: 60)."),
+  timeoutSeconds: z.number().default(120).describe("Timeout for the command, in seconds (default: 60)."),
 });
 
 export default {

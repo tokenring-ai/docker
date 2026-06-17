@@ -12,7 +12,7 @@ const displayName = "Docker/pruneVolumes";
 /**
  * Prune unused Docker volumes
  */
-async function execute({ filter, timeoutSeconds = 60 }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
+async function execute({ filter, timeoutSeconds  }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -63,7 +63,7 @@ const description = "Prune unused Docker volumes";
 const inputSchema = z.object({
   filter: z.string().describe("Filter volumes based on conditions provided").exactOptional(),
   force: z.boolean().describe("Whether to force removal of volumes").default(false),
-  timeoutSeconds: z.number().int().describe("Timeout in seconds").default(60),
+  timeoutSeconds: z.number().default(120).describe("Timeout in seconds").default(60),
 });
 
 export default {

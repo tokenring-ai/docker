@@ -13,7 +13,7 @@ const displayName = "Docker/getContainerLogs";
  */
 
 async function execute(
-  { name: containerName, follow = false, timestamps = false, since, until, tail = 100, details = false, timeoutSeconds = 30 }: z.output<typeof inputSchema>,
+  { name: containerName, follow , timestamps , since, until, tail , details , timeoutSeconds  }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -90,7 +90,7 @@ const inputSchema = z.object({
   until: z.string().exactOptional().describe("Show logs before a timestamp (e.g. 2013-01-02T13:23:37Z) or relative (e.g. 42m for 42 minutes)"),
   tail: z.number().int().exactOptional().default(100).describe("Number of lines to show from the end of the logs"),
   details: z.boolean().exactOptional().default(false).describe("Whether to show extra details provided to logs"),
-  timeoutSeconds: z.number().int().exactOptional().default(30).describe("Timeout in seconds"),
+  timeoutSeconds: z.number().default(120).default(30).describe("Timeout in seconds"),
 });
 
 export default {

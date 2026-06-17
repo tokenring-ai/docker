@@ -13,7 +13,7 @@ const name = "docker_listImages";
 const displayName = "Docker/listImages";
 
 async function execute(
-  { all = false, quiet = false, digests = false, filter, format = "json", timeoutSeconds = 30 }: z.output<typeof inputSchema>,
+  { all , quiet , digests , filter, format , timeoutSeconds  }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -108,7 +108,7 @@ const inputSchema = z.object({
   digests: z.boolean().default(false).describe("Whether to show digests"),
   filter: z.string().exactOptional().describe("Filter output based on conditions provided"),
   format: z.string().default("json").describe("Format the output (json or table)"),
-  timeoutSeconds: z.number().int().default(30).describe("Timeout in seconds"),
+  timeoutSeconds: z.number().default(120).default(30).describe("Timeout in seconds"),
 });
 
 export default {

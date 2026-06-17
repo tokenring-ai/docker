@@ -15,7 +15,7 @@ const displayName = "Docker/removeImage";
  * Remove one or more Docker images
  */
 async function execute(
-  { images, force = false, noPrune = false, timeoutSeconds = 30 }: z.output<typeof inputSchema>,
+  { images, force , noPrune , timeoutSeconds  }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -70,7 +70,7 @@ const inputSchema = z
     images: z.array(z.string()).describe("Image ID(s) or name(s) to remove"),
     force: z.boolean().exactOptional().default(false).describe("Whether to force removal of the image"),
     noPrune: z.boolean().exactOptional().default(false).describe("Whether to prevent the pruning of parent images"),
-    timeoutSeconds: z.number().int().exactOptional().default(30).describe("Timeout in seconds"),
+    timeoutSeconds: z.number().default(120).default(30).describe("Timeout in seconds"),
   })
   .strict();
 

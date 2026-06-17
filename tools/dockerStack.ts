@@ -12,7 +12,7 @@ import DockerService from "../DockerService.ts";
 const name = "docker_dockerStack";
 const displayName = "Docker/dockerStack";
 
-async function execute({ action, stackName, composeFile, timeoutSeconds = 60 }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
+async function execute({ action, stackName, composeFile, timeoutSeconds  }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -63,7 +63,7 @@ const inputSchema = z.object({
   action: z.enum(["deploy", "remove", "ps"]).describe("Action to perform: 'deploy', 'remove', or 'ps'."),
   stackName: z.string().describe("Name of the stack to deploy/remove/list."),
   composeFile: z.string().describe("Path to docker-compose.yml file (required for deploy)").exactOptional(),
-  timeoutSeconds: z.number().int().describe("Timeout for the stack operation in seconds (default: 60).").exactOptional(),
+  timeoutSeconds: z.number().default(120).describe("Timeout for the stack operation in seconds (default: 60)."),
 });
 
 export default {

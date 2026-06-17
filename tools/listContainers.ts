@@ -13,7 +13,7 @@ const name = "docker_listContainers";
 const displayName = "Docker/listContainers";
 
 async function execute(
-  { all = false, quiet = false, limit, filter, size = false, format = "json", timeoutSeconds = 30 }: z.output<typeof inputSchema>,
+  { all , quiet , limit, filter, size , format , timeoutSeconds  }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -114,7 +114,7 @@ const inputSchema = z.object({
   filter: z.string().describe("Filter output based on conditions provided").exactOptional(),
   size: z.boolean().describe("Display total file sizes").default(false),
   format: z.string().describe("Format the output (json or table)").default("json"),
-  timeoutSeconds: z.number().int().describe("Timeout in seconds").default(30),
+  timeoutSeconds: z.number().default(120).describe("Timeout in seconds").default(30),
 });
 
 export default {

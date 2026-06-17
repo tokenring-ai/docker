@@ -12,7 +12,7 @@ const displayName = "Docker/createNetwork";
  * Create a Docker network
  */
 async function execute(
-  { name: networkName, driver = "bridge", options = {}, internal = false, subnet, gateway, ipRange, timeoutSeconds = 30 }: z.output<typeof inputSchema>,
+  { name: networkName, driver , options,  internal , subnet, gateway, ipRange, timeoutSeconds  }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -91,7 +91,7 @@ const inputSchema = z.object({
   subnet: z.string().describe("Subnet in CIDR format").exactOptional(),
   gateway: z.string().describe("Gateway for the subnet").exactOptional(),
   ipRange: z.string().describe("Allocate container IP from a sub-range").exactOptional(),
-  timeoutSeconds: z.number().int().describe("Timeout in seconds").default(30),
+  timeoutSeconds: z.number().default(120).describe("Timeout in seconds").default(30),
 });
 
 export default {

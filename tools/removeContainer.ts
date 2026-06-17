@@ -13,7 +13,7 @@ const name = "docker_removeContainer";
 const displayName = "Docker/removeContainer";
 
 async function execute(
-  { containers, force = false, volumes = false, link = false, timeoutSeconds = 30 }: z.output<typeof inputSchema>,
+  { containers, force , volumes , link , timeoutSeconds  }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -76,7 +76,7 @@ const inputSchema = z.object({
   force: z.boolean().default(false).describe("Whether to force the removal of a running container"),
   volumes: z.boolean().default(false).describe("Whether to remove anonymous volumes associated with the container"),
   link: z.boolean().default(false).describe("Whether to remove the specified link"),
-  timeoutSeconds: z.number().int().default(30).describe("Timeout in seconds"),
+  timeoutSeconds: z.number().default(120).default(30).describe("Timeout in seconds"),
 });
 
 export default {

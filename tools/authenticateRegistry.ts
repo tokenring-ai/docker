@@ -13,7 +13,7 @@ const displayName = "Docker/authenticateRegistry";
  * Authenticate against a Docker registry
  */
 async function execute(
-  { server, username, password, email, passwordStdin = false, timeoutSeconds = 30 }: z.output<typeof inputSchema>,
+  { server, username, password, email, passwordStdin , timeoutSeconds  }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -82,8 +82,8 @@ const inputSchema = z.object({
   username: z.string().describe("Username for the registry"),
   password: z.string().describe("Password for the registry"),
   email: z.string().describe("Email for the registry account").exactOptional(),
-  passwordStdin: z.boolean().describe("Take the password from stdin").default(false).exactOptional(),
-  timeoutSeconds: z.number().int().describe("Timeout in seconds").default(30).exactOptional(),
+  passwordStdin: z.boolean().describe("Take the password from stdin").default(false),
+  timeoutSeconds: z.number().default(120).describe("Timeout in seconds").default(30),
 });
 
 export default {

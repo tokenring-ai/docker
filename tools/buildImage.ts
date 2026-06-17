@@ -12,7 +12,7 @@ const displayName = "Docker/buildImage";
  * Build a Docker image
  */
 async function execute(
-  { context, tag, dockerfile, buildArgs = {}, noCache = false, pull = false, timeoutSeconds = 300 }: z.output<typeof inputSchema>,
+  { context, tag, dockerfile, buildArgs,  noCache , pull , timeoutSeconds  }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -76,10 +76,10 @@ const inputSchema = z.object({
   context: z.string().describe("The build context (directory containing Dockerfile)"),
   tag: z.string().describe("The tag to apply to the built image"),
   dockerfile: z.string().describe("Path to the Dockerfile (relative to context)").exactOptional(),
-  buildArgs: z.record(z.string(), z.string()).describe("Build arguments to pass to the build").exactOptional(),
-  noCache: z.boolean().describe("Whether to use cache when building the image").default(false).exactOptional(),
-  pull: z.boolean().describe("Whether to always pull newer versions of the base images").default(false).exactOptional(),
-  timeoutSeconds: z.number().int().describe("Timeout in seconds").default(300).exactOptional(),
+  buildArgs: z.record(z.string(), z.string()).default({}).describe("Build arguments to pass to the build"),
+  noCache: z.boolean().describe("Whether to use cache when building the image").default(false),
+  pull: z.boolean().describe("Whether to always pull newer versions of the base images").default(false),
+  timeoutSeconds: z.number().default(120).describe("Timeout in seconds").default(300),
 });
 
 export default {

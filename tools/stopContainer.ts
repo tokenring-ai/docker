@@ -11,7 +11,7 @@ const displayName = "Docker/stopContainer";
 /**
  * Stop one or more Docker containers
  */
-async function execute({ containers, time = 10, timeoutSeconds = 30 }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
+async function execute({ containers, time, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Convert single container to array
@@ -55,7 +55,7 @@ const description = "Stop one or more Docker containers";
 const inputSchema = z.object({
   containers: z.array(z.string()).describe("Container ID(s) or name(s) to stop"),
   time: z.number().int().default(10).describe("Seconds to wait for stop before killing the container"),
-  timeoutSeconds: z.number().int().default(30).describe("Timeout in seconds"),
+  timeoutSeconds: z.number().default(120).default(30).describe("Timeout in seconds"),
 });
 
 export default {

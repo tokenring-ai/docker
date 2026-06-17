@@ -13,7 +13,7 @@ const displayName = "Docker/execInContainer";
  */
 
 async function execute(
-  { container, commands, interactive = false, tty = false, workdir, env = {}, privileged = false, user, timeoutSeconds = 30 }: z.output<typeof inputSchema>,
+  { container, commands, interactive , tty , workdir, env,  privileged , user, timeoutSeconds  }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -98,7 +98,7 @@ const inputSchema = z.object({
   env: z.record(z.string(), z.string()).exactOptional().default({}).describe("Environment variables to set"),
   privileged: z.boolean().exactOptional().default(false).describe("Whether to give extended privileges to the command"),
   user: z.string().exactOptional().describe("Username or UID to execute the command as"),
-  timeoutSeconds: z.number().int().exactOptional().default(30).describe("Timeout in seconds"),
+  timeoutSeconds: z.number().default(120).default(30).describe("Timeout in seconds"),
 });
 
 export default {

@@ -13,7 +13,7 @@ const displayName = "Docker/startContainer";
  * Start one or more Docker containers
  */
 async function execute(
-  { containers, attach = false, interactive = false, timeoutSeconds = 30 }: z.output<typeof inputSchema>,
+  { containers, attach , interactive , timeoutSeconds  }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
@@ -66,7 +66,7 @@ const inputSchema = z
     containers: z.array(z.string()).describe("Container ID(s) or name(s) to start"),
     attach: z.boolean().exactOptional().default(false).describe("Whether to attach STDOUT/STDERR and forward signals"),
     interactive: z.boolean().exactOptional().default(false).describe("Whether to attach container's STDIN"),
-    timeoutSeconds: z.number().int().exactOptional().default(30).describe("Timeout in seconds"),
+    timeoutSeconds: z.number().default(120).default(30).describe("Timeout in seconds"),
   })
   .strict();
 
