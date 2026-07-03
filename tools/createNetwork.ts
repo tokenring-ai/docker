@@ -12,7 +12,7 @@ const displayName = "Docker/createNetwork";
  * Create a Docker network
  */
 async function execute(
-  { name: networkName, driver , options,  internal , subnet, gateway, ipRange, timeoutSeconds  }: z.output<typeof inputSchema>,
+  { name: networkName, driver, options, internal, subnet, gateway, ipRange, timeoutSeconds }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);

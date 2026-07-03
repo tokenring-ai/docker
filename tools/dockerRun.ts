@@ -10,7 +10,7 @@ const displayName = "Docker/dockerRun";
 /**
  * Runs a shell command in an ephemeral Docker container
  */
-async function execute({ image, cmd, timeoutSeconds  }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
+async function execute({ image, cmd, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const terminal = agent.requireServiceByType(TerminalService);
   const dockerService = agent.requireServiceByType(DockerService);
 
@@ -48,13 +48,13 @@ async function execute({ image, cmd, timeoutSeconds  }: z.output<typeof inputSch
   // Create the final command with timeout
   // Add bind mount for working directory
   dockerArgs.unshift("-v", `${process.cwd()}:/workdir:rw`, "-w", "/workdir");
-  const finalCommand: string[] = ["timeout", `${timeout}s`, "docker", ...dockerArgs];
+  const finalCommand = ["timeout", `${timeout}s`, "docker", ...dockerArgs];
 
   agent.infoMessage(`[${name}] Executing: ${finalCommand.join(" ")}`);
 
   try {
     const result = await terminal.executeCommand(
-      finalCommand[0],
+      finalCommand[0]!,
       finalCommand.slice(1),
       {
         timeoutSeconds: timeout,

@@ -12,10 +12,7 @@ import DockerService from "../DockerService.ts";
 const name = "docker_listContainers";
 const displayName = "Docker/listContainers";
 
-async function execute(
-  { all , quiet , limit, filter, size , format , timeoutSeconds  }: z.output<typeof inputSchema>,
-  agent: Agent,
-): Promise<TokenRingToolResult> {
+async function execute({ all, quiet, limit, filter, size, format, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings

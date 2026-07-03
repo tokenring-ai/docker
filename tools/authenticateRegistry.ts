@@ -13,7 +13,7 @@ const displayName = "Docker/authenticateRegistry";
  * Authenticate against a Docker registry
  */
 async function execute(
-  { server, username, password, email, passwordStdin , timeoutSeconds  }: z.output<typeof inputSchema>,
+  { server, username, password, email, passwordStdin, timeoutSeconds }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);

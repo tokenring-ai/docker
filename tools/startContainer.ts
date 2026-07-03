@@ -12,10 +12,7 @@ const displayName = "Docker/startContainer";
 /**
  * Start one or more Docker containers
  */
-async function execute(
-  { containers, attach , interactive , timeoutSeconds  }: z.output<typeof inputSchema>,
-  agent: Agent,
-): Promise<TokenRingToolResult> {
+async function execute({ containers, attach, interactive, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Convert single container to array (maintained for backward compatibility)

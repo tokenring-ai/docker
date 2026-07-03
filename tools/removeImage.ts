@@ -14,10 +14,7 @@ const displayName = "Docker/removeImage";
 /**
  * Remove one or more Docker images
  */
-async function execute(
-  { images, force , noPrune , timeoutSeconds  }: z.output<typeof inputSchema>,
-  agent: Agent,
-): Promise<TokenRingToolResult> {
+async function execute({ images, force, noPrune, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Convert single image to array (images is already an array per type, but keep for safety)

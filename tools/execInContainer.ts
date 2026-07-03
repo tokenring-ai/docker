@@ -13,7 +13,7 @@ const displayName = "Docker/execInContainer";
  */
 
 async function execute(
-  { container, commands, interactive , tty , workdir, env,  privileged , user, timeoutSeconds  }: z.output<typeof inputSchema>,
+  { container, commands, interactive, tty, workdir, env, privileged, user, timeoutSeconds }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);

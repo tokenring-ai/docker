@@ -12,10 +12,7 @@ import DockerService from "../DockerService.ts";
 const name = "docker_getContainerStats";
 const displayName = "Docker/getContainerStats";
 
-async function execute(
-  { containers, all , noStream, format, timeoutSeconds  }: z.output<typeof inputSchema>,
-  agent: Agent,
-): Promise<TokenRingToolResult> {
+async function execute({ containers, all, noStream, format, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Convert single container to array

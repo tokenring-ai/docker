@@ -12,10 +12,7 @@ import DockerService from "../DockerService.ts";
 const name = "docker_removeContainer";
 const displayName = "Docker/removeContainer";
 
-async function execute(
-  { containers, force , volumes , link , timeoutSeconds  }: z.output<typeof inputSchema>,
-  agent: Agent,
-): Promise<TokenRingToolResult> {
+async function execute({ containers, force, volumes, link, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Convert single container to array

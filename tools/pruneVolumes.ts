@@ -12,7 +12,7 @@ const displayName = "Docker/pruneVolumes";
 /**
  * Prune unused Docker volumes
  */
-async function execute({ filter, timeoutSeconds  }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
+async function execute({ filter, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -38,14 +38,14 @@ async function execute({ filter, timeoutSeconds  }: z.output<typeof inputSchema>
 
   // Parse the output to extract the amount of space reclaimed
   let spaceReclaimed = "0B";
-  const match = stdout.match(/Total reclaimed space: ([\d.]+\s?[KMGT]?B)/i);
+  const match = stdout.match(/Total reclaimed space: ([\d.]+\s?[KMGT]?B)/i) as [string, string] | undefined;
   if (match) {
     spaceReclaimed = match[1];
   }
 
   // Parse the output to extract the number of volumes deleted
   let volumesDeleted = 0;
-  const deletedMatch = stdout.match(/Deleted Volumes:\s*(\S*?)Total/);
+  const deletedMatch = stdout.match(/Deleted Volumes:\s*(\S*?)Total/) as [string, string] | undefined;
   if (deletedMatch) {
     const deletedText = deletedMatch[1].trim();
     volumesDeleted = deletedText.split("\n").filter(line => line.trim()).length;

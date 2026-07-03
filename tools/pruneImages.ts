@@ -11,7 +11,7 @@ const displayName = "Docker/pruneImages";
 /**
  * Prune unused Docker images
  */
-async function execute({ all, filter, timeoutSeconds  }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
+async function execute({ all, filter, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
   // Build Docker command with host and TLS settings
@@ -42,7 +42,7 @@ async function execute({ all, filter, timeoutSeconds  }: z.output<typeof inputSc
 
   // Parse the output to extract the amount of space reclaimed
   let spaceReclaimed = "0B";
-  const match = stdout.match(/Total reclaimed space: ([\d.]+\s?[KMGT]?B)/i);
+  const match = stdout.match(/Total reclaimed space: ([\d.]+\s?[KMGT]?B)/i) as [string, string] | undefined;
   if (match) {
     spaceReclaimed = match[1];
   }
