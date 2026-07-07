@@ -1,9 +1,8 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
-import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
-import { execa } from "execa";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
+import { clampTimeout, executeDockerCommand } from "../util/executeDockerCommand.ts";
 
 const name = "docker_pruneImages";
 const displayName = "Docker/pruneImages";
@@ -13,46 +12,26 @@ const displayName = "Docker/pruneImages";
  */
 async function execute({ all, filter, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
+  const timeout = clampTimeout(timeoutSeconds, 5, 300);
+  const dockerArgs = ["image", "prune", "-f"];
 
-  // Build Docker command with host and TLS settings
-  const dockerCmd = dockerService.buildDockerCmd();
-
-  // Construct the docker image prune command
-  const timeout = Math.max(5, Math.min(timeoutSeconds, 300));
-  let cmd = `timeout ${timeout}s ${dockerCmd} image prune -f`; // Always use -f to avoid interactive prompt
-
-  // Add all flag if specified
   if (all) {
-    cmd += ` -a`;
+    dockerArgs.push("-a");
   }
 
-  // Add filter if specified
   if (filter) {
-    cmd += ` --filter ${shellEscape(filter)}`;
+    dockerArgs.push("--filter", filter);
   }
 
-  agent.infoMessage(`[${name}] Pruning unused Docker images...`);
-  agent.infoMessage(`[${name}] Executing: ${cmd}`);
-
-  const { stdout, stderr, exitCode } = await execa(cmd, {
-    shell: true,
-    timeout: timeout * 1000,
-    maxBuffer: 1024 * 1024,
+  return await executeDockerCommand(dockerService, agent, {
+    toolName: name,
+    summary: "Pruned unused Docker images",
+    dockerArgs,
+    timeoutSeconds: timeout,
+    maxTimeout: 300,
+    contextLines: [`All unused: ${all}`],
+    errorMessage: "Error while pruning Docker images",
   });
-
-  // Parse the output to extract the amount of space reclaimed
-  let spaceReclaimed = "0B";
-  const match = stdout.match(/Total reclaimed space: ([\d.]+\s?[KMGT]?B)/i) as [string, string] | undefined;
-  if (match) {
-    spaceReclaimed = match[1];
-  }
-
-  agent.infoMessage(`[${name}] Successfully pruned unused Docker images. Space reclaimed: ${spaceReclaimed}`);
-
-  return {
-    summary: `Pruned unused Docker images, reclaimed ${spaceReclaimed}`,
-    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout.trim() || "", stderr: stderr.trim() || "", spaceReclaimed }),
-  };
 }
 
 const description = "Prune unused Docker images";

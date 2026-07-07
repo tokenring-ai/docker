@@ -1,10 +1,8 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
-import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
-import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
-import { execa } from "execa";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
+import { clampTimeout, executeDockerCommand } from "../util/executeDockerCommand.ts";
 
 const name = "docker_buildImage";
 const displayName = "Docker/buildImage";
@@ -17,57 +15,36 @@ async function execute(
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
+  const timeout = clampTimeout(timeoutSeconds, 5, 1800);
+  const dockerArgs = ["build", "-t", tag];
 
-  // Build Docker command with host and TLS settings
-  const dockerCmd = dockerService.buildDockerCmd();
-
-  // Construct the docker build command
-  const timeout = Math.max(5, Math.min(timeoutSeconds, 1800));
-  let cmd = `timeout ${timeout}s ${dockerCmd} build`;
-
-  // Add tag
-  cmd += ` -t ${shellEscape(tag)}`;
-
-  // Add dockerfile if specified
   if (dockerfile) {
-    cmd += ` -f ${shellEscape(dockerfile)}`;
+    dockerArgs.push("-f", dockerfile);
   }
 
-  // Add build args
   for (const [key, value] of Object.entries(buildArgs)) {
-    cmd += ` --build-arg ${shellEscape(`${key}=${value}`)}`;
+    dockerArgs.push("--build-arg", `${key}=${value}`);
   }
 
-  // Add no-cache flag if specified
   if (noCache) {
-    cmd += ` --no-cache`;
+    dockerArgs.push("--no-cache");
   }
 
-  // Add pull flag if specified
   if (pull) {
-    cmd += ` --pull`;
+    dockerArgs.push("--pull");
   }
 
-  // Add context
-  cmd += ` ${shellEscape(context)}`;
+  dockerArgs.push(context);
 
-  agent.infoMessage(`[${name}] Building image ${tag}...`);
-  agent.infoMessage(`[${name}] Executing: ${cmd}`);
-
-  try {
-    const { stdout, stderr, exitCode } = await execa(cmd, {
-      shell: true,
-      timeout: timeout * 1000,
-      maxBuffer: 5 * 1024 * 1024,
-    });
-    agent.infoMessage(`[${name}] Successfully built image ${tag}`);
-    return {
-      summary: `Built Docker image ${tag}`,
-      result: JSON.stringify({ ok: true, exitCode, stdout: stdout.trim() || "", stderr: stderr.trim() || "", tag }),
-    };
-  } catch (err) {
-    throw new ToolCallError(name, "Error while building image", { cause: err });
-  }
+  return await executeDockerCommand(dockerService, agent, {
+    toolName: name,
+    summary: `Built Docker image ${tag}`,
+    dockerArgs,
+    timeoutSeconds: timeout,
+    maxTimeout: 1800,
+    contextLines: [`Tag: ${tag}`, `Context: ${context}`],
+    errorMessage: "Error while building image",
+  });
 }
 
 const description = "Build a Docker image from a Dockerfile";

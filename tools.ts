@@ -1,7 +1,6 @@
 // Import all implemented tools
 import type { TokenRingToolDefinition } from "@tokenring-ai/chat";
 // Import all implemented tools
-import authenticateRegistry from "./tools/authenticateRegistry.ts";
 import buildImage from "./tools/buildImage.ts";
 import createNetwork from "./tools/createNetwork.ts";
 import dockerRun from "./tools/dockerRun.ts";
@@ -22,7 +21,6 @@ import tagImage from "./tools/tagImage.ts";
 
 export default [
   dockerRun,
-  authenticateRegistry,
   buildImage,
   createNetwork,
   dockerStack,

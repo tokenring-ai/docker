@@ -1,11 +1,9 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
-import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
-import { execa } from "execa";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
+import { clampTimeout, executeDockerCommand } from "../util/executeDockerCommand.ts";
 
-// Export the tool name in the required format
 const name = "docker_pruneVolumes";
 const displayName = "Docker/pruneVolumes";
 
@@ -14,48 +12,21 @@ const displayName = "Docker/pruneVolumes";
  */
 async function execute({ filter, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
+  const timeout = clampTimeout(timeoutSeconds, 5, 300);
+  const dockerArgs = ["volume", "prune", "-f"];
 
-  // Build Docker command with host and TLS settings
-  const dockerCmd = dockerService.buildDockerCmd();
-
-  // Construct the docker volume prune command
-  const timeout = Math.max(5, Math.min(timeoutSeconds, 300));
-  let cmd = `timeout ${timeout}s ${dockerCmd} volume prune -f`; // Always use -f to avoid interactive prompt
-
-  // Add filter if specified
   if (filter) {
-    cmd += ` --filter ${shellEscape(filter)}`;
+    dockerArgs.push("--filter", filter);
   }
 
-  agent.infoMessage(`[${name}] Pruning unused Docker volumes...`);
-  agent.infoMessage(`[${name}] Executing: ${cmd}`);
-
-  const { stdout, stderr, exitCode } = await execa(cmd, {
-    shell: true,
-    timeout: timeout * 1000,
-    maxBuffer: 1024 * 1024,
+  return await executeDockerCommand(dockerService, agent, {
+    toolName: name,
+    summary: "Pruned unused Docker volumes",
+    dockerArgs,
+    timeoutSeconds: timeout,
+    maxTimeout: 300,
+    errorMessage: "Error while pruning Docker volumes",
   });
-
-  // Parse the output to extract the amount of space reclaimed
-  let spaceReclaimed = "0B";
-  const match = stdout.match(/Total reclaimed space: ([\d.]+\s?[KMGT]?B)/i) as [string, string] | undefined;
-  if (match) {
-    spaceReclaimed = match[1];
-  }
-
-  // Parse the output to extract the number of volumes deleted
-  let volumesDeleted = 0;
-  const deletedMatch = stdout.match(/Deleted Volumes:\s*(\S*?)Total/) as [string, string] | undefined;
-  if (deletedMatch) {
-    const deletedText = deletedMatch[1].trim();
-    volumesDeleted = deletedText.split("\n").filter(line => line.trim()).length;
-  }
-
-  agent.infoMessage(`[${name}] Successfully pruned unused Docker volumes. Space reclaimed: ${spaceReclaimed}`);
-  return {
-    summary: `Pruned unused Docker volumes, reclaimed ${spaceReclaimed}`,
-    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout.trim() || "", stderr: stderr.trim() || "", spaceReclaimed, volumesDeleted }),
-  };
 }
 
 const description = "Prune unused Docker volumes";

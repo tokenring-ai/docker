@@ -9,22 +9,31 @@ export default class DockerService implements TokenRingService {
 
   constructor(readonly options: z.output<typeof DockerConfigSchema>) {}
 
-  buildDockerCmd(): string {
-    let dockerCmd = "docker";
+  buildDockerPrefixArgs(): string[] {
+    const args: string[] = [];
 
     if (this.options.host) {
-      dockerCmd += ` -H ${shellEscape(this.options.host)}`;
+      args.push("-H", this.options.host);
     }
 
     if (this.options.tls?.verify) {
-      dockerCmd += " --tls";
+      args.push("--tls");
       const { caCert, cert, key } = this.options.tls;
 
-      if (caCert) dockerCmd += ` --tlscacert=${shellEscape(caCert)}`;
-      if (cert) dockerCmd += ` --tlscert=${shellEscape(cert)}`;
-      if (key) dockerCmd += ` --tlskey=${shellEscape(key)}`;
+      if (caCert) args.push(`--tlscacert=${caCert}`);
+      if (cert) args.push(`--tlscert=${cert}`);
+      if (key) args.push(`--tlskey=${key}`);
     }
 
-    return dockerCmd;
+    return args;
+  }
+
+  buildDockerCmd(): string {
+    const prefixArgs = this.buildDockerPrefixArgs();
+    if (prefixArgs.length === 0) {
+      return "docker";
+    }
+
+    return `docker ${prefixArgs.map(arg => shellEscape(arg)).join(" ")}`;
   }
 }

@@ -1,10 +1,9 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
 import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
-import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
-import { execa } from "execa";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
+import { clampTimeout, executeDockerCommand } from "../util/executeDockerCommand.ts";
 
 const name = "docker_execInContainer";
 const displayName = "Docker/execInContainer";
@@ -23,68 +22,44 @@ async function execute(
     throw new ToolCallError(name, `command cannot be empty`);
   }
 
-  // Build Docker command with host and TLS settings
-  const dockerCmd = dockerService.buildDockerCmd();
+  const timeout = clampTimeout(timeoutSeconds, 5, 300);
+  const dockerArgs = ["exec"];
 
-  // Construct the docker exec command
-  const timeout = Math.max(5, Math.min(timeoutSeconds, 300));
-  let cmd = `timeout ${timeout}s ${dockerCmd} exec`;
-
-  // Add interactive flag if specified
   if (interactive) {
-    cmd += ` -i`;
+    dockerArgs.push("-i");
   }
 
-  // Add tty flag if specified
   if (tty) {
-    cmd += ` -t`;
+    dockerArgs.push("-t");
   }
 
-  // Add workdir if specified
   if (workdir) {
-    cmd += ` -w ${shellEscape(workdir)}`;
+    dockerArgs.push("-w", workdir);
   }
 
-  // Add environment variables
   for (const [key, value] of Object.entries(env)) {
-    cmd += ` -e ${shellEscape(`${key}=${value}`)}`;
+    dockerArgs.push("-e", `${key}=${value}`);
   }
 
-  // Add privileged flag if specified
   if (privileged) {
-    cmd += ` --privileged`;
+    dockerArgs.push("--privileged");
   }
 
-  // Add user if specified
   if (user) {
-    cmd += ` -u ${shellEscape(user)}`;
+    dockerArgs.push("-u", user);
   }
 
-  // Add container
-  cmd += ` ${shellEscape(container)}`;
+  dockerArgs.push(container, ...commands);
 
-  // Add command
-  cmd += ` ${commands.map(arg => shellEscape(arg)).join(" ")}`;
-
-  // Informational messages prefixed with tool name
-  agent.infoMessage(`[execInContainer] Executing command in container ${container}...`);
-  agent.infoMessage(`[execInContainer] Executing: ${cmd}`);
-
-  try {
-    const { stdout, stderr, exitCode } = await execa(cmd, {
-      shell: true,
-      timeout: timeout * 1000,
-      maxBuffer: 5 * 1024 * 1024,
-    });
-
-    agent.infoMessage(`[execInContainer] Command executed successfully in container ${container}`);
-    return {
-      summary: `Executed command in container ${container}`,
-      result: JSON.stringify({ ok: true, exitCode, stdout: stdout.trim() || "", stderr: stderr.trim() || "", container, command: commands.join(" ") }),
-    };
-  } catch (err) {
-    throw new ToolCallError(name, "Error while executing command in container", { cause: err });
-  }
+  return await executeDockerCommand(dockerService, agent, {
+    toolName: name,
+    summary: `Executed command in container ${container}`,
+    dockerArgs,
+    timeoutSeconds: timeout,
+    maxTimeout: 300,
+    contextLines: [`Container: ${container}`, `Command: ${commands.join(" ")}`],
+    errorMessage: "Error while executing command in container",
+  });
 }
 
 const description = "Execute a command in a running Docker container";

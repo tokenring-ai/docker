@@ -1,10 +1,9 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
 import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
-import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
-import { execa } from "execa";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
+import { clampTimeout, executeDockerCommand } from "../util/executeDockerCommand.ts";
 
 /**
  * Get stats from a Docker container
@@ -16,72 +15,38 @@ const displayName = "Docker/getContainerStats";
 async function execute({ containers, all, noStream, format, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
-  // Convert single container to array
   if (containers.length === 0) {
     throw new ToolCallError(name, `at least one container must be specified`);
   }
 
-  // Build Docker command with host and TLS settings
-  const dockerCmd = dockerService.buildDockerCmd();
+  const timeout = clampTimeout(timeoutSeconds, 5, 60);
+  const dockerArgs = ["stats"];
 
-  // Construct the docker stats command
-  const timeout = Math.max(5, Math.min(timeoutSeconds, 60));
-  let cmd = `timeout ${timeout}s ${dockerCmd} stats`;
-
-  // Add no-stream flag if specified
   if (noStream) {
-    cmd += ` --no-stream`;
+    dockerArgs.push("--no-stream");
   }
 
-  // Add all flag if specified
   if (all) {
-    cmd += ` --all`;
+    dockerArgs.push("--all");
   }
 
-  // Add format
   if (format === "json") {
-    cmd += ` --format '{{json .}}'`;
-  } else if (format === "table") {
-    // Default table format
-  } else {
-    // Custom format
-    cmd += ` --format ${shellEscape(format)}`;
+    dockerArgs.push("--format", "{{json .}}");
+  } else if (format !== "table") {
+    dockerArgs.push("--format", format);
   }
 
-  // Add containers
-  cmd += ` ${containers.map(container => shellEscape(container)).join(" ")}`;
+  dockerArgs.push(...containers);
 
-  agent.infoMessage(`[${name}] Getting stats for container(s): ${containers.join(", ")}...`);
-  agent.infoMessage(`[${name}] Executing: ${cmd}`);
-
-  try {
-    const { stdout, stderr, exitCode } = await execa(cmd, {
-      shell: true,
-      timeout: timeout * 1000,
-      maxBuffer: 1024 * 1024,
-    });
-
-    // Parse the output
-    let stats: any;
-    if (format === "json") {
-      // Split by newline and parse each line as JSON
-      stats = stdout
-        .trim()
-        .split("\n")
-        .filter(line => line.trim())
-        .map(line => JSON.parse(line));
-    } else {
-      stats = stdout.trim();
-    }
-
-    agent.infoMessage(`[${name}] Successfully retrieved stats for container(s): ${containers.join(", ")}`);
-    return {
-      summary: `Retrieved stats for container(s): ${containers.join(", ")}`,
-      result: JSON.stringify({ ok: true, exitCode, stats, containers: containers, stdout: stdout.trim() || "", stderr: stderr.trim() || "" }),
-    };
-  } catch (err) {
-    throw new ToolCallError(name, "Error while getting container stats", { cause: err });
-  }
+  return await executeDockerCommand(dockerService, agent, {
+    toolName: name,
+    summary: "Retrieved stats for container(s)",
+    dockerArgs,
+    timeoutSeconds: timeout,
+    maxTimeout: 60,
+    contextLines: [`Containers: ${containers.join(", ")}`, `Format: ${format}`],
+    errorMessage: "Error while getting container stats",
+  });
 }
 
 const description = "Get stats from a Docker container";

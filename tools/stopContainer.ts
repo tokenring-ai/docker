@@ -1,10 +1,9 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
 import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
-import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
-import { execa } from "execa";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
+import { clampTimeout, executeDockerCommand } from "../util/executeDockerCommand.ts";
 
 const name = "docker_stopContainer";
 const displayName = "Docker/stopContainer";
@@ -15,40 +14,28 @@ const displayName = "Docker/stopContainer";
 async function execute({ containers, time, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
-  // Convert single container to array
   if (containers.length === 0) {
     throw new ToolCallError(name, `at least one container must be specified`);
   }
 
-  // Build Docker command with host and TLS settings
-  const dockerCmd = dockerService.buildDockerCmd();
+  const timeout = clampTimeout(timeoutSeconds, 5, 120);
+  const dockerArgs = ["stop"];
 
-  // Construct the docker stop command
-  const timeout = Math.max(5, Math.min(timeoutSeconds, 120));
-  let cmd = `timeout ${timeout}s ${dockerCmd} stop`;
-
-  // Add time parameter if it differs from default
   if (time !== 10) {
-    cmd += ` -t ${shellEscape(String(time))}`;
+    dockerArgs.push("-t", String(time));
   }
 
-  // Append container identifiers
-  cmd += ` ${containers.map(c => shellEscape(c)).join(" ")}`;
+  dockerArgs.push(...containers);
 
-  agent.infoMessage(`[${name}] Stopping container(s): ${containers.join(", ")}...`);
-  agent.infoMessage(`[${name}] Executing: ${cmd}`);
-
-  const { stdout, stderr, exitCode } = await execa(cmd, {
-    shell: true,
-    timeout: timeout * 1000,
-    maxBuffer: 1024 * 1024,
-  });
-
-  agent.infoMessage(`[${name}] Successfully stopped container(s): ${containers.join(", ")}`);
-  return {
+  return await executeDockerCommand(dockerService, agent, {
+    toolName: name,
     summary: `Stopped container(s): ${containers.join(", ")}`,
-    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout.trim() || "", stderr: stderr.trim() || "", containers: containers }),
-  };
+    dockerArgs,
+    timeoutSeconds: timeout,
+    maxTimeout: 120,
+    contextLines: [`Containers: ${containers.join(", ")}`, `Stop timeout: ${time}s`],
+    errorMessage: "Error while stopping container",
+  });
 }
 
 const description = "Stop one or more Docker containers";

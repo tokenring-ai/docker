@@ -1,10 +1,9 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
 import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
-import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
-import { execa } from "execa";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
+import { clampTimeout, executeDockerCommand } from "../util/executeDockerCommand.ts";
 
 /**
  * Remove one or more Docker containers
@@ -16,55 +15,36 @@ const displayName = "Docker/removeContainer";
 async function execute({ containers, force, volumes, link, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
-  // Convert single container to array
   if (containers.length === 0) {
     throw new ToolCallError(name, `at least one container must be specified`);
   }
 
-  // Build Docker command with host and TLS settings
-  const dockerCmd = dockerService.buildDockerCmd();
+  const timeout = clampTimeout(timeoutSeconds, 5, 120);
+  const dockerArgs = ["rm"];
 
-  // Construct the docker rm command
-  const timeout = Math.max(5, Math.min(timeoutSeconds, 120));
-  let cmd = `timeout ${timeout}s ${dockerCmd} rm`;
-
-  // Add force flag if specified
   if (force) {
-    cmd += ` -f`;
+    dockerArgs.push("-f");
   }
 
-  // Add volumes flag if specified
   if (volumes) {
-    cmd += ` -v`;
+    dockerArgs.push("-v");
   }
 
-  // Add link flag if specified
   if (link) {
-    cmd += ` -l`;
+    dockerArgs.push("-l");
   }
 
-  // Add containers
-  cmd += ` ${containers.map(container => shellEscape(container)).join(" ")}`;
+  dockerArgs.push(...containers);
 
-  agent.infoMessage(`[${name}] Removing container(s): ${containers.join(", ")}...`);
-  agent.infoMessage(`[${name}] Executing: ${cmd}`);
-
-  try {
-    const { stdout, stderr, exitCode } = await execa(cmd, {
-      shell: true,
-      timeout: timeout * 1000,
-      maxBuffer: 1024 * 1024,
-    });
-
-    agent.infoMessage(`[${name}] Successfully removed container(s): ${containers.join(", ")}`);
-    return {
-      summary: `Removed container(s): ${containers.join(", ")}`,
-      result: JSON.stringify({ ok: true, exitCode, stdout: stdout.trim() || "", stderr: stderr.trim() || "", containers: containers }),
-    };
-  } catch (err) {
-    // Throw error instead of returning an error object
-    throw new ToolCallError(name, "Error while removing container", { cause: err });
-  }
+  return await executeDockerCommand(dockerService, agent, {
+    toolName: name,
+    summary: `Removed container(s): ${containers.join(", ")}`,
+    dockerArgs,
+    timeoutSeconds: timeout,
+    maxTimeout: 120,
+    contextLines: [`Containers: ${containers.join(", ")}`],
+    errorMessage: "Error while removing container",
+  });
 }
 
 const description = "Remove one or more Docker containers";

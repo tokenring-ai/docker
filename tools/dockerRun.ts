@@ -4,6 +4,7 @@ import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { TerminalService } from "@tokenring-ai/terminal";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
+import { clampTimeout, formatDockerCommandOutput } from "../util/executeDockerCommand.ts";
 
 const name = "docker_dockerRun";
 const displayName = "Docker/dockerRun";
@@ -14,70 +15,30 @@ const displayName = "Docker/dockerRun";
 async function execute({ image, cmd, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const terminal = agent.requireServiceByType(TerminalService);
   const dockerService = agent.requireServiceByType(DockerService);
+  const timeout = clampTimeout(timeoutSeconds || 60, 5, 600);
 
-  // Build Docker command arguments
-  const dockerArgs: string[] = ["run", "--rm"];
-
-  // Add host if not using default
-  if (dockerService.options.host) {
-    dockerArgs.unshift("-H", dockerService.options.host);
-  }
-
-  const { tls } = dockerService.options;
-  // Add TLS settings if needed
-  if (tls?.verify) {
-    dockerArgs.unshift("--tls");
-
-    if (tls.caCert) {
-      dockerArgs.unshift(`--tlscacert=${tls.caCert}`);
-    }
-
-    if (tls.cert) {
-      dockerArgs.unshift(`--tlscert=${tls.cert}`);
-    }
-
-    if (tls.key) {
-      dockerArgs.unshift(`--tlskey=${tls.key}`);
-    }
-  }
-
-  // Add image and command
-  dockerArgs.push(image, "sh", "-c", cmd);
-
-  const timeout = Math.max(5, Math.min(timeoutSeconds || 60, 600));
-
-  // Create the final command with timeout
-  // Add bind mount for working directory
-  dockerArgs.unshift("-v", `${process.cwd()}:/workdir:rw`, "-w", "/workdir");
-  const finalCommand = ["timeout", `${timeout}s`, "docker", ...dockerArgs];
-
-  agent.infoMessage(`[${name}] Executing: ${finalCommand.join(" ")}`);
+  const dockerArgs = ["-v", `${process.cwd()}:/workdir:rw`, "-w", "/workdir", "run", "--rm", image, "sh", "-c", cmd];
+  const commandArgs = ["timeout", `${timeout}s`, "docker", ...dockerService.buildDockerPrefixArgs(), ...dockerArgs];
 
   try {
-    const result = await terminal.executeCommand(
-      finalCommand[0]!,
-      finalCommand.slice(1),
-      {
-        timeoutSeconds: timeout,
-      },
-      agent,
-    );
+    const result = await terminal.executeCommand(commandArgs[0]!, commandArgs.slice(1), { timeoutSeconds: timeout }, agent);
 
-    const ok = result.status === "success";
+    if (result.status === "timeout") {
+      throw new ToolCallError(name, "Error while running docker container", { cause: new Error("Command timed out") });
+    }
+
+    if (result.status === "unknownError") {
+      throw new ToolCallError(name, "Error while running docker container", { cause: new Error(result.error) });
+    }
+
     const exitCode = result.status === "badExitCode" ? result.exitCode : 0;
-    const error =
-      result.status === "success"
-        ? undefined
-        : result.status === "badExitCode"
-          ? `Command failed with exit code ${result.exitCode}`
-          : result.status === "timeout"
-            ? "Command timed out"
-            : result.error;
-    return {
-      summary: ok ? `Ran docker container with image ${image}` : `Docker run failed: ${error}`,
-      result: JSON.stringify({ ok, exitCode, error }),
-    };
+    const output = result.output;
+
+    return formatDockerCommandOutput(`Ran docker container with image ${image}`, [`Command: ${cmd}`], exitCode, output);
   } catch (err) {
+    if (err instanceof ToolCallError) {
+      throw err;
+    }
     throw new ToolCallError(name, "Error while running docker container", { cause: err });
   }
 }

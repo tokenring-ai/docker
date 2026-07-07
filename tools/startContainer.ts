@@ -1,12 +1,10 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
 import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
-import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
-import { execa } from "execa";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
+import { clampTimeout, executeDockerCommand } from "../util/executeDockerCommand.ts";
 
-// Export tool name for consistent messaging
 const name = "docker_startContainer";
 const displayName = "Docker/startContainer";
 
@@ -16,45 +14,32 @@ const displayName = "Docker/startContainer";
 async function execute({ containers, attach, interactive, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
 
-  // Convert single container to array (maintained for backward compatibility)
   if (containers.length === 0) {
     throw new ToolCallError(name, `at least one container must be specified`);
   }
 
-  // Build Docker command with host and TLS settings
-  const dockerCmd = dockerService.buildDockerCmd();
+  const timeout = clampTimeout(timeoutSeconds, 5, 120);
+  const dockerArgs = ["start"];
 
-  // Construct the docker start command
-  const timeout = Math.max(5, Math.min(timeoutSeconds, 120));
-  let cmd = `timeout ${timeout}s ${dockerCmd} start`;
-
-  // Add attach flag if specified
   if (attach) {
-    cmd += ` -a`;
+    dockerArgs.push("-a");
   }
 
-  // Add interactive flag if specified
   if (interactive) {
-    cmd += ` -i`;
+    dockerArgs.push("-i");
   }
 
-  // Add containers
-  cmd += ` ${containers.map(container => shellEscape(container)).join(" ")}`;
+  dockerArgs.push(...containers);
 
-  agent.infoMessage(`[${name}] Starting container(s): ${containers.join(", ")}...`);
-  agent.infoMessage(`[${name}] Executing: ${cmd}`);
-
-  const { stdout, stderr, exitCode } = await execa(cmd, {
-    shell: true,
-    timeout: timeout * 1000,
-    maxBuffer: 1024 * 1024,
-  });
-
-  agent.infoMessage(`[${name}] Successfully started container(s): ${containers.join(", ")}`);
-  return {
+  return await executeDockerCommand(dockerService, agent, {
+    toolName: name,
     summary: `Started container(s): ${containers.join(", ")}`,
-    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout.trim() || "", stderr: stderr.trim() || "", containers: containers }),
-  };
+    dockerArgs,
+    timeoutSeconds: timeout,
+    maxTimeout: 120,
+    contextLines: [`Containers: ${containers.join(", ")}`],
+    errorMessage: "Error while starting container",
+  });
 }
 
 const description = "Start one or more Docker containers";

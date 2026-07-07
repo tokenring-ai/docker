@@ -1,10 +1,8 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
-import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
-import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
-import { execa } from "execa";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
+import { clampTimeout, executeDockerCommand } from "../util/executeDockerCommand.ts";
 
 const name = "docker_createNetwork";
 const displayName = "Docker/createNetwork";
@@ -17,68 +15,44 @@ async function execute(
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
+  const timeout = clampTimeout(timeoutSeconds, 5, 120);
+  const dockerArgs = ["network", "create"];
 
-  // Build Docker command with host and TLS settings
-  const dockerCmd = dockerService.buildDockerCmd();
-
-  // Construct the docker network create command
-  const timeout = Math.max(5, Math.min(timeoutSeconds, 120));
-  let cmd = `timeout ${timeout}s ${dockerCmd} network create`;
-
-  // Add driver if specified
   if (driver !== "bridge") {
-    cmd += ` -d ${shellEscape(driver)}`;
+    dockerArgs.push("-d", driver);
   }
 
-  // Add options if specified
   for (const [key, value] of Object.entries(options)) {
-    cmd += ` -o ${shellEscape(`${key}=${value}`)}`;
+    dockerArgs.push("-o", `${key}=${value}`);
   }
 
-  // Add internal flag if specified
   if (internal) {
-    cmd += ` --internal`;
+    dockerArgs.push("--internal");
   }
 
-  // Add subnet if specified
   if (subnet) {
-    cmd += ` --subnet=${shellEscape(subnet)}`;
+    dockerArgs.push(`--subnet=${subnet}`);
   }
 
-  // Add gateway if specified
   if (gateway) {
-    cmd += ` --gateway=${shellEscape(gateway)}`;
+    dockerArgs.push(`--gateway=${gateway}`);
   }
 
-  // Add IP range if specified
   if (ipRange) {
-    cmd += ` --ip-range=${shellEscape(ipRange)}`;
+    dockerArgs.push(`--ip-range=${ipRange}`);
   }
 
-  // Add network name
-  cmd += ` ${shellEscape(networkName)}`;
+  dockerArgs.push(networkName);
 
-  agent.infoMessage(`[${name}] Creating Docker network ${networkName}...`);
-  agent.infoMessage(`[${name}] Executing: ${cmd}`);
-
-  try {
-    const { stdout, stderr, exitCode } = await execa(cmd, {
-      shell: true,
-      timeout: timeout * 1000,
-      maxBuffer: 1024 * 1024,
-    });
-
-    // The output is the network ID
-    const networkId = stdout.trim();
-
-    agent.infoMessage(`[${name}] Successfully created Docker network ${networkName} (${networkId})`);
-    return {
-      summary: `Created Docker network "${networkName}" (ID: ${networkId})`,
-      result: JSON.stringify({ ok: true, exitCode, stdout: stdout.trim() || "", stderr: stderr.trim() || "", name: networkName, id: networkId }),
-    };
-  } catch (err) {
-    throw new ToolCallError(name, `Error while creating Docker network "${networkName}"`, { cause: err });
-  }
+  return await executeDockerCommand(dockerService, agent, {
+    toolName: name,
+    summary: `Created Docker network "${networkName}"`,
+    dockerArgs,
+    timeoutSeconds: timeout,
+    maxTimeout: 120,
+    contextLines: [`Driver: ${driver}`],
+    errorMessage: `Error while creating Docker network "${networkName}"`,
+  });
 }
 
 const description = "Create a Docker network";

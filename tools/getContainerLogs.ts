@@ -1,10 +1,8 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
-import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
-import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
-import { execa } from "execa";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
+import { clampTimeout, executeDockerCommand } from "../util/executeDockerCommand.ts";
 
 const name = "docker_getContainerLogs";
 const displayName = "Docker/getContainerLogs";
@@ -18,67 +16,42 @@ async function execute(
   agent: Agent,
 ): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
-
-  // Build Docker command with host and TLS settings
-  const dockerCmd = dockerService.buildDockerCmd();
-
-  // Construct the docker logs command
-  const timeout = Math.max(5, Math.min(timeoutSeconds, 300));
-  let cmd = `timeout ${timeout}s ${dockerCmd} logs`;
+  const timeout = clampTimeout(timeoutSeconds, 5, 300);
+  const dockerArgs = ["logs"];
 
   if (follow) {
-    cmd += ` --follow`;
+    dockerArgs.push("--follow");
   }
 
   if (timestamps) {
-    cmd += ` --timestamps`;
+    dockerArgs.push("--timestamps");
   }
 
   if (since) {
-    cmd += ` --since ${shellEscape(since)}`;
+    dockerArgs.push("--since", since);
   }
 
   if (until) {
-    cmd += ` --until ${shellEscape(until)}`;
+    dockerArgs.push("--until", until);
   }
 
-  cmd += ` --tail ${shellEscape(String(tail))}`;
+  dockerArgs.push("--tail", String(tail));
 
   if (details) {
-    cmd += ` --details`;
+    dockerArgs.push("--details");
   }
 
-  cmd += ` ${shellEscape(containerName)}`;
+  dockerArgs.push(containerName);
 
-  agent.infoMessage(`[${name}] Getting logs from container ${containerName}...`);
-  agent.infoMessage(`[${name}] Executing: ${cmd}`);
-
-  try {
-    const { stdout, stderr, exitCode } = await execa(cmd, {
-      shell: true,
-      timeout: timeout * 1000,
-      maxBuffer: 5 * 1024 * 1024,
-    });
-
-    const logs = stdout.trim();
-    const logLines = logs.split("\n");
-
-    agent.infoMessage(`[${name}] Successfully retrieved logs from container ${containerName}`);
-    return {
-      summary: `Retrieved ${logLines.length} log line(s) from container ${containerName}`,
-      result: JSON.stringify({
-        ok: true,
-        exitCode,
-        logs,
-        lineCount: logLines.length,
-        container: containerName,
-        stdout: stdout.trim() || "",
-        stderr: stderr.trim() || "",
-      }),
-    };
-  } catch (err) {
-    throw new ToolCallError(name, "Error while retrieving container logs", { cause: err });
-  }
+  return await executeDockerCommand(dockerService, agent, {
+    toolName: name,
+    summary: `Retrieved logs from container ${containerName}`,
+    dockerArgs,
+    timeoutSeconds: timeout,
+    maxTimeout: 300,
+    contextLines: [`Container: ${containerName}`, `Tail: ${tail}`],
+    errorMessage: "Error while retrieving container logs",
+  });
 }
 
 const description = "Get logs from a Docker container";

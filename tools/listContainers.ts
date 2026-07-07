@@ -1,10 +1,8 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
-import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
-import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
-import { execa } from "execa";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
+import { clampTimeout, executeDockerCommand } from "../util/executeDockerCommand.ts";
 
 /**
  * List Docker containers
@@ -15,86 +13,44 @@ const displayName = "Docker/listContainers";
 
 async function execute({ all, quiet, limit, filter, size, format, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
+  const timeout = clampTimeout(timeoutSeconds, 5, 120);
+  const dockerArgs = ["ps"];
 
-  // Build Docker command with host and TLS settings
-  const dockerCmd = dockerService.buildDockerCmd();
-
-  // Construct the docker ps command
-  const timeout = Math.max(5, Math.min(timeoutSeconds, 120));
-  let cmd = `timeout ${timeout}s ${dockerCmd} ps`;
-
-  // Add all flag if specified
   if (all) {
-    cmd += ` -a`;
+    dockerArgs.push("-a");
   }
 
-  // Add quiet flag if specified
   if (quiet) {
-    cmd += ` -q`;
+    dockerArgs.push("-q");
   }
 
-  // Add limit if specified
   if (limit) {
-    cmd += ` -n ${shellEscape(String(limit))}`;
+    dockerArgs.push("-n", String(limit));
   }
 
-  // Add filter if specified
   if (filter) {
-    cmd += ` --filter ${shellEscape(filter)}`;
+    dockerArgs.push("--filter", filter);
   }
 
-  // Add size flag if specified
   if (size) {
-    cmd += ` -s`;
+    dockerArgs.push("-s");
   }
 
-  // Add format
   if (format === "json") {
-    cmd += ` --format '{{json .}}'`;
-  } else if (format === "table") {
-    // Default table format
-  } else {
-    // Custom format
-    cmd += ` --format ${shellEscape(format)}`;
+    dockerArgs.push("--format", "{{json .}}");
+  } else if (format !== "table") {
+    dockerArgs.push("--format", format);
   }
 
-  agent.infoMessage(`[${name}] Listing containers...`);
-  agent.infoMessage(`[${name}] Executing: ${cmd}`);
-
-  try {
-    const { stdout, stderr, exitCode } = await execa(cmd, {
-      shell: true,
-      timeout: timeout * 1000,
-      maxBuffer: 1024 * 1024,
-    });
-
-    // Parse the output
-    let containers: any;
-    if (format === "json" && !quiet) {
-      // Split by newline and parse each line as JSON
-      containers = stdout
-        .trim()
-        .split("\n")
-        .filter(line => line.trim())
-        .map(line => JSON.parse(line));
-    } else {
-      containers = stdout.trim();
-    }
-
-    agent.infoMessage(`[${name}] Successfully listed containers`);
-    const count = Array.isArray(containers)
-      ? containers.length
-      : stdout
-          .trim()
-          .split("\n")
-          .filter(line => line.trim()).length;
-    return {
-      summary: `Listed ${count} Docker container(s)`,
-      result: JSON.stringify({ ok: true, exitCode, containers, count, stdout: stdout.trim() || "", stderr: stderr.trim() || "" }),
-    };
-  } catch (err) {
-    throw new ToolCallError(name, "Error while listing Docker containers", { cause: err });
-  }
+  return await executeDockerCommand(dockerService, agent, {
+    toolName: name,
+    summary: `Showing ${all ? "All" : "Running"} Containers`,
+    dockerArgs,
+    timeoutSeconds: timeout,
+    maxTimeout: 120,
+    contextLines: [`Format: ${format}`],
+    errorMessage: "Error while listing Docker containers",
+  });
 }
 
 const description = "List Docker containers";

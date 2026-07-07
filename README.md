@@ -7,7 +7,7 @@ Comprehensive container management and isolated sandboxing via Docker.
 The `@tokenring-ai/docker` package enables AI agents to interact with Docker through a configurable service and a set of
 tools for Docker operations. It supports local Docker via Unix socket, remote hosts via TCP, and optional TLS
 configuration for secure connections. The package provides a `DockerService` for configuration, a
-`DockerSandboxProvider` for persistent container management, and 18 tools for comprehensive Docker operations.
+`DockerSandboxProvider` for persistent container management, and 17 tools for comprehensive Docker operations.
 
 ### Key Features
 
@@ -18,7 +18,7 @@ configuration for secure connections. The package provides a `DockerService` for
 - **Agent Integration**: Seamless integration with Token Ring's agent ecosystem and service architecture
 - **Shell Safety**: All operations use proper shell escaping and timeout management
 - **Sandbox Provider**: Integrates with the Token Ring sandbox system for container orchestration
-- **Comprehensive Toolset**: 18 Docker tools for managing images, containers, networks, stacks, and more
+- **Comprehensive Toolset**: 17 Docker tools for managing images, containers, networks, stacks, and more
 
 ## Installation
 
@@ -50,7 +50,8 @@ interface DockerConfig {
 
 **Key Methods**:
 
-- `buildDockerCmd(): string` - Builds the Docker CLI command with host and TLS settings
+- `buildDockerPrefixArgs(): string[]` - Builds Docker CLI prefix arguments (-H host, --tls, etc.)
+- `buildDockerCmd(): string` - Builds the complete Docker CLI command with host and TLS settings
 
 **Properties**:
 
@@ -75,12 +76,15 @@ const dockerService = new DockerService({
 
 const dockerCmd = dockerService.buildDockerCmd();
 // Returns: "docker -H unix:///var/run/docker.sock --tls --tlscacert=/path/to/ca.crt --tlscert=/path/to/client.crt --tlskey=/path/to/client.key"
+
+const prefixArgs = dockerService.buildDockerPrefixArgs();
+// Returns: ["-H", "unix:///var/run/docker.sock", "--tls", "--tlscacert=/path/to/ca.crt", "--tlscert=/path/to/client.crt", "--tlskey=/path/to/client.key"]
 ```
 
 ### DockerSandboxProvider
 
 **Description**: Implements `SandboxProvider` to manage persistent Docker containers. Creates detached containers that
-can execute multiple commands over time.
+can execute multiple commands over time. The container runs `sleep infinity` to stay alive until explicitly stopped.
 
 **Constructor Parameters**:
 
@@ -184,10 +188,10 @@ Runs a shell command in an ephemeral Docker container with the project directory
 
 - `image` (string): Docker image name (e.g., ubuntu:latest)
 - `cmd` (string): Command to run in the container
-- `timeoutSeconds` (number, optional): Timeout for the command in seconds (default: 60, max: 600)
+- `timeoutSeconds` (number, optional): Timeout for the command in seconds (default: 120, max: 600)
 
-**Description**: Runs a shell command in an ephemeral Docker container (docker run --rm). Returns the result (stdout,
-stderr, exit code). The base directory for the project is bind mounted at /workdir, and the working directory of the
+**Description**: Runs a shell command in an ephemeral Docker container (docker run --rm). Returns the result (ok,
+exit code, error). The base directory for the project is bind mounted at /workdir, and the working directory of the
 container is set to /workdir. Uses TerminalService for execution.
 
 **Example**:
@@ -213,7 +217,7 @@ List Docker containers.
 - `filter` (string, optional): Filter output based on conditions
 - `size` (boolean, optional): Display total file sizes (default: false)
 - `format` (string, optional): Format the output (json or table, default: "json")
-- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30)
+- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30, max: 120)
 
 **Returns**: Object with `ok`, `exitCode`, `stdout`, `stderr`, `containers`, and `count` fields.
 
@@ -239,7 +243,7 @@ List Docker images.
 - `digests` (boolean, optional): Whether to show digests (default: false)
 - `filter` (string, optional): Filter output based on conditions
 - `format` (string, optional): Format the output (json or table, default: "json")
-- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30)
+- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30, max: 120)
 
 **Returns**: Object with `ok`, `exitCode`, `stdout`, `stderr`, `images`, and `count` fields.
 
@@ -295,7 +299,7 @@ Start one or more Docker containers.
 - `containers` (string[]): Container ID(s) or name(s) to start (must be non-empty array)
 - `attach` (boolean, optional): Whether to attach STDOUT/STDERR (default: false)
 - `interactive` (boolean, optional): Whether to attach container's STDIN (default: false)
-- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30)
+- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30, max: 120)
 
 **Returns**: Object with `ok`, `exitCode`, `stdout`, `stderr`, and `containers` fields.
 
@@ -318,7 +322,7 @@ Stop one or more Docker containers.
 
 - `containers` (string[]): Container ID(s) or name(s) to stop (must be non-empty array)
 - `time` (number, optional): Seconds to wait for stop before killing (default: 10)
-- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30)
+- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30, max: 120)
 
 **Returns**: Object with `ok`, `exitCode`, `stdout`, `stderr`, and `containers` fields.
 
@@ -343,7 +347,7 @@ Remove one or more Docker containers.
 - `force` (boolean, optional): Whether to force removal of running container (default: false)
 - `volumes` (boolean, optional): Whether to remove anonymous volumes (default: false)
 - `link` (boolean, optional): Whether to remove the specified link (default: false)
-- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30)
+- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30, max: 120)
 
 **Returns**: Object with `ok`, `exitCode`, `stdout`, `stderr`, and `containers` fields.
 
@@ -372,7 +376,7 @@ Execute a command in a running Docker container.
 - `env` (Record<string, string>, optional): Environment variables to set
 - `privileged` (boolean, optional): Whether to give extended privileges (default: false)
 - `user` (string, optional): Username or UID to execute as
-- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30)
+- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30, max: 300)
 
 **Returns**: Object with `ok`, `exitCode`, `stdout`, `stderr`, `container`, and `command` fields.
 
@@ -405,7 +409,7 @@ Get logs from a Docker container.
 - `until` (string, optional): Show logs before timestamp
 - `tail` (number, optional): Number of lines to show (default: 100)
 - `details` (boolean, optional): Whether to show extra details (default: false)
-- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30)
+- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30, max: 300)
 
 **Returns**: Object with `ok`, `exitCode`, `logs`, `lineCount`, `container`, `stdout`, and `stderr` fields.
 
@@ -430,7 +434,7 @@ Get stats from a Docker container.
 - `all` (boolean, optional): Whether to show all containers (default: false)
 - `noStream` (boolean, optional): Whether to disable streaming stats and only pull one stat (default: true)
 - `format` (string, optional): Format the output (json or table, default: "json")
-- `timeoutSeconds` (number, optional): Timeout in seconds (default: 10)
+- `timeoutSeconds` (number, optional): Timeout in seconds (default: 10, max: 60)
 
 **Returns**: Object with `ok`, `exitCode`, `stats`, `containers`, `stdout`, and `stderr` fields.
 
@@ -454,7 +458,7 @@ Remove one or more Docker images.
 - `images` (string[]): Image ID(s) or name(s) to remove (must be non-empty array)
 - `force` (boolean, optional): Whether to force removal (default: false)
 - `noPrune` (boolean, optional): Whether to prevent pruning parent images (default: false)
-- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30)
+- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30, max: 120)
 
 **Returns**: Object with `ok`, `exitCode`, `stdout`, `stderr`, and `images` fields.
 
@@ -477,7 +481,7 @@ Tag a Docker image with a new name and/or tag.
 
 - `sourceImage` (string): The source image to tag
 - `targetImage` (string): The target image name and tag
-- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30)
+- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30, max: 120)
 
 **Returns**: Object with `ok`, `exitCode`, `stdout`, `stderr`, `sourceImage`, and `targetImage` fields.
 
@@ -528,7 +532,7 @@ Create a Docker network.
 - `subnet` (string, optional): Subnet in CIDR format
 - `gateway` (string, optional): Gateway for the subnet
 - `ipRange` (string, optional): Allocate container IP from a sub-range
-- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30)
+- `timeoutSeconds` (number, optional): Timeout in seconds (default: 30, max: 120)
 
 **Returns**: Object with `ok`, `exitCode`, `stdout`, `stderr`, `name`, and `id` fields.
 
@@ -556,7 +560,7 @@ Launch, update, or remove a Docker stack from the local Docker Swarm.
 - `action` (enum): Action to perform - "deploy", "remove", or "ps"
 - `stackName` (string): Name of the stack
 - `composeFile` (string, optional): Path to docker-compose.yml (required for deploy)
-- `timeoutSeconds` (number, optional): Timeout in seconds (default: 60)
+- `timeoutSeconds` (number, optional): Timeout in seconds (default: 120, max: 600)
 
 **Returns**: Object with `ok`, `exitCode`, `stdout`, `stderr`, and `error` fields.
 
@@ -717,9 +721,9 @@ const result = await dockerRun.execute({
 }, agent);
 
 if (result.data.ok) {
-  console.log("Command output:", result.data.stdout);
+  console.log("Command succeeded");
 } else {
-  console.error("Error:", result.data.stderr);
+  console.error("Error:", result.data.error);
 }
 ```
 
@@ -970,7 +974,7 @@ The package has the following dependencies:
 - `@tokenring-ai/sandbox` (workspace:*) - Sandbox provider interface
 - `@tokenring-ai/utility` (workspace:*) - Shared utilities
 - `@tokenring-ai/terminal` (workspace:*) - Terminal service for command execution
-- `zod` (^4.3.6) - Schema validation
+- `zod` (^4.4.3) - Schema validation
 - `execa` (^9.6.1) - Process execution
 
 ### Dev Dependencies

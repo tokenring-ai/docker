@@ -1,9 +1,8 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
-import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
-import { execa } from "execa";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
+import { clampTimeout, executeDockerCommand } from "../util/executeDockerCommand.ts";
 
 const name = "docker_tagImage";
 const displayName = "Docker/tagImage";
@@ -13,28 +12,18 @@ const displayName = "Docker/tagImage";
  */
 async function execute({ sourceImage, targetImage, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const dockerService = agent.requireServiceByType(DockerService);
+  const timeout = clampTimeout(timeoutSeconds, 5, 120);
+  const dockerArgs = ["tag", sourceImage, targetImage];
 
-  // Construct the docker tag command with Docker context settings
-  const timeout = Math.max(5, Math.min(timeoutSeconds, 120));
-
-  // Build Docker command with host and TLS settings
-  const dockerCmd = dockerService.buildDockerCmd();
-
-  const cmd = `timeout ${timeout}s ${dockerCmd} tag ${shellEscape(sourceImage)} ${shellEscape(targetImage)}`;
-
-  agent.infoMessage(`[${name}] Tagging image ${sourceImage} as ${targetImage}...`);
-  agent.infoMessage(`[${name}] Executing: ${cmd}`);
-
-  const { stdout, stderr, exitCode } = await execa(cmd, {
-    shell: true,
-    timeout: timeout * 1000,
-    maxBuffer: 1024 * 1024,
-  });
-  agent.infoMessage(`[${name}] Successfully tagged image ${sourceImage} as ${targetImage}`);
-  return {
+  return await executeDockerCommand(dockerService, agent, {
+    toolName: name,
     summary: `Tagged Docker image ${sourceImage} as ${targetImage}`,
-    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout.trim() || "", stderr: stderr.trim() || "", sourceImage, targetImage }),
-  };
+    dockerArgs,
+    timeoutSeconds: timeout,
+    maxTimeout: 120,
+    contextLines: [`Source: ${sourceImage}`, `Target: ${targetImage}`],
+    errorMessage: "Error while tagging Docker image",
+  });
 }
 
 const description = "Tag a Docker image with a new name and/or tag";
