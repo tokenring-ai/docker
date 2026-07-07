@@ -1,4 +1,5 @@
 import type { ExecuteResult, LogsResult, SandboxOptions, SandboxProvider, SandboxResult } from "@tokenring-ai/sandbox/SandboxProvider";
+import formatError from "@tokenring-ai/utility/error/formatError";
 import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
 import { execa } from "execa";
 import type { DockerService } from "./index.ts";
@@ -43,8 +44,8 @@ export default class DockerSandboxProvider implements SandboxProvider {
         stderr: stderr || "",
         exitCode: exitCode || 0,
       };
-    } catch (err: any) {
-      return { stdout: "", stderr: err.message, exitCode: 1 };
+    } catch (err) {
+      return { stdout: "", stderr: formatError(err), exitCode: 1 };
     }
   }
 

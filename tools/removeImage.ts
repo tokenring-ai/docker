@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
 import { execa } from "execa";
 import { z } from "zod";
@@ -19,7 +20,7 @@ async function execute({ images, force, noPrune, timeoutSeconds }: z.output<type
 
   // Convert single image to array (images is already an array per type, but keep for safety)
   if (images.length === 0) {
-    throw new Error(`[${name}] at least one image must be specified`);
+    throw new ToolCallError(name, `at least one image must be specified`);
   }
 
   // Build Docker command with host and TLS settings
@@ -56,7 +57,7 @@ async function execute({ images, force, noPrune, timeoutSeconds }: z.output<type
 
   return {
     summary: `Removed Docker image(s): ${images.join(", ")}`,
-    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", images: images }),
+    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout.trim() || "", stderr: stderr.trim() || "", images: images }),
   };
 }
 

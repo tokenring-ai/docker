@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { stripUndefinedKeys } from "@tokenring-ai/utility/object/stripObject";
 import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
 import { execa } from "execa";
@@ -66,12 +67,10 @@ async function execute(
     agent.infoMessage(`[${name}] Successfully authenticated to registry ${server}`);
     return {
       summary: `Authenticated to Docker registry ${server} as ${username}`,
-      result: JSON.stringify({ ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", server, username }),
+      result: JSON.stringify({ ok: true, exitCode, stdout: stdout.trim() || "", stderr: stderr.trim() || "", server, username }),
     };
-  } catch (err: any) {
-    // Error message follows the required format
-    agent.errorMessage(`[${name}] Error: ${err.message}`);
-    throw new Error(`[${name}] ${err.shortMessage || err.message}`);
+  } catch (err) {
+    throw new ToolCallError(name, "Error while authenticating to registry", { cause: err });
   }
 }
 

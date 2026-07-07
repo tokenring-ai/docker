@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
 import { execa } from "execa";
 import { z } from "zod";
@@ -19,7 +20,7 @@ async function execute(
   const dockerService = agent.requireServiceByType(DockerService);
 
   if (commands.length === 0) {
-    throw new Error(`[${name}] command cannot be empty`);
+    throw new ToolCallError(name, `command cannot be empty`);
   }
 
   // Build Docker command with host and TLS settings
@@ -79,11 +80,10 @@ async function execute(
     agent.infoMessage(`[execInContainer] Command executed successfully in container ${container}`);
     return {
       summary: `Executed command in container ${container}`,
-      result: JSON.stringify({ ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", container, command: commands.join(" ") }),
+      result: JSON.stringify({ ok: true, exitCode, stdout: stdout.trim() || "", stderr: stderr.trim() || "", container, command: commands.join(" ") }),
     };
-  } catch (err: any) {
-    // Throw error instead of returning error object
-    throw new Error(`[${name}] ${err.message}`);
+  } catch (err) {
+    throw new ToolCallError(name, "Error while executing command in container", { cause: err });
   }
 }
 

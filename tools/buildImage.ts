@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
 import { execa } from "execa";
 import { z } from "zod";
@@ -62,11 +63,10 @@ async function execute(
     agent.infoMessage(`[${name}] Successfully built image ${tag}`);
     return {
       summary: `Built Docker image ${tag}`,
-      result: JSON.stringify({ ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", tag }),
+      result: JSON.stringify({ ok: true, exitCode, stdout: stdout.trim() || "", stderr: stderr.trim() || "", tag }),
     };
-  } catch (err: any) {
-    const message = err.shortMessage || err.message;
-    throw new Error(`[${name}] ${message}`);
+  } catch (err) {
+    throw new ToolCallError(name, "Error while building image", { cause: err });
   }
 }
 

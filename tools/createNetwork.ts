@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
 import { execa } from "execa";
 import { z } from "zod";
@@ -73,11 +74,10 @@ async function execute(
     agent.infoMessage(`[${name}] Successfully created Docker network ${networkName} (${networkId})`);
     return {
       summary: `Created Docker network "${networkName}" (ID: ${networkId})`,
-      result: JSON.stringify({ ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", name: networkName, id: networkId }),
+      result: JSON.stringify({ ok: true, exitCode, stdout: stdout.trim() || "", stderr: stderr.trim() || "", name: networkName, id: networkId }),
     };
-  } catch (err: any) {
-    const errMsg = err.message || "Unknown error";
-    throw new Error(`[${name}] ${errMsg}`);
+  } catch (err) {
+    throw new ToolCallError(name, `Error while creating Docker network "${networkName}"`, { cause: err });
   }
 }
 

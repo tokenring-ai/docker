@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { TerminalService } from "@tokenring-ai/terminal";
 import { z } from "zod";
 import DockerService from "../DockerService.ts";
@@ -76,8 +77,8 @@ async function execute({ image, cmd, timeoutSeconds }: z.output<typeof inputSche
       summary: ok ? `Ran docker container with image ${image}` : `Docker run failed: ${error}`,
       result: JSON.stringify({ ok, exitCode, error }),
     };
-  } catch (err: any) {
-    throw new Error(`[${name}] ${err.message}`);
+  } catch (err) {
+    throw new ToolCallError(name, "Error while running docker container", { cause: err });
   }
 }
 

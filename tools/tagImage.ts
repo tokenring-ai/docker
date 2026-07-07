@@ -33,7 +33,7 @@ async function execute({ sourceImage, targetImage, timeoutSeconds }: z.output<ty
   agent.infoMessage(`[${name}] Successfully tagged image ${sourceImage} as ${targetImage}`);
   return {
     summary: `Tagged Docker image ${sourceImage} as ${targetImage}`,
-    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", sourceImage, targetImage }),
+    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout.trim() || "", stderr: stderr.trim() || "", sourceImage, targetImage }),
   };
 }
 

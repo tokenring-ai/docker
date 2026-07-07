@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
 import { execa } from "execa";
 import { z } from "zod";
@@ -73,7 +74,7 @@ async function execute({ all, quiet, digests, filter, format, timeoutSeconds }: 
           .filter(line => line.trim())
           .map(line => JSON.parse(line));
       } catch (e: any) {
-        agent.errorMessage(`[${name}] Error parsing JSON output: ${e.message}`);
+        agent.errorMessage(`[${name}] Error parsing JSON output`, e);
         images = stdout.trim();
       }
     } else {
@@ -89,11 +90,10 @@ async function execute({ all, quiet, digests, filter, format, timeoutSeconds }: 
           .filter(line => line.trim()).length;
     return {
       summary: `Listed ${count} Docker image(s)`,
-      result: JSON.stringify({ ok: true, exitCode, images, count, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "" }),
+      result: JSON.stringify({ ok: true, exitCode, images, count, stdout: stdout.trim() || "", stderr: stderr.trim() || "" }),
     };
-  } catch (err: any) {
-    // Throw error instead of returning an object
-    throw new Error(`[${name}] Error: ${err.message}`);
+  } catch (err) {
+    throw new ToolCallError(name, "Error while listing Docker images", { cause: err });
   }
 }
 

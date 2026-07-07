@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
 import { execa } from "execa";
 import { z } from "zod";
@@ -24,7 +25,7 @@ async function execute({ action, stackName, composeFile, timeoutSeconds }: z.out
   switch (action) {
     case "deploy":
       if (!composeFile) {
-        throw new Error(`[${name}] composeFile required for deploy`);
+        throw new ToolCallError(name, `composeFile required for deploy`);
       }
       cmd = `timeout ${timeout}s ${dockerCmd} stack deploy -c ${shellEscape(composeFile)} ${shellEscape(stackName)}`;
       break;
@@ -35,7 +36,7 @@ async function execute({ action, stackName, composeFile, timeoutSeconds }: z.out
       cmd = `timeout ${timeout}s ${dockerCmd} stack ps ${shellEscape(stackName)}`;
       break;
     default:
-      throw new Error(`[${name}] Unknown action: ${action as string}`);
+      throw new ToolCallError(name, `Unknown action: ${action as string}`);
   }
 
   agent.infoMessage(`[dockerStack] Executing: ${cmd}`);
@@ -49,11 +50,10 @@ async function execute({ action, stackName, composeFile, timeoutSeconds }: z.out
     agent.infoMessage(`[dockerStack] Successfully executed ${action} on stack ${stackName}`);
     return {
       summary: `Docker stack ${action} on "${stackName}" succeeded`,
-      result: JSON.stringify({ ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", error: undefined }),
+      result: JSON.stringify({ ok: true, exitCode, stdout: stdout.trim() || "", stderr: stderr.trim() || "", error: undefined }),
     };
-  } catch (err: any) {
-    // Propagate as an error with contextual information
-    throw new Error(`[${name}] ${err.message}`);
+  } catch (err) {
+    throw new ToolCallError(name, "Error while executing docker stack command", { cause: err });
   }
 }
 

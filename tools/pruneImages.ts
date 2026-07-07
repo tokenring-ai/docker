@@ -51,7 +51,7 @@ async function execute({ all, filter, timeoutSeconds }: z.output<typeof inputSch
 
   return {
     summary: `Pruned unused Docker images, reclaimed ${spaceReclaimed}`,
-    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", spaceReclaimed }),
+    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout.trim() || "", stderr: stderr.trim() || "", spaceReclaimed }),
   };
 }
 

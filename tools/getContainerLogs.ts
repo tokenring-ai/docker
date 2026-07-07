@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
 import { execa } from "execa";
 import { z } from "zod";
@@ -71,12 +72,12 @@ async function execute(
         logs,
         lineCount: logLines.length,
         container: containerName,
-        stdout: stdout?.trim() || "",
-        stderr: stderr?.trim() || "",
+        stdout: stdout.trim() || "",
+        stderr: stderr.trim() || "",
       }),
     };
-  } catch (err: any) {
-    throw new Error(`[${name}] Error: ${err.message}`);
+  } catch (err) {
+    throw new ToolCallError(name, "Error while retrieving container logs", { cause: err });
   }
 }
 

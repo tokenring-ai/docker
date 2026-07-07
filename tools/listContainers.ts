@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
 import { execa } from "execa";
 import { z } from "zod";
@@ -70,17 +71,12 @@ async function execute({ all, quiet, limit, filter, size, format, timeoutSeconds
     // Parse the output
     let containers: any;
     if (format === "json" && !quiet) {
-      try {
-        // Split by newline and parse each line as JSON
-        containers = stdout
-          .trim()
-          .split("\n")
-          .filter(line => line.trim())
-          .map(line => JSON.parse(line));
-      } catch (e: any) {
-        // Throw parsing error instead of returning error object
-        throw new Error(`[${name}] Error parsing JSON output: ${e.message}`);
-      }
+      // Split by newline and parse each line as JSON
+      containers = stdout
+        .trim()
+        .split("\n")
+        .filter(line => line.trim())
+        .map(line => JSON.parse(line));
     } else {
       containers = stdout.trim();
     }
@@ -94,11 +90,10 @@ async function execute({ all, quiet, limit, filter, size, format, timeoutSeconds
           .filter(line => line.trim()).length;
     return {
       summary: `Listed ${count} Docker container(s)`,
-      result: JSON.stringify({ ok: true, exitCode, containers, count, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "" }),
+      result: JSON.stringify({ ok: true, exitCode, containers, count, stdout: stdout.trim() || "", stderr: stderr.trim() || "" }),
     };
-  } catch (err: any) {
-    // Throw error instead of returning error object
-    throw new Error(`[${name}] Error: ${err.message}`);
+  } catch (err) {
+    throw new ToolCallError(name, "Error while listing Docker containers", { cause: err });
   }
 }
 

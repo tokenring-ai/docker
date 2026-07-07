@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
 import { execa } from "execa";
 import { z } from "zod";
@@ -17,7 +18,7 @@ async function execute({ containers, force, volumes, link, timeoutSeconds }: z.o
 
   // Convert single container to array
   if (containers.length === 0) {
-    throw new Error(`[${name}] at least one container must be specified`);
+    throw new ToolCallError(name, `at least one container must be specified`);
   }
 
   // Build Docker command with host and TLS settings
@@ -58,11 +59,11 @@ async function execute({ containers, force, volumes, link, timeoutSeconds }: z.o
     agent.infoMessage(`[${name}] Successfully removed container(s): ${containers.join(", ")}`);
     return {
       summary: `Removed container(s): ${containers.join(", ")}`,
-      result: JSON.stringify({ ok: true, exitCode, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", containers: containers }),
+      result: JSON.stringify({ ok: true, exitCode, stdout: stdout.trim() || "", stderr: stderr.trim() || "", containers: containers }),
     };
-  } catch (err: any) {
+  } catch (err) {
     // Throw error instead of returning an error object
-    throw new Error(`[${name}] ${err.message}`);
+    throw new ToolCallError(name, "Error while removing container", { cause: err });
   }
 }
 

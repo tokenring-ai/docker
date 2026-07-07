@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
 import { execa } from "execa";
 import { z } from "zod";
@@ -17,7 +18,7 @@ async function execute({ containers, attach, interactive, timeoutSeconds }: z.ou
 
   // Convert single container to array (maintained for backward compatibility)
   if (containers.length === 0) {
-    throw new Error(`[${name}] at least one container must be specified`);
+    throw new ToolCallError(name, `at least one container must be specified`);
   }
 
   // Build Docker command with host and TLS settings
@@ -52,7 +53,7 @@ async function execute({ containers, attach, interactive, timeoutSeconds }: z.ou
   agent.infoMessage(`[${name}] Successfully started container(s): ${containers.join(", ")}`);
   return {
     summary: `Started container(s): ${containers.join(", ")}`,
-    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", containers: containers }),
+    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout.trim() || "", stderr: stderr.trim() || "", containers: containers }),
   };
 }
 

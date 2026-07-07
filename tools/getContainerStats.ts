@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { shellEscape } from "@tokenring-ai/utility/string/shellEscape";
 import { execa } from "execa";
 import { z } from "zod";
@@ -17,7 +18,7 @@ async function execute({ containers, all, noStream, format, timeoutSeconds }: z.
 
   // Convert single container to array
   if (containers.length === 0) {
-    throw new Error(`[${name}] at least one container must be specified`);
+    throw new ToolCallError(name, `at least one container must be specified`);
   }
 
   // Build Docker command with host and TLS settings
@@ -63,16 +64,12 @@ async function execute({ containers, all, noStream, format, timeoutSeconds }: z.
     // Parse the output
     let stats: any;
     if (format === "json") {
-      try {
-        // Split by newline and parse each line as JSON
-        stats = stdout
-          .trim()
-          .split("\n")
-          .filter(line => line.trim())
-          .map(line => JSON.parse(line));
-      } catch (e: any) {
-        throw new Error(`[${name}] Error parsing JSON output: ${e.message}`);
-      }
+      // Split by newline and parse each line as JSON
+      stats = stdout
+        .trim()
+        .split("\n")
+        .filter(line => line.trim())
+        .map(line => JSON.parse(line));
     } else {
       stats = stdout.trim();
     }
@@ -80,10 +77,10 @@ async function execute({ containers, all, noStream, format, timeoutSeconds }: z.
     agent.infoMessage(`[${name}] Successfully retrieved stats for container(s): ${containers.join(", ")}`);
     return {
       summary: `Retrieved stats for container(s): ${containers.join(", ")}`,
-      result: JSON.stringify({ ok: true, exitCode, stats, containers: containers, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "" }),
+      result: JSON.stringify({ ok: true, exitCode, stats, containers: containers, stdout: stdout.trim() || "", stderr: stderr.trim() || "" }),
     };
-  } catch (err: any) {
-    throw new Error(`[${name}] Error: ${err.message}`);
+  } catch (err) {
+    throw new ToolCallError(name, "Error while getting container stats", { cause: err });
   }
 }
 

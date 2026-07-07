@@ -54,7 +54,7 @@ async function execute({ filter, timeoutSeconds }: z.output<typeof inputSchema>,
   agent.infoMessage(`[${name}] Successfully pruned unused Docker volumes. Space reclaimed: ${spaceReclaimed}`);
   return {
     summary: `Pruned unused Docker volumes, reclaimed ${spaceReclaimed}`,
-    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", spaceReclaimed, volumesDeleted }),
+    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout.trim() || "", stderr: stderr.trim() || "", spaceReclaimed, volumesDeleted }),
   };
 }
 

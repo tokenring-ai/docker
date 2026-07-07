@@ -41,7 +41,7 @@ async function execute({ tag, allTags, timeoutSeconds }: z.output<typeof inputSc
   agent.infoMessage(`[${name}] Successfully pushed image ${tag}`);
   return {
     summary: `Pushed Docker image ${tag}`,
-    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout?.trim() || "", stderr: stderr?.trim() || "", tag }),
+    result: JSON.stringify({ ok: true, exitCode: exitCode ?? 0, stdout: stdout.trim() || "", stderr: stderr.trim() || "", tag }),
   };
 }
 
