@@ -25,7 +25,7 @@ function getCommandResult(result: ExecuteCommandResult): { exitCode: number; out
     case "badExitCode":
       return { exitCode: result.exitCode, output: result.output };
     case "timeout":
-      return { exitCode: 124, output: "Command timed out" };
+      return { exitCode: 124, output: result.output || "Command timed out" };
     case "unknownError":
       return { exitCode: 1, output: result.error };
     default: {

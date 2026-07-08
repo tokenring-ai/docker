@@ -24,7 +24,9 @@ async function execute({ image, cmd, timeoutSeconds }: z.output<typeof inputSche
     const result = await terminal.executeCommand(commandArgs[0]!, commandArgs.slice(1), { timeoutSeconds: timeout }, agent);
 
     if (result.status === "timeout") {
-      throw new ToolCallError(name, "Error while running docker container", { cause: new Error("Command timed out") });
+      throw new ToolCallError(name, "Error while running docker container", {
+        cause: new Error(result.output || "Command timed out"),
+      });
     }
 
     if (result.status === "unknownError") {
