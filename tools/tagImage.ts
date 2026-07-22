@@ -17,7 +17,8 @@ async function execute({ sourceImage, targetImage, timeoutSeconds }: z.output<ty
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: `Tagged Docker image ${sourceImage} as ${targetImage}`,
+    message: `**Docker Image** Tagged ${sourceImage} as ${targetImage}`,
+    resultLabel: `Tagged Docker image ${sourceImage} as ${targetImage}`,
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 120,

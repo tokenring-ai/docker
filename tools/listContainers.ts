@@ -44,7 +44,8 @@ async function execute({ all, quiet, limit, filter, size, format, timeoutSeconds
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: `Showing ${all ? "All" : "Running"} Containers`,
+    message: `**Docker Container** Listed ${all ? "All" : "Running"} Containers`,
+    resultLabel: `Showing ${all ? "All" : "Running"} Containers`,
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 120,

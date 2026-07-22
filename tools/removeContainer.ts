@@ -38,7 +38,8 @@ async function execute({ containers, force, volumes, link, timeoutSeconds }: z.o
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: `Removed container(s): ${containers.join(", ")}`,
+    message: `**Docker Container** Removed ${containers.join(", ")}`,
+    resultLabel: `Removed container(s): ${containers.join(", ")}`,
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 120,

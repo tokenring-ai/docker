@@ -40,7 +40,8 @@ async function execute({ all, quiet, digests, filter, format, timeoutSeconds }: 
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: `Showing ${all ? "All" : "Non-intermediate"} Images(s)`,
+    message: `**Docker Image** Listed ${all ? "All" : "Non-intermediate"} Images(s)`,
+    resultLabel: `Showing ${all ? "All" : "Non-intermediate"} Images(s)`,
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 120,

@@ -45,7 +45,8 @@ async function execute(
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: `Retrieved logs from container ${containerName}`,
+    message: `**Docker Container** Retrieved logs from ${containerName}`,
+    resultLabel: `Retrieved logs from container ${containerName}`,
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 300,

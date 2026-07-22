@@ -46,7 +46,8 @@ async function execute(
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: `Created Docker network "${networkName}"`,
+    message: `**Docker Network** Created network "${networkName}"`,
+    resultLabel: `Created Docker network "${networkName}"`,
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 120,

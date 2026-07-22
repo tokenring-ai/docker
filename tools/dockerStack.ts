@@ -36,7 +36,8 @@ async function execute({ action, stackName, composeFile, timeoutSeconds }: z.out
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: `Docker stack ${action} on "${stackName}" succeeded`,
+    message: `**Docker Swarm** ${action} ${stackName}`,
+    resultLabel: `Docker stack ${action} on "${stackName}" succeeded`,
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 600,

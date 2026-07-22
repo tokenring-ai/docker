@@ -29,7 +29,8 @@ async function execute({ containers, time, timeoutSeconds }: z.output<typeof inp
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: `Stopped container(s): ${containers.join(", ")}`,
+    message: `**Docker Container** Stopped ${containers.join(", ")}`,
+    resultLabel: `Stopped container(s): ${containers.join(", ")}`,
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 120,

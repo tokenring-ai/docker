@@ -25,7 +25,8 @@ async function execute({ all, filter, timeoutSeconds }: z.output<typeof inputSch
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: "Pruned unused Docker images",
+    message: `**Docker Prune** Pruned unused images`,
+    resultLabel: "Pruned unused Docker images",
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 300,

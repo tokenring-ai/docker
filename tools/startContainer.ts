@@ -33,7 +33,8 @@ async function execute({ containers, attach, interactive, timeoutSeconds }: z.ou
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: `Started container(s): ${containers.join(", ")}`,
+    message: `**Docker Container** Started ${containers.join(", ")}`,
+    resultLabel: `Started container(s): ${containers.join(", ")}`,
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 120,

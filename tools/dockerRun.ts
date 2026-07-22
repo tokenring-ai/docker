@@ -36,7 +36,10 @@ async function execute({ image, cmd, timeoutSeconds }: z.output<typeof inputSche
     const exitCode = result.status === "badExitCode" ? result.exitCode : 0;
     const output = result.output;
 
-    return formatDockerCommandOutput(`Ran docker container with image ${image}`, [`Command: ${cmd}`], exitCode, output);
+    return {
+      message: `**Docker Container** Ran ${cmd} in ${image}`,
+      result: formatDockerCommandOutput(`Ran docker container with image ${image}`, [`Command: ${cmd}`], exitCode, output),
+    };
   } catch (err) {
     if (err instanceof ToolCallError) {
       throw err;

@@ -23,7 +23,8 @@ async function execute({ tag, allTags, timeoutSeconds }: z.output<typeof inputSc
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: `Pushed Docker image ${tag}`,
+    message: `**Docker Image** Pushed ${tag}`,
+    resultLabel: `Pushed Docker image ${tag}`,
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 1800,

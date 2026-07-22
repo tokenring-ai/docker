@@ -53,7 +53,8 @@ async function execute(
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: `Executed command in container ${container}`,
+    message: `**Docker Container** Executed ${commands.join(" ")} in ${container}`,
+    resultLabel: `Executed command in container ${container}`,
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 300,

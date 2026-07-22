@@ -36,7 +36,8 @@ async function execute({ images, force, noPrune, timeoutSeconds }: z.output<type
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: `Removed Docker image(s): ${images.join(", ")}`,
+    message: `**Docker Image** Removed image(s) ${images.join(", ")}`,
+    resultLabel: `Removed Docker image(s): ${images.join(", ")}`,
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 120,

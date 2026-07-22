@@ -38,7 +38,8 @@ async function execute(
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: `Built Docker image ${tag}`,
+    message: `**Docker Image* Built image ${tag}`,
+    resultLabel: `Built Docker image ${tag}`,
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 1800,

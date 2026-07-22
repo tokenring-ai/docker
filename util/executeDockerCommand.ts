@@ -37,7 +37,10 @@ function getCommandResult(result: ExecuteCommandResult): { exitCode: number; out
 
 export type ExecuteDockerCommandOptions = {
   toolName: string;
-  summary: string;
+  /** Markdown message with bolded intent, e.g. `**Listed** containers` */
+  message: string;
+  /** Label included at the start of the result text sent to the LLM */
+  resultLabel: string;
   dockerArgs: string[];
   timeoutSeconds: number;
   minTimeout?: number;
@@ -66,7 +69,10 @@ export async function executeDockerCommand(dockerService: DockerService, agent: 
       });
     }
 
-    return formatDockerCommandOutput(options.summary, options.contextLines ?? [], exitCode, output);
+    return {
+      message: options.message,
+      result: formatDockerCommandOutput(options.resultLabel, options.contextLines ?? [], exitCode, output),
+    };
   } catch (err) {
     if (err instanceof ToolCallError) {
       throw err;
@@ -77,7 +83,10 @@ export async function executeDockerCommand(dockerService: DockerService, agent: 
 
 export type RunDockerScriptOptions = {
   toolName: string;
-  summary: string;
+  /** Markdown message with bolded intent, e.g. `**Ran** docker stack deploy` */
+  message: string;
+  /** Label included at the start of the result text sent to the LLM */
+  resultLabel: string;
   script: string;
   timeoutSeconds: number;
   minTimeout?: number;
@@ -105,7 +114,10 @@ export async function runDockerScript(agent: Agent, options: RunDockerScriptOpti
       });
     }
 
-    return formatDockerCommandOutput(options.summary, options.contextLines ?? [], exitCode, output);
+    return {
+      message: options.message,
+      result: formatDockerCommandOutput(options.resultLabel, options.contextLines ?? [], exitCode, output),
+    };
   } catch (err) {
     if (err instanceof ToolCallError) {
       throw err;

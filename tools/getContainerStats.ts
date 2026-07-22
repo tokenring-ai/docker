@@ -40,7 +40,8 @@ async function execute({ containers, all, noStream, format, timeoutSeconds }: z.
 
   return await executeDockerCommand(dockerService, agent, {
     toolName: name,
-    summary: "Retrieved stats for container(s)",
+    message: `**Docker Stats** Retrieved container stats`,
+    resultLabel: "Retrieved stats for container(s)",
     dockerArgs,
     timeoutSeconds: timeout,
     maxTimeout: 60,
