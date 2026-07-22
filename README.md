@@ -921,14 +921,14 @@ The package has the following dependencies:
 
 ### Dev Dependencies
 
-- `vitest` (^4.1.1) - Testing framework
+- `bun test` - Testing framework
 - `typescript` (^6.0.2) - TypeScript compiler
 
 ## Development and Testing
 
 ### Testing
 
-The package uses vitest for testing:
+The package uses bun test for testing:
 
 ```bash
 bun test
