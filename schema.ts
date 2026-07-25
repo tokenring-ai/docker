@@ -1,11 +1,9 @@
 import type { ConfigFieldMeta } from "@tokenring-ai/app/config/metadata";
+import { fromEnv, sourcedValue } from "@tokenring-ai/secrets/secret";
 import { z } from "zod";
 
 export const DockerConfigSchema = z.object({
-  host: z
-    .string()
-    .exactOptional()
-    .meta({ description: "Docker daemon host (e.g. tcp://localhost:2376)" } satisfies ConfigFieldMeta),
+  host: sourcedValue({ description: "Docker daemon host (e.g. tcp://localhost:2376)" } satisfies ConfigFieldMeta).default(fromEnv("DOCKER_HOST")),
   tls: z
     .object({
       verify: z
@@ -29,8 +27,11 @@ export const DockerConfigSchema = z.object({
     .meta({ label: "TLS", advanced: true } satisfies ConfigFieldMeta),
   sandbox: z
     .boolean()
-    .exactOptional()
-    .meta({ description: "Run containers with sandboxing restrictions" } satisfies ConfigFieldMeta),
+    .default(true)
+    .meta({ description: "Registers this docker instance as a sandbox environment" } satisfies ConfigFieldMeta),
 });
 
 export type DockerConfig = z.output<typeof DockerConfigSchema>;
+
+/** Config as handed to the service, with the daemon host already resolved. */
+export type ResolvedDockerConfig = Omit<DockerConfig, "host"> & { host?: string | undefined };

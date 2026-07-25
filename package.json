@@ -10,7 +10,8 @@
     "@tokenring-ai/sandbox": "workspace:*",
     "@tokenring-ai/utility": "workspace:*",
     "@tokenring-ai/terminal": "workspace:*",
-    "execa": "^9.6.1"
+    "execa": "^9.6.1",
+    "@tokenring-ai/secrets": "workspace:*"
   },
   "exports": {
     ".": "./index.ts",
