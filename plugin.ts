@@ -18,19 +18,19 @@ export default {
   displayName: "Docker Integration",
   version: packageJSON.version,
   description: packageJSON.description,
-  install(app, config) {
-    app.waitForService(ChatService, chatService => chatService.addTools(...tools));
-
-    const { host: hostRef, ...dockerConfig } = config.docker;
-    const host = resolveSecret(app, hostRef);
-    const dockerService = new DockerService({ ...dockerConfig, ...(host !== undefined && { host }) });
+  install(app) {
+    const dockerService = new DockerService();
     app.addServices(dockerService);
 
-    if (config.docker.sandbox) {
-      app.waitForService(SandboxService, sandboxService => {
-        sandboxService.registerProvider("docker", new DockerSandboxProvider(dockerService));
-      });
-    }
+    app.waitForService(ChatService, chatService => chatService.addTools(...tools));
+    app.waitForService(SandboxService, sandboxService => {
+      sandboxService.registerProvider("docker", new DockerSandboxProvider(dockerService));
+    });
+  },
+  reconfigure(app, config) {
+    const { host: hostRef, ...dockerConfig } = config.docker;
+    const host = resolveSecret(app, hostRef);
+    app.requireService(DockerService).reconfigure({ ...dockerConfig, ...(host !== undefined && { host }) });
   },
   configSchema: packageConfigSchema,
 } satisfies TokenRingPlugin<typeof packageConfigSchema>;

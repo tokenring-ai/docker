@@ -6,7 +6,15 @@ export default class DockerService implements TokenRingService {
   readonly name = "DockerService";
   description = "Provides Docker functionality";
 
-  constructor(readonly options: ResolvedDockerConfig) {}
+  private options: ResolvedDockerConfig = { sandbox: true };
+
+  constructor(options?: ResolvedDockerConfig) {
+    if (options) this.options = options;
+  }
+
+  reconfigure(options: ResolvedDockerConfig): void {
+    this.options = options;
+  }
 
   buildDockerPrefixArgs(): string[] {
     const args: string[] = [];
