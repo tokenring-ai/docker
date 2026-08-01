@@ -13,7 +13,7 @@ const name = "docker_getContainerStats";
 const displayName = "Docker/getContainerStats";
 
 async function execute({ containers, all, noStream, format, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
 
   if (containers.length === 0) {
     throw new ToolCallError(name, `at least one container must be specified`);

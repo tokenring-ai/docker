@@ -51,7 +51,7 @@ export type ExecuteDockerCommandOptions = {
 };
 
 export async function executeDockerCommand(dockerService: DockerService, agent: Agent, options: ExecuteDockerCommandOptions): Promise<TokenRingToolResult> {
-  const terminal = agent.requireServiceByType(TerminalService);
+  const terminal = agent.requireService(TerminalService);
   const minTimeout = options.minTimeout ?? 5;
   const maxTimeout = options.maxTimeout ?? 120;
   const timeout = clampTimeout(options.timeoutSeconds, minTimeout, maxTimeout);
@@ -97,7 +97,7 @@ export type RunDockerScriptOptions = {
 };
 
 export async function runDockerScript(agent: Agent, options: RunDockerScriptOptions): Promise<TokenRingToolResult> {
-  const terminal = agent.requireServiceByType(TerminalService);
+  const terminal = agent.requireService(TerminalService);
   const minTimeout = options.minTimeout ?? 5;
   const maxTimeout = options.maxTimeout ?? 120;
   const timeout = clampTimeout(options.timeoutSeconds, minTimeout, maxTimeout);

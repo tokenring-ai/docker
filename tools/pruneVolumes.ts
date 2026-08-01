@@ -11,7 +11,7 @@ const displayName = "Docker/pruneVolumes";
  * Prune unused Docker volumes
  */
 async function execute({ filter, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
   const timeout = clampTimeout(timeoutSeconds, 5, 300);
   const dockerArgs = ["volume", "prune", "-f"];
 

@@ -11,7 +11,7 @@ const displayName = "Docker/pushImage";
  * Push a Docker image to a registry
  */
 async function execute({ tag, allTags, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
   const timeout = clampTimeout(timeoutSeconds, 5, 1800);
   const dockerArgs = ["push"];
 

@@ -13,7 +13,7 @@ const name = "docker_dockerStack";
 const displayName = "Docker/dockerStack";
 
 async function execute({ action, stackName, composeFile, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
   const timeout = clampTimeout(timeoutSeconds, 5, 600);
   let dockerArgs: string[];
 

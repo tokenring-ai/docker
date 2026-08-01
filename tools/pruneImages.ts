@@ -11,7 +11,7 @@ const displayName = "Docker/pruneImages";
  * Prune unused Docker images
  */
 async function execute({ all, filter, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
   const timeout = clampTimeout(timeoutSeconds, 5, 300);
   const dockerArgs = ["image", "prune", "-f"];
 

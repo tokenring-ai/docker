@@ -12,7 +12,7 @@ const name = "docker_listImages";
 const displayName = "Docker/listImages";
 
 async function execute({ all, quiet, digests, filter, format, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
   const timeout = clampTimeout(timeoutSeconds, 5, 120);
   const dockerArgs = ["images"];
 

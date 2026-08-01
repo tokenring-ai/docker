@@ -15,7 +15,7 @@ const displayName = "Docker/removeImage";
  * Remove one or more Docker images
  */
 async function execute({ images, force, noPrune, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
 
   if (images.length === 0) {
     throw new ToolCallError(name, `at least one image must be specified`);

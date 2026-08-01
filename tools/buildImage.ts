@@ -14,7 +14,7 @@ async function execute(
   { context, tag, dockerfile, buildArgs, noCache, pull, timeoutSeconds }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
   const timeout = clampTimeout(timeoutSeconds, 5, 1800);
   const dockerArgs = ["build", "-t", tag];
 

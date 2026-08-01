@@ -13,7 +13,7 @@ const name = "docker_removeContainer";
 const displayName = "Docker/removeContainer";
 
 async function execute({ containers, force, volumes, link, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
 
   if (containers.length === 0) {
     throw new ToolCallError(name, `at least one container must be specified`);

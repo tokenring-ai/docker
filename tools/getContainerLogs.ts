@@ -15,7 +15,7 @@ async function execute(
   { name: containerName, follow, timestamps, since, until, tail, details, timeoutSeconds }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
   const timeout = clampTimeout(timeoutSeconds, 5, 300);
   const dockerArgs = ["logs"];
 

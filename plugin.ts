@@ -19,10 +19,9 @@ export default {
   version: packageJSON.version,
   description: packageJSON.description,
   install(app) {
-    const dockerService = new DockerService();
-    app.addServices(dockerService);
+    const dockerService = app.addService(new DockerService());
 
-    app.waitForService(ChatService, chatService => chatService.addTools(...tools));
+    app.waitForService(ChatService, chatService => chatService.addTools(tools));
     app.waitForService(SandboxService, sandboxService => {
       sandboxService.registerProvider("docker", new DockerSandboxProvider(dockerService));
     });

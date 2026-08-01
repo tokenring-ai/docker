@@ -12,7 +12,7 @@ const displayName = "Docker/stopContainer";
  * Stop one or more Docker containers
  */
 async function execute({ containers, time, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
 
   if (containers.length === 0) {
     throw new ToolCallError(name, `at least one container must be specified`);

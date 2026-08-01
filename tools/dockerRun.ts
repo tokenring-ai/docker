@@ -13,8 +13,8 @@ const displayName = "Docker/dockerRun";
  * Runs a shell command in an ephemeral Docker container
  */
 async function execute({ image, cmd, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const terminal = agent.requireServiceByType(TerminalService);
-  const dockerService = agent.requireServiceByType(DockerService);
+  const terminal = agent.requireService(TerminalService);
+  const dockerService = agent.requireService(DockerService);
   const timeout = clampTimeout(timeoutSeconds || 60, 5, 600);
 
   const dockerArgs = ["-v", `${process.cwd()}:/workdir:rw`, "-w", "/workdir", "run", "--rm", image, "sh", "-c", cmd];

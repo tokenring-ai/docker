@@ -16,7 +16,7 @@ async function execute(
   { container, commands, interactive, tty, workdir, env, privileged, user, timeoutSeconds }: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
 
   if (commands.length === 0) {
     throw new ToolCallError(name, `command cannot be empty`);

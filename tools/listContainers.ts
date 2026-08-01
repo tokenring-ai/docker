@@ -12,7 +12,7 @@ const name = "docker_listContainers";
 const displayName = "Docker/listContainers";
 
 async function execute({ all, quiet, limit, filter, size, format, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
   const timeout = clampTimeout(timeoutSeconds, 5, 120);
   const dockerArgs = ["ps"];
 

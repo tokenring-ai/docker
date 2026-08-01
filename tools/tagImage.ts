@@ -11,7 +11,7 @@ const displayName = "Docker/tagImage";
  * Tag a Docker image
  */
 async function execute({ sourceImage, targetImage, timeoutSeconds }: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const dockerService = agent.requireServiceByType(DockerService);
+  const dockerService = agent.requireService(DockerService);
   const timeout = clampTimeout(timeoutSeconds, 5, 120);
   const dockerArgs = ["tag", sourceImage, targetImage];
 
